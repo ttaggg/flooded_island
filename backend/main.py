@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from game.room_manager import start_cleanup_task
+from routers import websocket
 
 # Load environment variables
 load_dotenv()
@@ -54,11 +55,14 @@ app = FastAPI(
 # Configure CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url],
-    allow_credentials=True,
+    allow_origins=["*"],  # Allow all origins for development; restrict in production
+    allow_credentials=False,  # Must be False when using wildcard origins
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include WebSocket router
+app.include_router(websocket.router, tags=["websocket"])
 
 
 @app.get("/")
@@ -71,6 +75,22 @@ async def health_check():
         "status": "ok",
         "message": "Flooding Islands API is running",
         "version": "1.0.0",
+    }
+
+
+@app.post("/rooms")
+async def create_room():
+    """
+    Create a new game room.
+    Returns the room ID and initial state.
+    """
+    from game.room_manager import room_manager
+
+    room = await room_manager.create_room()
+    return {
+        "room_id": room.room_id,
+        "status": room.game_status.value,
+        "created_at": room.created_at.isoformat(),
     }
 
 

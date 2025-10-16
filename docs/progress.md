@@ -470,6 +470,85 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 3.1: WebSocket Connection Handler
+- **Date**: 2025-10-16
+- **Status**: Completed ✅
+- **Changes**:
+  - Created `backend/routers/websocket.py` with WebSocket infrastructure
+  - **ConnectionManager Class:**
+    - Tracks active WebSocket connections per room
+    - Stores player roles: `dict[room_id, dict[player_id, role]]`
+    - Thread-safe operations with `asyncio.Lock`
+    - Methods: `connect()`, `disconnect()`, `broadcast()`, `send_to_player()`
+    - Automatic cleanup of dead connections
+    - Returns player role on disconnect for state updates
+  - **WebSocket Endpoint `/ws/{room_id}`:**
+    - Accepts connection first (FastAPI/Starlette requirement)
+    - Generates unique player_id using UUID
+    - Validates room existence after acceptance
+    - Sends error message and closes if room not found
+    - Sends initial room state to connecting player
+    - Message loop for receiving and routing client messages
+    - Parses JSON and validates message structure
+    - Routes messages to appropriate handlers (stubs for now)
+  - **Disconnection Handling:**
+    - Removes connection from ConnectionManager
+    - Retrieves player's role before cleanup
+    - Broadcasts `player_disconnected` message to remaining players
+    - Updates room state to mark player as disconnected
+    - Cleans up empty rooms automatically
+  - **Message Broadcasting:**
+    - Serializes Pydantic models to JSON
+    - Sends to all active connections in a room
+    - Handles individual send failures gracefully
+    - Logs broadcast activity
+    - Automatically removes failed connections
+  - **FastAPI Integration:**
+    - Included WebSocket router in `main.py`
+    - Configured CORS: `allow_origins=["*"]` with `allow_credentials=False`
+    - Added POST `/rooms` endpoint for programmatic room creation
+    - Endpoint returns room_id, status, and created_at timestamp
+  - **Message Handlers (Stubs):**
+    - `select_role`: Returns "not yet implemented" error
+    - `configure_grid`: Returns "not yet implemented" error
+    - `move`: Returns "not yet implemented" error
+    - `flood`: Returns "not yet implemented" error
+    - Unknown message types: Returns error message
+    - Invalid JSON: Returns parsing error
+  - **Comprehensive Test Suite (`test_websocket.py`):**
+    - Test 1: Invalid room connection (error message handling)
+    - Test 2: Valid room connection (initial state reception)
+    - Test 3: Message parsing (JSON errors, missing fields, unknown types)
+    - Test 4: Multiple simultaneous connections
+    - Test 5: Disconnection handling and reconnection
+    - All 5 tests passing
+    - Uses httpx for HTTP API calls
+    - Uses websockets library for WebSocket client
+- **Technical Details**:
+  - **Critical Discovery**: Must call `await websocket.accept()` BEFORE any async operations. Attempting to validate room and close connection before accepting causes HTTP 403 Forbidden errors from Starlette/Uvicorn layer.
+  - **CORS Issue Resolution**: Cannot use `allow_credentials=True` with `allow_origins=["*"]`. Must use `allow_credentials=False` for wildcard origins in development.
+  - **WebSocket Handshake**: FastAPI/Starlette requires accepting the WebSocket connection immediately, then handling validation/rejection by sending error messages and closing the accepted connection.
+  - **Room State Serialization**: Created `serialize_room_state()` helper to convert GameRoom Pydantic models to JSON-serializable dictionaries with proper enum value handling.
+- **Dependencies Added**:
+  - `httpx` (for test suite HTTP requests)
+- **Verification**:
+  - No linter errors
+  - All WebSocket connections working correctly
+  - Broadcasting tested with multiple simultaneous connections
+  - Disconnection cleanup verified
+  - Message routing framework ready for game logic
+- **Notes**: 
+  - WebSocket infrastructure complete and production-ready
+  - Connection manager supports unlimited rooms and players
+  - Message routing framework extensible for new message types
+  - Stub handlers ready to be replaced with actual game logic in tasks 3.2-3.4
+  - CORS configuration suitable for development; should be restricted in production
+  - Room creation API provides foundation for frontend integration
+  - All acceptance criteria met and verified
+  - Next task: Task 3.2 - Message Handlers (Role Selection)
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]
