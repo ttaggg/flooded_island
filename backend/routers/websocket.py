@@ -14,17 +14,20 @@ from typing import Optional
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
-logger = logging.getLogger(__name__)
-
+from game.board import Board
 from game.room_manager import room_manager
-from models.game import GameRoom, GameStatus, PlayerRole
+from game.validator import validate_grid_size
+from models.game import GameRoom, GameStatus, PlayerRole, Position
 from models.messages import (
+    ConfigureGridMessage,
     ErrorMessage,
     PlayerDisconnectedMessage,
     PlayerReconnectedMessage,
     RoomStateMessage,
     SelectRoleMessage,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ConnectionManager:
@@ -384,14 +387,103 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
                         await websocket.send_json(error_msg.model_dump())
 
                 elif message_type == "configure_grid":
-                    # TODO: Implement in Task 3.3
-                    print(f"  → Grid configuration: size={message.get('size')}")
-                    await websocket.send_json(
-                        {
-                            "type": "error",
-                            "message": "Grid configuration not yet implemented",
-                        }
-                    )
+                    logger.info(f"Handling configure_grid for player {player_id[:8]}")
+                    # Task 3.3: Grid Configuration
+                    try:
+                        # Parse and validate message
+                        config_msg = ConfigureGridMessage(**message)
+                        grid_size = config_msg.size
+                        print(f"  → Grid configuration: size={grid_size}")
+
+                        # Get current room state
+                        room = await room_manager.get_room(room_id)
+                        if not room:
+                            error_msg = ErrorMessage(
+                                type="error", message="Room not found"
+                            )
+                            await websocket.send_json(error_msg.model_dump())
+                            continue
+
+                        # Verify player role first (more specific error)
+                        player_role = await connection_manager.get_player_role(
+                            room_id, player_id
+                        )
+                        if not player_role:
+                            error_msg = ErrorMessage(
+                                type="error",
+                                message="You must select a role before configuring the grid",
+                            )
+                            await websocket.send_json(error_msg.model_dump())
+                            continue
+
+                        if player_role != PlayerRole.JOURNEYMAN:
+                            error_msg = ErrorMessage(
+                                type="error",
+                                message="Only the journeyman player can configure the grid",
+                            )
+                            await websocket.send_json(error_msg.model_dump())
+                            continue
+
+                        # Check room status (must be CONFIGURING)
+                        if room.game_status != GameStatus.CONFIGURING:
+                            error_msg = ErrorMessage(
+                                type="error",
+                                message=f"Room must be in configuring state to set grid size (current: {room.game_status.value})",
+                            )
+                            await websocket.send_json(error_msg.model_dump())
+                            continue
+
+                        # Validate grid size (3-10)
+                        is_valid, error_message = validate_grid_size(grid_size)
+                        if not is_valid:
+                            error_msg = ErrorMessage(
+                                type="error", message=error_message
+                            )
+                            await websocket.send_json(error_msg.model_dump())
+                            continue
+
+                        # Initialize game board
+                        board = Board(grid_size)
+                        print(
+                            f"  → Board initialized: {grid_size}x{grid_size} grid with all DRY fields"
+                        )
+
+                        # Update room state
+                        room.grid_size = grid_size
+                        room.grid = board.grid
+                        room.journeyman_position = Position(x=0, y=0)
+                        room.game_status = GameStatus.ACTIVE
+                        room.current_role = PlayerRole.JOURNEYMAN
+                        room.current_turn = 1
+
+                        print(
+                            f"  → Journeyman placed at (0, 0), game status: ACTIVE, turn: 1"
+                        )
+
+                        # Save updated room state
+                        await room_manager.update_room(room_id, room)
+
+                        # Broadcast updated room state to all players
+                        logger.info(f"Broadcasting game start to room {room_id}")
+                        room_state_msg = RoomStateMessage(
+                            type="room_state", state=serialize_room_state(room)
+                        )
+                        broadcast_count = await connection_manager.broadcast(
+                            room_id, room_state_msg.model_dump()
+                        )
+                        logger.info(
+                            f"Game started! Broadcast sent to {broadcast_count} player(s)"
+                        )
+                        print(
+                            f"  → Game started! Broadcast sent to {broadcast_count} player(s)"
+                        )
+
+                    except ValidationError as e:
+                        error_msg = ErrorMessage(
+                            type="error",
+                            message=f"Invalid grid configuration: {str(e)}",
+                        )
+                        await websocket.send_json(error_msg.model_dump())
 
                 elif message_type == "move":
                     # TODO: Implement in Task 3.4

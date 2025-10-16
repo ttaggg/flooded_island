@@ -638,6 +638,116 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 3.3: Message Handlers - Game Configuration
+- **Date**: 2025-10-16
+- **Status**: Completed ✅
+- **Changes**:
+  - **Handler Implementation** in `backend/routers/websocket.py`:
+    - Replaced configure_grid TODO placeholder with full implementation (~100 lines)
+    - Added imports: `Board`, `validate_grid_size`, `Position`, `ConfigureGridMessage`
+    - Implemented validation chain: role check → state check → size validation
+    - Initialize Board instance with validated grid size
+    - Place journeyman at (0, 0)
+    - Transition room from CONFIGURING → ACTIVE
+    - Broadcast complete game state to all players
+  - **Comprehensive Test Suite** (`backend/test_grid_configuration.py`):
+    - Test 1: Journeyman can configure grid (sizes 3, 5, 7, 10)
+    - Test 2: Weather player cannot configure (gets error)
+    - Test 3: Invalid sizes rejected (2, 11, -1, 0, 100)
+    - Test 4: Cannot configure without role
+    - Test 5: Cannot configure in WAITING state
+    - All 12 test cases passing (4 grid sizes × 1 + 8 other scenarios)
+  - **Validation Logic**:
+    - Player role verification (only journeyman can configure)
+    - Room state verification (must be in CONFIGURING)
+    - Grid size validation (3-10 inclusive using existing validator)
+    - Clear, specific error messages for each failure case
+  - **Board Initialization**:
+    - Creates NxN grid with all DRY fields
+    - Uses existing Board class from game/board.py
+    - Validates grid size before initialization
+  - **State Updates**:
+    - `room.grid_size` = validated size
+    - `room.grid` = initialized board grid
+    - `room.journeyman_position` = Position(x=0, y=0)
+    - `room.game_status` = ACTIVE
+    - `room.current_role` = JOURNEYMAN (first turn)
+    - `room.current_turn` = 1
+  - **Broadcast Verification**:
+    - Both players receive identical game state
+    - RoomStateMessage with complete serialized state
+    - Grid, position, status all synchronized
+- **Test Results**: All 12/12 tests passing
+  ```
+  ✅ Journeyman configure grid sizes 3, 5, 7, 10
+  ✅ Weather player cannot configure
+  ✅ Invalid sizes 2, 11, -1, 0, 100 all rejected
+  ✅ Cannot configure without role
+  ✅ Cannot configure in WAITING state
+  ```
+- **Message Flow**:
+  ```
+  Journeyman → configure_grid(size=5)
+    → Parse ConfigureGridMessage (Pydantic validation)
+    → Check player_role == JOURNEYMAN ✓
+    → Check room.game_status == CONFIGURING ✓
+    → Validate 3 <= size <= 10 ✓
+    → Initialize Board(5) with all DRY fields
+    → Set room properties (grid, size, position, status)
+    → Save room state
+    → Broadcast to all players
+    → Game status: ACTIVE, ready for gameplay
+  ```
+- **Validation Order** (most specific to general):
+  1. Player role check (no role or wrong role)
+  2. Room state check (must be CONFIGURING)
+  3. Grid size validation (3-10 range)
+- **Edge Cases Handled**:
+  - ✅ Player without role tries to configure
+  - ✅ Weather player tries to configure
+  - ✅ Configuration in WAITING state (roles not filled)
+  - ✅ Configuration in ACTIVE state (already started)
+  - ✅ Invalid grid sizes (out of bounds)
+  - ✅ Malformed messages (Pydantic validation)
+  - ✅ Room not found
+  - ✅ Broadcast to multiple players
+- **State Machine Verification**:
+  - WAITING (roles not filled) → Cannot configure
+  - WAITING → Both roles filled → CONFIGURING
+  - CONFIGURING → Journeyman configures → ACTIVE ✓
+  - ACTIVE → (gameplay in progress) → Future task
+- **Verification**:
+  - No linter errors
+  - All 12 tests passing
+  - Grid initialization working correctly
+  - Journeyman placement at (0,0) verified
+  - State transition CONFIGURING → ACTIVE working
+  - Broadcast synchronization confirmed
+  - Server auto-reload working after cache clear
+- **Technical Notes**:
+  - Encountered Python bytecode caching issue during testing
+  - Resolved by clearing __pycache__ and restarting server
+  - Server was running old process (PID mismatch) - killed and restarted
+  - Learned importance of verifying running processes during development
+  - Uvicorn reload feature works well for iterative development
+- **Integration Points**:
+  - Board class: `Board(grid_size)` creates initialized grid
+  - Validator: `validate_grid_size(size)` returns (bool, str)
+  - Room manager: `update_room()` persists state changes
+  - Connection manager: `get_player_role()` for authorization
+  - Message models: `ConfigureGridMessage` with Pydantic validation
+- **Notes**: 
+  - Grid configuration completes the pre-game setup flow
+  - Game is now ready for gameplay handlers (Task 3.4)
+  - Full game flow verified: create room → select roles → configure grid → ready to play
+  - Board initialization and state management working perfectly
+  - Error handling comprehensive with clear user feedback
+  - All acceptance criteria met and verified
+  - Ready for journeyman move and weather flood handlers
+  - Next task: Task 3.4 - Message Handlers (Gameplay: move and flood)
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]
