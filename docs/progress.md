@@ -892,6 +892,44 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 3.5: Reconnection Logic
+- **Date**: 2025-10-16
+- **Status**: Completed ✅
+- **Changes**:
+  - **Room Auto-Creation** (`backend/routers/websocket.py` lines 281-303):
+    - Modified WebSocket endpoint to create room automatically if it doesn't exist
+    - First player to connect to a room URL creates it
+    - Room initialized with WAITING status and empty player slots
+    - Added datetime import for room creation timestamp
+  - **Reconnection Detection** (`backend/routers/websocket.py` line 371):
+    - Added `is_reconnection` flag to detect ACTIVE game state
+    - Distinguishes between initial connection and reconnection scenarios
+  - **Status Preservation** (`backend/routers/websocket.py` lines 374-381):
+    - Modified game status transition logic
+    - Only transition to CONFIGURING when currently in WAITING state
+    - Preserve ACTIVE status when player joins ongoing game (reconnection)
+  - **Conditional Broadcasting** (`backend/routers/websocket.py` lines 386-413):
+    - Added conditional message routing based on reconnection status
+    - Send `PlayerReconnectedMessage` when role selected in active game
+    - Send `RoomStateMessage` for initial role selections
+    - Both players receive appropriate notifications
+  - **Comprehensive Testing** (`backend/test_reconnection.py`):
+    - Created full end-to-end reconnection test script
+    - Tests 11-step scenario: connect, play, disconnect, reconnect, continue
+    - Verifies disconnection handling, role release, reconnection, and game continuity
+    - All tests passing successfully
+- **Notes**: 
+  - Reconnection logic complete and tested
+  - Room auto-creation enables seamless multiplayer without pre-created rooms
+  - Game state properly preserved during player disconnection/reconnection
+  - New players can take over disconnected roles mid-game
+  - Game continues from exact state where it left off
+  - No player authentication needed (stateless reconnection)
+  - Phase 3 (WebSocket Communication) now complete
+  - Ready to begin Phase 4 (Frontend - UI Components)
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]

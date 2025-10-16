@@ -9,6 +9,7 @@ import asyncio
 import json
 import logging
 import uuid
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -278,16 +279,28 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
     # Generate unique player ID
     player_id = str(uuid.uuid4())
 
-    # Validate room exists
+    # Get or create room
     room = await room_manager.get_room(room_id)
 
     if not room:
-        # Send error and close connection
-        error_msg = ErrorMessage(type="error", message=f"Room {room_id} not found")
-        await websocket.send_json(error_msg.model_dump())
-        await websocket.close(code=4004, reason=f"Room {room_id} not found")
-        print(f"❌ Connection to room {room_id} rejected: Room not found")
-        return
+        # Create room if it doesn't exist (first player creates the room)
+        room = GameRoom(
+            room_id=room_id,
+            grid_size=None,
+            grid=None,
+            journeyman_position=None,
+            current_turn=1,
+            current_role=PlayerRole.JOURNEYMAN,
+            players={"journeyman": False, "weather": False},
+            game_status=GameStatus.WAITING,
+            winner=None,
+            created_at=datetime.now(),
+            ended_at=None,
+        )
+        # Directly add to room manager (update_room requires room to exist)
+        async with room_manager.lock:
+            room_manager.rooms[room_id] = room
+        print(f"🎮 Room {room_id} created by first player")
 
     await connection_manager.connect(room_id, player_id, websocket)
 
@@ -367,25 +380,52 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
                         )
                         room.players[selected_role.value] = True
 
+                        # Detect if this is a reconnection (joining an active game)
+                        is_reconnection = room.game_status == GameStatus.ACTIVE
+
                         # Check if both roles are filled
                         if room.players["journeyman"] and room.players["weather"]:
-                            room.game_status = GameStatus.CONFIGURING
-                            print(
-                                f"  → Both roles filled! Room {room_id} transitioning to CONFIGURING"
-                            )
+                            # Only transition to CONFIGURING if currently WAITING
+                            # Keep ACTIVE status if already active (reconnection case)
+                            if room.game_status == GameStatus.WAITING:
+                                room.game_status = GameStatus.CONFIGURING
+                                print(
+                                    f"  → Both roles filled! Room {room_id} transitioning to CONFIGURING"
+                                )
 
                         # Save updated room state
                         await room_manager.update_room(room_id, room)
 
-                        # Broadcast updated room state to all players
-                        logger.info(f"Broadcasting role update to room {room_id}")
-                        room_state_msg = RoomStateMessage(
-                            type="room_state", state=serialize_room_state(room)
-                        )
-                        broadcast_count = await connection_manager.broadcast(
-                            room_id, room_state_msg.model_dump()
-                        )
-                        logger.info(f"Broadcast sent to {broadcast_count} player(s)")
+                        # Broadcast appropriate message based on reconnection status
+                        if is_reconnection:
+                            # Reconnection: notify other player that opponent is back
+                            logger.info(
+                                f"Player reconnected to active game in room {room_id}"
+                            )
+                            print(
+                                f"  → Reconnection! {selected_role.value} rejoined active game"
+                            )
+                            reconnect_msg = PlayerReconnectedMessage(
+                                type="player_reconnected", role=selected_role
+                            )
+                            broadcast_count = await connection_manager.broadcast(
+                                room_id, reconnect_msg.model_dump()
+                            )
+                            logger.info(
+                                f"Reconnection broadcast sent to {broadcast_count} player(s)"
+                            )
+                        else:
+                            # Initial connection: broadcast room state
+                            logger.info(f"Broadcasting role update to room {room_id}")
+                            room_state_msg = RoomStateMessage(
+                                type="room_state", state=serialize_room_state(room)
+                            )
+                            broadcast_count = await connection_manager.broadcast(
+                                room_id, room_state_msg.model_dump()
+                            )
+                            logger.info(
+                                f"Broadcast sent to {broadcast_count} player(s)"
+                            )
 
                     except ValidationError as e:
                         error_msg = ErrorMessage(
