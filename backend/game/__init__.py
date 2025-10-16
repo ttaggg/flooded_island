@@ -2,10 +2,11 @@
 Game logic module for Flooding Islands.
 
 Contains core game mechanics including board management, move validation,
-and win condition checking.
+win condition checking, and room management.
 """
 
 from game.board import Board
+from game.room_manager import RoomManager, room_manager
 from game.validator import (
     is_journeyman_trapped,
     validate_grid_size,
@@ -29,4 +30,6 @@ __all__ = [
     "check_weather_victory",
     "calculate_statistics",
     "check_win_condition",
+    "RoomManager",
+    "room_manager",
 ]

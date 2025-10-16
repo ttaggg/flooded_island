@@ -3,11 +3,14 @@ FastAPI application entry point for Flooding Islands game.
 Provides health check endpoint and configures CORS for frontend communication.
 """
 
+import asyncio
 import os
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from game.room_manager import start_cleanup_task
 
 # Load environment variables
 load_dotenv()
@@ -25,9 +28,19 @@ async def lifespan(app: FastAPI):
     # Startup
     print("🌊 Flooding Islands API starting up...")
     print(f"📡 CORS enabled for: {frontend_url}")
+
+    # Start background cleanup task
+    cleanup_task = asyncio.create_task(start_cleanup_task())
+
     yield
+
     # Shutdown
     print("🌊 Flooding Islands API shutting down...")
+    cleanup_task.cancel()
+    try:
+        await cleanup_task
+    except asyncio.CancelledError:
+        pass
 
 
 # Initialize FastAPI application

@@ -405,6 +405,71 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 2.5: Room Management
+- **Date**: 2025-10-16
+- **Status**: Completed ✅
+- **Changes**:
+  - Created `backend/game/room_manager.py` with complete room lifecycle management
+  - **RoomManager Class:**
+    - In-memory storage using dictionary: `rooms: dict[str, GameRoom]`
+    - Thread-safe operations using `asyncio.Lock()`
+    - Singleton `room_manager` instance for easy import
+  - **Room ID Generation:**
+    - `_generate_room_id()` - generates unique 6-character alphanumeric codes
+    - Character set: "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" (excludes confusing 0/O, 1/I)
+    - Collision detection with retry logic (up to 100 attempts)
+    - ~729M possible combinations (30^6) for MVP scale
+  - **Core Room Operations:**
+    - `create_room() -> GameRoom` - creates new room with unique ID and default state
+    - `get_room(room_id) -> Optional[GameRoom]` - retrieves room by ID
+    - `update_room(room_id, room)` - updates room state with validation
+    - `delete_room(room_id)` - removes room from storage
+    - `room_exists(room_id) -> bool` - checks room existence
+  - **Cleanup Logic:**
+    - `cleanup_old_rooms() -> int` - removes rooms ended >5 minutes ago
+    - Checks `ended_at` timestamp against 300-second threshold
+    - Returns count of deleted rooms for logging
+    - Only cleans up rooms with `ended_at` set (active games preserved)
+  - **Background Cleanup Task:**
+    - `start_cleanup_task()` - async background task
+    - Runs every 60 seconds (configurable)
+    - Logs cleanup activity with deletion counts
+    - Handles errors gracefully without crashing
+    - Integrated into FastAPI lifespan handler
+  - Updated `backend/game/__init__.py`:
+    - Exported RoomManager class and room_manager instance
+    - Added to __all__ list
+    - Updated module docstring
+  - Updated `backend/main.py`:
+    - Integrated cleanup task into lifespan handler
+    - Starts task at application startup
+    - Cancels task gracefully at shutdown
+    - Properly handles CancelledError
+  - **Testing:**
+    - Created comprehensive test suite with 7 test scenarios
+    - Tested room creation with unique IDs (no collisions)
+    - Tested room retrieval (existing and non-existent)
+    - Tested room updates and deletion operations
+    - Tested cleanup of old rooms (>5 minutes deleted, <5 minutes kept)
+    - Tested active games not cleaned up
+    - Tested concurrent room access (5 simultaneous operations)
+    - All tests passed successfully
+  - **Verification:**
+    - No linter errors
+    - All functions properly typed with type hints
+    - Thread-safe for concurrent WebSocket connections
+    - Clean, well-documented code with docstrings
+- **Notes**: 
+  - Room IDs are easy to share and type (6 uppercase chars/digits)
+  - Thread-safe design ready for multiple concurrent WebSocket connections
+  - Background cleanup prevents memory bloat from abandoned games
+  - Singleton pattern provides convenient global access via `room_manager`
+  - Ready for WebSocket integration in Phase 3
+  - All acceptance criteria met and verified
+  - Next task: Task 3.1 - WebSocket Connection Handler
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]
