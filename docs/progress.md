@@ -302,6 +302,56 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 2.3: Game Logic - Move Validation
+- **Status**: Completed ✅
+- **Changes**:
+  - Created `backend/game/validator.py` with move validation logic:
+    - **Journeyman Movement Validation:**
+      - `validate_journeyman_move(board, current_pos, target_pos)` - validates movement rules
+      - Checks target is adjacent (8 directions) using board adjacency calculation
+      - Validates target is within grid bounds
+      - Ensures target field is DRY
+      - Returns tuple[bool, str] with validation result and error message
+    - **Weather Flooding Validation:**
+      - `validate_weather_flood(board, positions, journeyman_pos)` - validates flood actions
+      - Enforces 0-2 positions limit
+      - Validates each position is within bounds
+      - Checks all fields are currently DRY
+      - Prevents flooding journeyman's current position
+      - Returns detailed error messages for each violation
+    - **Trap Detection:**
+      - `is_journeyman_trapped(board, journeyman_pos)` - detects win condition for weather
+      - Gets all adjacent positions (8 directions)
+      - Checks if any adjacent field is DRY
+      - Returns True if no valid moves available
+    - **Grid Size Validation:**
+      - `validate_grid_size(size)` - validates configuration
+      - Enforces 3-10 range (inclusive)
+      - Returns validation result with error message
+  - Updated `backend/game/__init__.py`:
+    - Exported all validator functions alongside Board class
+    - Updated __all__ list for clean imports
+  - **Testing:**
+    - Created comprehensive test suite with 36 test cases
+    - Tested all valid scenarios
+    - Tested all invalid scenarios with proper error detection
+    - Tested edge cases (corners, boundaries, trap conditions)
+    - All tests passed successfully
+  - **Verification:**
+    - No linter errors
+    - All validation functions work correctly with Board class
+    - Proper error messages for all failure cases
+- **Notes**: 
+  - Validation functions return tuple[bool, str] making error handling straightforward
+  - Trap detection is critical for implementing weather win condition
+  - Functions leverage existing Board class methods for consistency
+  - Validators are ready for use in game state management and WebSocket handlers
+  - Edge cases properly handled (corner positions, edge positions, boundary conditions)
+  - All acceptance criteria met and verified
+  - Next task: Task 2.4 - Game Logic - Turn Management
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]

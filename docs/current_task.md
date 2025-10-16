@@ -1,7 +1,7 @@
 # Current Active Task
 
 ## Task
-Task 2.2: Game Logic - Board Management
+Task 2.3: Game Logic - Move Validation
 
 ## Phase
 Phase 2: Core Backend Logic
@@ -10,104 +10,132 @@ Phase 2: Core Backend Logic
 Completed
 
 ## Description
-Implement the core board management logic for the Flooding Islands game. This module handles grid initialization, field state management, position validation, and adjacency calculations for both movement (8 directions) and drying (4 directions).
+Implement move validation logic for the Flooding Islands game. This module validates journeyman movement, weather flooding actions, detects trap conditions, and validates grid configuration.
 
 ## Requirements
 - Python 3.13+ installed
-- Create `game/board.py` with Board class
-- Initialize grid with configurable size (3-10)
-- Implement field state get/set operations
-- Validate position bounds
-- Calculate adjacent positions for 8 directions (movement) and 4 directions (drying)
-- Use existing Position and FieldState models from `models/game.py`
+- Create `game/validator.py` with validation functions
+- Validate journeyman movement (adjacent dry fields only)
+- Validate weather flooding (dry fields, not journeyman's position, max 2)
+- Check if journeyman is trapped (no valid moves)
+- Validate grid size configuration (3-10)
 
 ## Implementation Steps
 
-### 1. Create Board Class
-- Initialize with grid_size (3-10)
-- Validate grid size in constructor
-- Create NxN grid with all fields initially DRY
-- Store grid as `list[list[FieldState]]`
+### 1. Journeyman Movement Validation
+- `validate_journeyman_move(board, current_pos, target_pos) -> tuple[bool, str]`
+- Check target position is adjacent (8 directions)
+- Check target position is within grid bounds
+- Check target field is DRY
+- Return validation result with error message if invalid
 
-### 2. Field State Management
-- `get_field_state(position: Position) -> FieldState` - Get state at position
-- `set_field_state(position: Position, state: FieldState)` - Update field state
-- Validate positions before accessing grid
+### 2. Weather Flooding Validation
+- `validate_weather_flood(board, positions, journeyman_pos) -> tuple[bool, str]`
+- Check positions count is 0-2
+- Validate each position is within grid bounds
+- Check fields are currently DRY
+- Ensure no position is the journeyman's current position
+- Return validation result with error message if invalid
 
-### 3. Position Validation
-- `is_valid_position(position: Position) -> bool` - Check bounds
-- Ensure 0 <= x < grid_size and 0 <= y < grid_size
+### 3. Trap Detection
+- `is_journeyman_trapped(board, journeyman_pos) -> bool`
+- Get all adjacent positions (8 directions)
+- Check if any adjacent field is DRY
+- Return True if trapped, False otherwise
 
-### 4. Adjacency Calculation
-- `get_adjacent_positions(position, include_diagonals=True) -> list[Position]`
-- 8 directions (N, NE, E, SE, S, SW, W, NW) when include_diagonals=True
-- 4 directions (N, E, S, W) when include_diagonals=False
-- Filter out positions outside grid bounds
-- Handle edge cases (corners, edges with fewer neighbors)
+### 4. Grid Size Validation
+- `validate_grid_size(size) -> tuple[bool, str]`
+- Check size is between 3 and 10 (inclusive)
+- Return validation result with error message if invalid
 
 ## Current Progress
-- [x] Create `backend/game/board.py` ✅
-- [x] Implement Board class with grid initialization ✅
-  - Grid size validation (3-10)
-  - Initialize all fields as DRY
-- [x] Implement `get_field_state` method ✅
-  - Position validation
-  - Return FieldState at position
-- [x] Implement `set_field_state` method ✅
-  - Position validation
-  - Update field state
-- [x] Implement `is_valid_position` method ✅
-  - Bounds checking (0 <= x,y < grid_size)
-- [x] Implement `get_adjacent_positions` method ✅
-  - 8-directional support (include_diagonals=True)
-  - 4-directional support (include_diagonals=False)
-  - Proper bounds checking before creating Position objects
-  - Handles corners, edges, and center positions correctly
-- [x] Create `backend/game/__init__.py` ✅
-  - Export Board class
-- [x] Set up virtual environment and install dependencies ✅
-  - Installed FastAPI, Pydantic, and other requirements
-- [x] Verify implementation ✅
-  - All tests passed successfully
-  - No linter errors
+- [x] Create `backend/game/validator.py` ✅
+- [x] Implement `validate_journeyman_move` function ✅
+  - Adjacency check using board.get_adjacent_positions()
+  - Bounds validation using board.is_valid_position()
+  - DRY field state check
+  - Comprehensive error messages
+- [x] Implement `validate_weather_flood` function ✅
+  - Count validation (0-2 positions)
+  - Bounds checking for all positions
+  - DRY field state validation
+  - Journeyman position exclusion
+  - Detailed error messages for each case
+- [x] Implement `is_journeyman_trapped` function ✅
+  - Gets all adjacent positions (8 directions)
+  - Checks for any available DRY fields
+  - Returns boolean trap status
+- [x] Implement `validate_grid_size` function ✅
+  - Range validation (3-10 inclusive)
+  - Clear error message with received value
+- [x] Update `backend/game/__init__.py` ✅
+  - Export all validator functions
+  - Updated __all__ list
+- [x] Test all validation functions ✅
+  - Tested valid scenarios for all functions
+  - Tested invalid scenarios with proper error detection
+  - Tested edge cases (corners, boundaries, etc.)
+  - All 36 test cases passed
 
 ## Acceptance Criteria
-- ✅ Board class created in `backend/game/board.py`
-- ✅ Grid initializes correctly with all DRY fields
+- ✅ Validator module created in `backend/game/validator.py`
+- ✅ Journeyman move validation checks adjacency, bounds, and field state
+- ✅ Weather flood validation enforces count limits and position rules
+- ✅ Trap detection correctly identifies when journeyman has no moves
 - ✅ Grid size validation enforces 3-10 range
-- ✅ Field states can be get/set properly with position validation
-- ✅ Position validation works for valid and invalid positions
-- ✅ 8-directional adjacency returns correct neighbors (8 for center, 3 for corner, 5 for edge)
-- ✅ 4-directional adjacency returns correct neighbors (4 for center, 2 for corner, 3 for edge)
-- ✅ Edge/corner positions return correct number of neighbors
+- ✅ All functions return appropriate error messages
+- ✅ Functions exported from `backend/game/__init__.py`
 - ✅ No linter errors
-- ✅ Proper error handling for out-of-bounds positions
-- ✅ Proper handling of Position model validation (x,y >= 0)
+- ✅ Comprehensive test coverage
 
 ## Test Results
 ```
-✓ Grid initialized with size 5
-✓ Field at (0,0) is dry
-✓ Field at (2,2) changed to flooded
-✓ Position (4,4) is valid: True
-✓ Position (5,5) is valid: False
-✓ 8-directional adjacency from center (2,2): 8 neighbors
-✓ 4-directional adjacency from center (2,2): 4 neighbors
-✓ 8-directional adjacency from corner (0,0): 3 neighbors
-✓ 4-directional adjacency from corner (0,0): 2 neighbors
-✓ Grid size validation works
-✓ 8-directional adjacency from edge (0,2): 5 neighbors
-✓ 4-directional adjacency from edge (0,2): 3 neighbors
+=== Testing Journeyman Move Validation ===
+✓ Valid move to adjacent dry field (diagonal)
+✓ Valid move to adjacent dry field (cardinal)
+✓ Invalid move detected: not adjacent
+✓ Invalid move detected: flooded field
+✓ Invalid move detected: out of bounds
+✓ Valid move from corner position
+✓ Valid move from edge position
 
-✅ All tests passed!
+=== Testing Weather Flood Validation ===
+✓ Valid flood with 2 positions
+✓ Valid flood with 1 position
+✓ Valid flood with 0 positions
+✓ Invalid flood detected: too many positions
+✓ Invalid flood detected: journeyman's position
+✓ Invalid flood detected: already flooded
+✓ Invalid flood detected: out of bounds
+✓ Valid flood near edge with journeyman at corner
+
+=== Testing Trap Detection ===
+✓ Not trapped: all adjacent fields dry
+✓ Not trapped: one adjacent field dry
+✓ Trapped: all adjacent fields flooded
+✓ Not trapped: corner position with dry fields
+✓ Trapped: corner position with all adjacent fields flooded
+✓ Not trapped: edge position with dry fields
+✓ Trapped: edge position with all adjacent fields flooded
+
+=== Testing Grid Size Validation ===
+✓ Valid grid size: 3, 5, 7, 10
+✓ Invalid size detected: too small (2)
+✓ Invalid size detected: too large (11)
+✓ Valid minimum boundary: 3
+✓ Valid maximum boundary: 10
+✓ Invalid size detected: zero
+✓ Invalid size detected: negative
+
+✅ ALL TESTS PASSED! (36 test cases)
 ```
 
 ## Next Task
-Task 2.3: Game Logic - Move Validation
+Task 2.4: Game Logic - Turn Management
 
 ## Blockers/Notes
 - No blockers
-- Virtual environment created and dependencies installed
-- Position model validates x,y >= 0, so adjacency calculation checks bounds before creating Position objects
-- Grid coordinates: (0,0) is top-left, (n-1, n-1) is bottom-right
-- Implementation ready for use in move validation and other game logic
+- All validation functions work correctly with existing Board class
+- Functions return tuple[bool, str] for validation results, making error handling easy
+- Trap detection is critical for weather win condition
+- Validators ready for use in game state management and WebSocket handlers
