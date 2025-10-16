@@ -40,10 +40,12 @@ uv pip install -r requirements.txt
 
 ### 4. Configure Environment Variables
 
-Copy `.env.example` to `.env` and adjust if needed:
-```bash
-cp .env.example .env
-```
+Environment variables are configured in the **root `.env` file** (shared with frontend).
+The root `.env` file contains all necessary configuration including:
+- `BACKEND_PORT=8000`
+- `FRONTEND_URL=http://localhost:5173`
+
+No additional configuration needed for the backend.
 
 ### 5. Run the Server
 
@@ -82,7 +84,6 @@ Once the server is running, visit:
 backend/
 ├── main.py              # FastAPI app entry point
 ├── requirements.txt     # Python dependencies
-├── .env.example         # Environment variables template
 ├── game/               # Game logic modules
 │   └── __init__.py
 ├── models/             # Pydantic data models
@@ -90,6 +91,8 @@ backend/
 └── routers/            # API routes and WebSocket handlers
     └── __init__.py
 ```
+
+**Note:** Environment variables are configured in the root `../.env` file (shared with frontend).
 
 ## Dependencies
 

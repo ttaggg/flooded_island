@@ -12,14 +12,16 @@ React + TypeScript + Vite frontend for the Flooding Islands game.
 
 1. Install dependencies:
 ```bash
+cd frontend
 npm install
 ```
 
-2. Create a `.env` file in the frontend directory with:
-```env
-VITE_BACKEND_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
-```
+2. Environment variables are configured in the **root `.env` file** (shared with backend).
+   The root `.env` file contains:
+   - `VITE_BACKEND_URL=http://localhost:8000`
+   - `VITE_WS_URL=ws://localhost:8000`
+   
+   No additional configuration needed for the frontend.
 
 ### Development
 
@@ -67,6 +69,8 @@ frontend/
 ```
 
 ## Environment Variables
+
+Environment variables are configured in the **root `../.env` file** (shared with backend):
 
 - `VITE_BACKEND_URL` - Backend API URL (default: http://localhost:8000)
 - `VITE_WS_URL` - WebSocket server URL (default: ws://localhost:8000)

@@ -39,6 +39,7 @@ Build a 2-player online turn-based strategy game where:
 - Create root `README.md` with setup instructions
 - Create `.env` file for local development
 - Test both servers can run simultaneously
+- Create scripts to deploy and to switch off
 
 ---
 
