@@ -352,6 +352,59 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 2.4: Game Logic - Win Conditions
+- **Status**: Completed ✅
+- **Changes**:
+  - Created `backend/game/win_checker.py` with win condition checking logic:
+    - **Journeyman Victory Check:**
+      - `check_journeyman_victory(current_turn)` - checks if 365 turns completed
+      - Simple comparison: current_turn >= 365
+      - Returns boolean result
+    - **Weather Victory Check:**
+      - `check_weather_victory(board, journeyman_pos)` - checks if journeyman is trapped
+      - Leverages existing `is_journeyman_trapped()` from validator module
+      - Returns boolean result
+    - **Statistics Calculation:**
+      - `calculate_statistics(board, current_turn)` - computes game statistics
+      - Counts days_survived (current turn)
+      - Counts fields_flooded by iterating grid
+      - Counts fields_dry by iterating grid
+      - Calculates total_fields (grid_size * grid_size)
+      - Returns comprehensive dictionary
+    - **Combined Win Condition Checker:**
+      - `check_win_condition(board, journeyman_pos, current_turn, current_role)` - main checker
+      - Checks appropriate win condition based on whose turn just completed
+      - Journeyman victory only checked after journeyman's turn (turn 365+)
+      - Weather victory only checked after weather's turn (trapped)
+      - Returns tuple: (winner or None, statistics dict)
+      - Prevents false win detections by role-aware checking
+  - Updated `backend/game/__init__.py`:
+    - Exported all 4 win checker functions
+    - Added to __all__ list: check_journeyman_victory, check_weather_victory, calculate_statistics, check_win_condition
+  - **Testing:**
+    - Created comprehensive test suite with 20 test cases
+    - Tested journeyman victory at various turns (1, 364, 365, 366)
+    - Tested weather victory with trapped scenarios (center, corner positions)
+    - Tested statistics calculation accuracy (different board sizes, various flooded states)
+    - Tested combined win condition checker (role-aware detection)
+    - All tests passed successfully
+  - **Verification:**
+    - No linter errors
+    - All functions properly typed with type hints
+    - Successfully imported from game module
+    - Clean, well-documented code with docstrings
+- **Notes**: 
+  - Win conditions correctly check based on whose turn just completed
+  - Journeyman wins at turn 365 (only checked after journeyman moves)
+  - Weather wins when journeyman trapped (only checked after weather floods)
+  - Statistics provide comprehensive game state information for end-game display
+  - Leverages existing validator functions for consistency
+  - Ready for integration into WebSocket game flow handlers
+  - All acceptance criteria met and verified
+  - Next task: Task 2.5 - Room Management
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]
