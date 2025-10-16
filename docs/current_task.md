@@ -1,7 +1,7 @@
 # Current Active Task
 
 ## Task
-Task 3.1: WebSocket Connection Handler
+Task 3.2: Message Handlers - Role Selection
 
 ## Phase
 Phase 3: WebSocket Communication
@@ -10,131 +10,103 @@ Phase 3: WebSocket Communication
 Completed
 
 ## Description
-Implement WebSocket infrastructure for real-time multiplayer communication, including connection management, room joining, disconnection handling, and message broadcasting. This is the foundation for all real-time gameplay interactions.
+Implement role selection message handler to assign player roles, validate role availability, update room state, broadcast changes to all players, and transition to configuration phase when both roles are filled.
 
 ## Requirements
-- Python 3.13+ installed
-- FastAPI with WebSocket support
-- Create `routers/websocket.py` with connection management
-- WebSocket endpoint `/ws/{room_id}`
-- Connection acceptance and room validation
-- Disconnection handling with cleanup
-- Message broadcasting to room players
-- Integration with room_manager
+- Handle `select_role` WebSocket messages
+- Validate role availability (prevent duplicates)
+- Assign roles to players via ConnectionManager
+- Update room state with role assignments
+- Support role switching before game starts
+- Transition to CONFIGURING when both roles filled
+- Broadcast updates to all connected players
+- Comprehensive error handling
 
 ## Implementation Steps
 
-### 1. Connection Manager Class
-- `ConnectionManager` class for tracking WebSocket connections
-- Structure: `dict[room_id, dict[player_id, WebSocket]]`
-- Thread-safe operations with `asyncio.Lock`
-- Track player roles per room
-- Methods: connect, disconnect, broadcast, send_to_player
+### 1. Message Parsing and Validation
+- Parse `SelectRoleMessage` from incoming WebSocket message
+- Use Pydantic validation for role enum
+- Catch and report ValidationError exceptions
+- Return error for invalid role names
 
-### 2. WebSocket Endpoint
-- Route: `/ws/{room_id}`
-- Accept connection first (FastAPI requirement)
-- Generate unique player_id (UUID)
-- Validate room existence
-- Send initial room state to player
-- Message loop for receiving client messages
-- Parse and route messages to handlers
+### 2. Role Availability Check
+- Get current room state from room_manager
+- Check if selected role already taken: `room.players[role.value] == True`
+- Return error message if role unavailable
+- Continue if role is free
 
-### 3. Disconnection Handling
-- Remove connection from ConnectionManager
-- Determine player's role
-- Broadcast `player_disconnected` message
-- Update room state
-- Clean up empty rooms
+### 3. Role Assignment
+- Check if player already has a different role
+- Free previous role if switching: `room.players[old_role] = False`
+- Assign new role via `ConnectionManager.set_player_role()`
+- Update room state: `room.players[new_role] = True`
+- Log role assignment activity
 
-### 4. Message Broadcasting
-- Convert Pydantic models to JSON
-- Send to all active connections in room
-- Handle individual send failures gracefully
-- Log broadcast activity
+### 4. State Transition Check
+- Check if both roles now filled
+- If `players["journeyman"] AND players["weather"]` both True:
+  - Set `room.game_status = GameStatus.CONFIGURING`
+  - Log transition event
 
-### 5. FastAPI Integration
-- Include WebSocket router in main app
-- Configure CORS for WebSocket support
-- Add HTTP endpoint for room creation (for testing)
+### 5. Save and Broadcast
+- Save updated room using `room_manager.update_room()`
+- Serialize room state with `serialize_room_state()`
+- Create `RoomStateMessage` with updated state
+- Broadcast to all players via `connection_manager.broadcast()`
+- All players receive synchronized state
 
 ## Current Progress
-- [x] Create `backend/routers/websocket.py` ✅
-- [x] Implement ConnectionManager class ✅
-  - Connection tracking per room
-  - Player role management
-  - Thread-safe operations with asyncio.Lock
-  - broadcast() and send_to_player() methods
-- [x] Implement WebSocket endpoint `/ws/{room_id}` ✅
-  - Accept connection first (fixes 403 errors)
-  - Room validation after acceptance
-  - Player ID generation
-  - Send initial room state
-  - Message loop with JSON parsing
-- [x] Implement disconnection handling ✅
-  - Remove from ConnectionManager
-  - Broadcast player_disconnected message
-  - Update room state
-  - Clean up empty rooms
-- [x] Implement message broadcasting ✅
-  - JSON serialization of Pydantic models
-  - Error handling for failed sends
-  - Automatic cleanup of dead connections
-- [x] Integrate with FastAPI ✅
-  - Include router in main.py
-  - Configure CORS for WebSocket support
-  - Add POST /rooms endpoint for testing
-- [x] Create test suite ✅
-  - test_websocket.py with 5 comprehensive tests
-  - All tests passing
+- [x] Import SelectRoleMessage from models.messages ✅
+- [x] Import GameStatus from models.game ✅
+- [x] Parse and validate select_role messages ✅
+- [x] Check role availability in room state ✅
+- [x] Handle role switching (free previous role) ✅
+- [x] Assign role via ConnectionManager ✅
+- [x] Update room.players dictionary ✅
+- [x] Check both roles filled condition ✅
+- [x] Transition to CONFIGURING status ✅
+- [x] Save room state changes ✅
+- [x] Broadcast updates to all players ✅
+- [x] Error handling for taken roles ✅
+- [x] Error handling for invalid roles ✅
+- [x] Add logging for debugging ✅
+- [x] Create comprehensive test suite ✅
+- [x] All tests passing (5/5) ✅
 
 ## Acceptance Criteria
-- ✅ WebSocket router created in `backend/routers/websocket.py`
-- ✅ ConnectionManager class with thread-safe operations
-- ✅ WebSocket endpoint `/ws/{room_id}` working
-- ✅ Connection acceptance and room validation
-- ✅ Initial room state sent to connecting players
-- ✅ Disconnection handling with cleanup
-- ✅ Message broadcasting functionality
-- ✅ Router integrated into main FastAPI app
-- ✅ CORS properly configured
+- ✅ Player can select journeyman role
+- ✅ Player can select weather role
+- ✅ Error returned if role already taken
+- ✅ Player can switch roles before game starts
+- ✅ Room state updates with role assignments
+- ✅ Game transitions to CONFIGURING when both roles filled
+- ✅ Broadcast sends updates to all connected players
+- ✅ Both players receive synchronized state
+- ✅ Invalid role names rejected
 - ✅ No linter errors
 - ✅ Comprehensive test coverage
 
 ## Test Results
 ```
 ============================================================
-WEBSOCKET CONNECTION HANDLER TESTS
+ROLE SELECTION HANDLER TESTS
 ============================================================
 
-=== Test 1: Connection to Invalid Room ===
-✅ PASSED: Invalid room returns error message
+=== Test 1: First Player Selects Journeyman Role ===
+✅ PASSED: First player can select journeyman role
 
-=== Test 2: Connection to Valid Room ===
-✅ Connection accepted
-✅ Received initial room_state message
-✅ Room ID matches
-✅ Game status is 'waiting'
-✅ PASSED: Valid room connection works
+=== Test 2: Both Players Select Roles (Transition to CONFIGURING) ===
+✅ PASSED: Game transitions to CONFIGURING when both roles filled
 
-=== Test 3: Message Parsing and Error Handling ===
-✅ Invalid JSON handled correctly
-✅ Missing type field handled correctly
-✅ Unknown message type handled correctly
-✅ Stub handler returns not implemented error
-✅ PASSED: Message parsing works correctly
+=== Test 3: Role Already Taken Error ===
+✅ PASSED: Cannot take already-taken role
 
-=== Test 4: Multiple Connections to Same Room ===
-✅ Player 1 connected
-✅ Player 2 connected
-✅ Both connections active simultaneously
-✅ PASSED: Multiple connections work
+=== Test 4: Player Switches Roles ===
+✅ PASSED: Player can switch roles
 
-=== Test 5: Disconnection Handling ===
-✅ Player connected
-✅ Player disconnected cleanly
-✅ New player can connect after disconnection
-✅ PASSED: Disconnection handling works
+=== Test 5: Invalid Role Name ===
+✅ PASSED: Invalid role names are rejected
 
 ============================================================
 TEST SUMMARY: 5/5 tests passed
@@ -143,18 +115,51 @@ TEST SUMMARY: 5/5 tests passed
 ```
 
 ## Key Implementation Details
-- **Critical Fix**: WebSocket connections must call `await websocket.accept()` BEFORE any async operations (including room validation). Attempting to close/reject before accepting causes HTTP 403 errors from Starlette/Uvicorn.
-- **CORS Configuration**: Must use `allow_origins=["*"]` with `allow_credentials=False` for WebSocket support in development. Cannot use credentials with wildcard origins.
-- **Message Handlers**: Stub handlers implemented for select_role, configure_grid, move, and flood messages. These will be fully implemented in tasks 3.2-3.4.
-- **Room Creation API**: Added POST /rooms endpoint to allow programmatic room creation for testing and future frontend integration.
+
+### Bug Fix
+**Critical Issue Discovered**: Missing `GameStatus` import was causing "Internal server error" exceptions during role selection. Fixed by adding `GameStatus` to imports from `models.game`.
+
+### Message Flow
+```
+Player 1 connects → select_role(journeyman)
+  → Role available? Yes
+  → Assign to player 1
+  → room.players["journeyman"] = True
+  → Status: WAITING
+  → Broadcast to all players
+
+Player 2 connects → select_role(weather)
+  → Role available? Yes
+  → Assign to player 2
+  → room.players["weather"] = True
+  → Both roles filled! ✓
+  → Status: CONFIGURING
+  → Broadcast to all players
+```
+
+### Role Switching
+Player can change roles during WAITING phase:
+- Previous role automatically freed
+- New role assigned
+- Room state updated accordingly
+- Other players can take freed role
+
+### Edge Cases Handled
+- ✅ Role already taken by another player
+- ✅ Player switching between roles
+- ✅ Invalid role names (Pydantic validation)
+- ✅ Malformed messages
+- ✅ Multiple simultaneous connections
+- ✅ Broadcast synchronization
 
 ## Next Task
-Task 3.2: Message Handlers - Role Selection
+Task 3.3: Message Handlers - Game Configuration
 
 ## Blockers/Notes
 - No blockers
-- WebSocket infrastructure complete and tested
-- Connection manager ready for multi-room support
-- Message routing framework in place for game logic handlers
-- Broadcasting works reliably for multiple connections
-- Ready for role selection implementation in Task 3.2
+- Role selection fully implemented and tested
+- Broadcast mechanism working reliably
+- State transitions verified (WAITING → CONFIGURING)
+- Ready for grid configuration implementation
+- All message types for roles working correctly
+- Bug fix improved error handling robustness

@@ -7,19 +7,23 @@ message routing, and broadcasting to players in game rooms.
 
 import asyncio
 import json
+import logging
 import uuid
 from typing import Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
+logger = logging.getLogger(__name__)
+
 from game.room_manager import room_manager
-from models.game import GameRoom, PlayerRole
+from models.game import GameRoom, GameStatus, PlayerRole
 from models.messages import (
     ErrorMessage,
     PlayerDisconnectedMessage,
     PlayerReconnectedMessage,
     RoomStateMessage,
+    SelectRoleMessage,
 )
 
 
@@ -301,20 +305,83 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
                     await websocket.send_json(error_msg.model_dump())
                     continue
 
+                logger.info(
+                    f"📨 Received {message_type} from player {player_id[:8]} in room {room_id}"
+                )
                 print(
                     f"📨 Received {message_type} from player {player_id[:8]} in room {room_id}"
                 )
 
-                # Message handling stubs - will be implemented in tasks 3.2-3.4
+                # Message handling - implemented in tasks 3.2-3.4
                 if message_type == "select_role":
-                    # TODO: Implement in Task 3.2
-                    print(f"  → Role selection: {message.get('role')}")
-                    await websocket.send_json(
-                        {
-                            "type": "error",
-                            "message": "Role selection not yet implemented",
-                        }
-                    )
+                    logger.info(f"Handling select_role for player {player_id[:8]}")
+                    # Task 3.2: Role Selection
+                    try:
+                        # Parse and validate message
+                        role_msg = SelectRoleMessage(**message)
+                        selected_role = role_msg.role
+                        print(f"  → Role selection: {selected_role.value}")
+
+                        # Get current room state
+                        room = await room_manager.get_room(room_id)
+                        if not room:
+                            error_msg = ErrorMessage(
+                                type="error", message="Room not found"
+                            )
+                            await websocket.send_json(error_msg.model_dump())
+                            continue
+
+                        # Check if role is already taken
+                        if room.players[selected_role.value]:
+                            error_msg = ErrorMessage(
+                                type="error",
+                                message=f"Role {selected_role.value} is already taken",
+                            )
+                            await websocket.send_json(error_msg.model_dump())
+                            continue
+
+                        # Check if this player already has a different role and clear it
+                        current_role = await connection_manager.get_player_role(
+                            room_id, player_id
+                        )
+                        if current_role and current_role != selected_role:
+                            room.players[current_role.value] = False
+                            print(
+                                f"  → Player {player_id[:8]} switching from {current_role.value} to {selected_role.value}"
+                            )
+
+                        # Assign role to player
+                        await connection_manager.set_player_role(
+                            room_id, player_id, selected_role
+                        )
+                        room.players[selected_role.value] = True
+
+                        # Check if both roles are filled
+                        if room.players["journeyman"] and room.players["weather"]:
+                            room.game_status = GameStatus.CONFIGURING
+                            print(
+                                f"  → Both roles filled! Room {room_id} transitioning to CONFIGURING"
+                            )
+
+                        # Save updated room state
+                        await room_manager.update_room(room_id, room)
+
+                        # Broadcast updated room state to all players
+                        logger.info(f"Broadcasting role update to room {room_id}")
+                        room_state_msg = RoomStateMessage(
+                            type="room_state", state=serialize_room_state(room)
+                        )
+                        broadcast_count = await connection_manager.broadcast(
+                            room_id, room_state_msg.model_dump()
+                        )
+                        logger.info(f"Broadcast sent to {broadcast_count} player(s)")
+
+                    except ValidationError as e:
+                        error_msg = ErrorMessage(
+                            type="error",
+                            message=f"Invalid role selection: {str(e)}",
+                        )
+                        await websocket.send_json(error_msg.model_dump())
 
                 elif message_type == "configure_grid":
                     # TODO: Implement in Task 3.3

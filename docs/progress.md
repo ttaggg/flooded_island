@@ -549,6 +549,95 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 3.2: Message Handlers - Role Selection
+- **Date**: 2025-10-16
+- **Status**: Completed ✅
+- **Changes**:
+  - Implemented full `select_role` message handler in `backend/routers/websocket.py`
+  - **Role Selection Logic:**
+    - Parses and validates `SelectRoleMessage` using Pydantic
+    - Validates role availability (prevents duplicate assignments)
+    - Assigns role to player via `ConnectionManager.set_player_role()`
+    - Updates `room.players[role] = True` in room state
+    - Handles role switching (player can change role before game starts)
+    - Previous role is freed when player switches
+  - **State Transition:**
+    - Checks if both `players["journeyman"]` and `players["weather"]` are True
+    - Automatically transitions `game_status` to `CONFIGURING` when both roles filled
+    - Status remains `WAITING` when only one role filled
+  - **Broadcasting:**
+    - Serializes updated room state using `serialize_room_state()`
+    - Broadcasts to all connected players in the room
+    - Both players receive synchronized state updates
+  - **Error Handling:**
+    - Returns error if selected role already taken by another player
+    - Pydantic validation rejects invalid role names
+    - ValidationError exceptions caught and reported to client
+  - **Bug Fix:**
+    - **Critical**: Added missing `GameStatus` import from `models.game`
+    - This was causing "Internal server error" exceptions during role selection
+    - Import was present for `GameRoom` and `PlayerRole` but `GameStatus` was missed
+    - Fix enables proper `room.game_status = GameStatus.CONFIGURING` assignment
+  - **Added Logging:**
+    - Imported Python `logging` module for better debugging
+    - Added log statements for role selection and broadcast operations
+    - Helps track message flow and identify issues
+  - **Comprehensive Test Suite (`test_role_selection.py`):**
+    - Test 1: First player selects journeyman role ✅
+    - Test 2: Both players select roles, triggers CONFIGURING transition ✅
+    - Test 3: Error returned when role already taken ✅
+    - Test 4: Player can switch roles (frees previous role) ✅
+    - Test 5: Invalid role name rejected by Pydantic validation ✅
+    - All 5 tests passing
+    - Uses `websockets` library for WebSocket client connections
+    - Uses `httpx` for room creation via HTTP API
+- **Technical Details**:
+  - **Message Flow**:
+    ```
+    Player 1 → select_role(journeyman)
+      → Validate role available
+      → Assign to ConnectionManager
+      → Update room.players["journeyman"] = True
+      → Save room state
+      → Broadcast to all players
+      → Status remains "waiting"
+
+    Player 2 → select_role(weather)
+      → Validate role available
+      → Assign to ConnectionManager
+      → Update room.players["weather"] = True
+      → Both roles filled → Set status = "configuring"
+      → Save room state
+      → Broadcast to all players (including status change)
+    ```
+  - **Role Switching Logic**: When a player selects a new role, their previous role is cleared from both ConnectionManager and room state, allowing another player to take it
+  - **Broadcast Verification**: Debug testing confirmed both players receive synchronized updates when roles are assigned
+- **Edge Cases Handled**:
+  - ✅ Role already taken by another player (error returned)
+  - ✅ Player switching roles (previous role freed automatically)
+  - ✅ Invalid role names (Pydantic validation)
+  - ✅ Missing or malformed messages (JSON/validation errors)
+  - ✅ Multiple players in same room (broadcast to all)
+  - ✅ Connection stability during role selection
+- **Verification**:
+  - No linter errors
+  - All 5 tests passing
+  - Role assignment working correctly
+  - State transitions verified (WAITING → CONFIGURING)
+  - Broadcast mechanism confirmed working for all players
+  - Server logs show proper message handling
+- **Notes**: 
+  - Role selection is the first implemented game logic handler (others remain stubs)
+  - Players can change roles freely during WAITING phase
+  - Once both roles filled, game automatically transitions to CONFIGURING
+  - Ready for grid configuration in Task 3.3
+  - Broadcast mechanism proven reliable for multi-player state synchronization
+  - Bug fix demonstrates importance of thorough import checking
+  - All acceptance criteria met and verified
+  - Next task: Task 3.3 - Message Handlers (Game Configuration)
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]
