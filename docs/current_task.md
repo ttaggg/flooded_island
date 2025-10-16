@@ -1,80 +1,97 @@
 # Current Active Task
 
 ## Task
-Project Scaffolding & Initial Setup
+Task 1.1: Backend Project Setup
+
+## Phase
+Phase 1: Project Scaffolding (Foundation)
 
 ## Status
 Not started
 
 ## Description
-Set up the basic project structure including backend (FastAPI) and frontend (React + TypeScript + Vite) with proper dependencies, configuration files, and initial folder structure. This provides the foundation for implementing the game logic and UI.
+Set up the backend project structure with FastAPI, create the necessary directory structure, initialize Python virtual environment, and configure basic dependencies. This establishes the foundation for the backend API and WebSocket communication.
 
 ## Requirements
-- Backend: FastAPI application with WebSocket support
-- Frontend: React + TypeScript using Vite
-- Environment configuration (.env file)
-- Basic project structure as outlined in tech_context.md
-- Development tooling (linters, formatters)
-- README with setup instructions
+- Python 3.11+ installed
+- Create `backend/` directory with proper structure
+- Python virtual environment
+- `requirements.txt` with core dependencies
+- Basic FastAPI application with health check endpoint
+- Environment configuration template
+- Proper folder structure for game logic, models, and routers
 
-## Implementation Plan
+## Implementation Steps
 
-### Backend Setup
-1. Create `backend/` directory
-2. Initialize Python virtual environment
-3. Create `requirements.txt` with:
-   - fastapi
-   - uvicorn[standard]
-   - python-dotenv
-   - websockets (if needed separately)
-4. Create basic `main.py` with FastAPI app and hello world endpoint
-5. Set up project structure:
-   - `backend/game/` - Game logic modules
-   - `backend/models/` - Data models
-   - `backend/routers/` - API routes and WebSocket handlers
-6. Create `.env.example` file
-7. Add `.gitignore` for Python
+### 1. Backend Directory Structure
+Create the following structure:
+```
+backend/
+├── main.py              # FastAPI app entry point
+├── requirements.txt     # Python dependencies
+├── .env.example         # Environment variables template
+├── game/               # Game logic modules
+│   └── __init__.py
+├── models/             # Pydantic data models
+│   └── __init__.py
+└── routers/            # API routes and WebSocket handlers
+    └── __init__.py
+```
 
-### Frontend Setup
-1. Create `frontend/` directory
-2. Initialize Vite + React + TypeScript project
-3. Install dependencies:
-   - react, react-dom
-   - typescript
-   - Consider: tailwindcss or styling solution
-4. Set up project structure:
-   - `src/components/` - React components
-   - `src/hooks/` - Custom hooks
-   - `src/utils/` - Utilities
-   - `src/types/` - TypeScript types
-5. Configure TypeScript (tsconfig.json)
-6. Add basic App component
-7. Add `.gitignore` for Node
+### 2. Dependencies (requirements.txt)
+```
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-dotenv>=1.0.0
+websockets>=12.0
+```
 
-### Root Level
-1. Create root `.gitignore` (combine frontend + backend)
-2. Create main `README.md` with:
-   - Project description
-   - Setup instructions for both backend and frontend
-   - How to run development servers
-3. Create `.env` file (gitignored) for local development
+### 3. Basic FastAPI App (main.py)
+- Initialize FastAPI application
+- Configure CORS middleware for frontend communication
+- Create health check endpoint (GET /)
+- Add startup/shutdown event handlers
+- Configure uvicorn settings
+
+### 4. Environment Configuration (.env.example)
+```
+BACKEND_PORT=8000
+FRONTEND_URL=http://localhost:5173
+ROOM_CLEANUP_MINUTES=5
+```
+
+### 5. Verification
+- Virtual environment activates successfully
+- Dependencies install without errors
+- FastAPI server starts on port 8000
+- Health check endpoint responds correctly
+- CORS allows frontend origin
 
 ## Current Progress
-- [ ] Backend directory structure
-- [ ] Python virtual environment
-- [ ] requirements.txt
-- [ ] Basic FastAPI app
-- [ ] Frontend Vite project
-- [ ] TypeScript configuration
-- [ ] Root .gitignore
-- [ ] Root README.md
-- [ ] .env setup
+- [ ] Create `backend/` directory
+- [ ] Initialize Python virtual environment
+- [ ] Create `requirements.txt`
+- [ ] Install dependencies
+- [ ] Create folder structure (game/, models/, routers/)
+- [ ] Create `main.py` with FastAPI app
+- [ ] Add health check endpoint
+- [ ] Configure CORS middleware
+- [ ] Create `.env.example`
+- [ ] Test server startup
+
+## Acceptance Criteria
+- ✅ Backend directory exists with proper structure
+- ✅ Virtual environment is created and documented
+- ✅ All dependencies install successfully
+- ✅ FastAPI server runs on http://localhost:8000
+- ✅ Health check endpoint returns 200 OK
+- ✅ CORS is configured for http://localhost:5173
+- ✅ `.env.example` contains all required variables
+
+## Next Task
+Task 1.2: Frontend Project Setup
 
 ## Blockers/Notes
 - No blockers currently
-- Once scaffolding is complete, next tasks will be:
-  1. Implement core game logic (board, moves, win conditions)
-  2. WebSocket communication layer
-  3. Frontend game board UI
-  4. Role selection and room management
-
+- Ensure Python 3.11+ is installed on the system
+- Virtual environment should be gitignored (will be added in Task 1.3)
