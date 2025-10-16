@@ -1,7 +1,7 @@
 # Current Active Task
 
 ## Task
-Task 1.1: Backend Project Setup
+Task 1.2: Frontend Project Setup
 
 ## Phase
 Phase 1: Project Scaffolding (Foundation)
@@ -10,92 +10,101 @@ Phase 1: Project Scaffolding (Foundation)
 Completed
 
 ## Description
-Set up the backend project structure with FastAPI, create the necessary directory structure, initialize Python virtual environment, and configure basic dependencies. This establishes the foundation for the backend API and WebSocket communication.
+Initialize the frontend project with Vite, React, and TypeScript. Configure Tailwind CSS with an indigo theme and create a basic app structure. This establishes the foundation for the game's user interface and prepares the development environment.
 
 ## Requirements
-- Python 3.13 installed (minimum 3.11+)
-- Create `backend/` directory with proper structure
-- Python virtual environment (using uv)
-- `requirements.txt` with core dependencies
-- Basic FastAPI application with health check endpoint
-- Environment configuration template
-- Proper folder structure for game logic, models, and routers
+- Node.js 18+ installed
+- Create frontend project with Vite + React + TypeScript
+- Install and configure Tailwind CSS with indigo theme
+- Set up proper folder structure for components, hooks, types, and utils
+- Create basic App component with indigo gradient
+- Configure environment variables for backend connection
+- Verify dev server works correctly
 
 ## Implementation Steps
 
-### 1. Backend Directory Structure
-Create the following structure:
-```
-backend/
-├── main.py              # FastAPI app entry point
-├── requirements.txt     # Python dependencies
-├── .env.example         # Environment variables template
-├── game/               # Game logic modules
-│   └── __init__.py
-├── models/             # Pydantic data models
-│   └── __init__.py
-└── routers/            # API routes and WebSocket handlers
-    └── __init__.py
-```
+### 1. Initialize Vite Project
+- Create `package.json` with Vite, React, and TypeScript dependencies
+- Set up TypeScript configuration (`tsconfig.json`, `tsconfig.node.json`)
+- Create Vite config (`vite.config.ts`) with port 5173
+- Set up ESLint configuration
 
-### 2. Dependencies (requirements.txt)
-```
-fastapi>=0.104.0
-uvicorn[standard]>=0.24.0
-python-dotenv>=1.0.0
-websockets>=12.0
-```
+### 2. Install Dependencies
+- Install core dependencies: react, react-dom, typescript, vite
+- Install Tailwind CSS: tailwindcss, postcss, autoprefixer
+- Install dev dependencies for linting and TypeScript support
 
-### 3. Basic FastAPI App (main.py)
-- Initialize FastAPI application
-- Configure CORS middleware for frontend communication
-- Create health check endpoint (GET /)
-- Add startup/shutdown event handlers
-- Configure uvicorn settings
+### 3. Configure Tailwind CSS
+- Create `tailwind.config.js` with:
+  - Content paths for React files
+  - Extended indigo color palette
+  - Custom colors for dry (yellow) and flooded (blue) fields
+  - Custom animations (flip effect for field state changes)
+- Create `postcss.config.js`
+- Update `src/index.css` with Tailwind directives
 
-### 4. Environment Configuration (.env.example)
-```
-BACKEND_PORT=8000
-FRONTEND_URL=http://localhost:5173
-ROOM_CLEANUP_MINUTES=5
-```
+### 4. Create React App Structure
+- Create `src/main.tsx` - React entry point
+- Create `src/App.tsx` - Main app component with indigo gradient
+- Create `src/index.css` - Global styles with Tailwind
+- Create `src/vite-env.d.ts` - Vite type definitions
+- Create `index.html` - HTML template
 
-### 5. Verification
-- Virtual environment activates successfully
-- Dependencies install without errors
-- FastAPI server starts on port 8000
-- Health check endpoint responds correctly
-- CORS allows frontend origin
+### 5. Environment Configuration
+- Create `frontend/README.md` documenting environment variables:
+  - `VITE_BACKEND_URL=http://localhost:8000`
+  - `VITE_WS_URL=ws://localhost:8000`
+
+### 6. Verification
+- Run `npm install` to install all dependencies
+- Run `npm run dev` to start development server
+- Verify app loads at http://localhost:5173
+- Check TypeScript compilation with no errors
+- Verify Tailwind CSS works (indigo gradient displays)
 
 ## Current Progress
-- [x] Create `backend/` directory
-- [x] Initialize Python virtual environment using `uv venv` (creates `.venv`)
-- [x] Create `requirements.txt`
-- [x] Install dependencies using `uv pip install -r requirements.txt` ✅
-- [x] Create folder structure (game/, models/, routers/)
-- [x] Create `main.py` with FastAPI app
-- [x] Add health check endpoint
-- [x] Configure CORS middleware
-- [x] Create `.env.example`
+- [x] Create `frontend/` directory with folder structure (components/, hooks/, types/, utils/)
+- [x] Create `package.json` with all dependencies
+- [x] Create TypeScript configuration files
+- [x] Create Vite configuration
+- [x] Install all dependencies using `npm install` ✅
+  - Installed 316 packages successfully
+- [x] Configure Tailwind CSS with indigo theme ✅
+  - Created `tailwind.config.js` with custom colors for fields
+  - Added flip animation for field state changes
+  - Created `postcss.config.js`
+- [x] Create React app structure ✅
+  - Created `src/main.tsx` entry point
+  - Created `src/App.tsx` with indigo gradient background
+  - Created `src/index.css` with Tailwind directives
+  - Created `index.html` template
+- [x] Create frontend README with environment variable documentation
 - [x] Test server startup - Successfully verified ✅
-  - Server runs on http://localhost:8000
-  - Health check returns: `{"status":"ok","message":"Flooding Islands API is running","version":"1.0.0"}`
-  - CORS configured correctly for frontend
+  - Server runs on http://localhost:5173
+  - React app renders correctly with TypeScript
+  - Tailwind CSS working (indigo gradient displays)
+  - No TypeScript compilation errors
+  - Hot module replacement working
 
 ## Acceptance Criteria
-- ✅ Backend directory exists with proper structure
-- ✅ Virtual environment is created and documented
-- ✅ All dependencies install successfully
-- ✅ FastAPI server runs on http://localhost:8000
-- ✅ Health check endpoint returns 200 OK
-- ✅ CORS is configured for http://localhost:5173
-- ✅ `.env.example` contains all required variables
+- ✅ Frontend directory exists with proper structure
+- ✅ Vite project initialized with React and TypeScript
+- ✅ All dependencies install successfully (316 packages)
+- ✅ Tailwind CSS configured with indigo theme and custom colors
+- ✅ Dev server runs successfully on http://localhost:5173
+- ✅ React app renders with indigo gradient background
+- ✅ TypeScript compilation works with no errors
+- ✅ Hot module replacement works
+- ✅ Custom colors defined for dry (yellow) and flooded (blue) fields
+- ✅ Flip animation configured for field state changes
 
 ## Next Task
-Task 1.2: Frontend Project Setup
+Task 1.3: Root Configuration
 
 ## Blockers/Notes
 - No blockers currently
-- Python 3.13.5 confirmed installed and working
-- Virtual environment created at `backend/.venv` using uv
-- Virtual environment should be gitignored (will be added in Task 1.3)
+- Node.js and npm working correctly
+- 316 npm packages installed successfully
+- Frontend `.gitignore` created
+- Environment variables documented in README (`.env.example` blocked by gitignore)
+- Dev server tested and confirmed working
