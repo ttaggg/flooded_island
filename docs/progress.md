@@ -136,6 +136,137 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 1.3: Root Configuration
+- **Status**: Completed ✅
+- **Changes**:
+  - **Updated Root `.gitignore`:**
+    - Added comprehensive Python patterns: `__pycache__/`, `*.py[cod]`, `.venv/`, `venv/`, `*.egg-info/`, etc.
+    - Added comprehensive Node patterns: `node_modules/`, `dist/`, `*.log`, `dist-ssr/`, `.cache/`, etc.
+    - Added `.pids` directory pattern for script process IDs
+    - Merged patterns from frontend `.gitignore`
+    - Removed `backend/__pycache__/` from git tracking
+  - **Created Root `README.md`:**
+    - Project overview and game description
+    - Quick start guide with `./start.sh` and `./stop.sh` commands
+    - Prerequisites documentation (Python 3.11+, Node.js 18+, uv)
+    - Complete setup instructions for both manual and script-based setup
+    - Project structure overview with file tree
+    - Links to backend/frontend READMEs for detailed setup
+    - Development workflow and available endpoints
+    - Tech stack summary and feature list
+  - **Created Centralized `.env` File:**
+    - Backend configuration: `BACKEND_PORT=8000`, `FRONTEND_URL=http://localhost:5173`
+    - Frontend configuration: `VITE_BACKEND_URL=http://localhost:8000`, `VITE_WS_URL=ws://localhost:8000`
+    - Game configuration: `ROOM_CLEANUP_MINUTES=5`
+    - Consolidated all environment variables in single root-level file
+  - **Created Start/Stop Scripts:**
+    - `run.sh` - Start both servers in background:
+      - Auto-creates virtual environment if needed
+      - Auto-installs dependencies if needed
+      - Loads environment variables from `.env`
+      - Starts backend (activates venv, runs uvicorn)
+      - Starts frontend (npm run dev)
+      - Stores PIDs in `.pids/` directory for cleanup
+      - Displays status, URLs, and log file locations
+      - Graceful error handling and cleanup on interruption
+    - `stop.sh` - Stop both servers gracefully:
+      - Reads PIDs from stored files
+      - Sends kill signals to processes
+      - Cleans up PID and log files
+      - Removes empty `.pids/` directory
+      - Displays confirmation messages
+    - Both scripts made executable with proper permissions
+  - **Cleaned Up Redundant Configuration:**
+    - Removed `frontend/.gitignore` (patterns merged into root)
+    - Removed `backend/.env.example` (centralized in root `.env`)
+    - Removed `backend/__pycache__/` from git tracking
+  - **Updated Backend README:**
+    - Removed instructions to create separate `.env` file
+    - Added note about shared root `.env` file
+    - Updated project structure to remove `.env.example`
+    - Clarified that no additional backend configuration is needed
+  - **Updated Frontend README:**
+    - Removed instructions to create separate `.env` file
+    - Added note about shared root `.env` file
+    - Clarified environment variable location
+    - Added `cd frontend` to npm install command for clarity
+  - **Verification & Testing:**
+    - Successfully tested `./start.sh` script
+    - Backend started correctly on http://localhost:8000
+    - Frontend started correctly on http://localhost:5173
+    - Verified health check endpoint responds: `{"status":"ok",...}`
+    - Verified frontend HTML renders correctly
+    - Successfully tested `./stop.sh` script
+    - Confirmed both servers stop gracefully
+    - Verified proper cleanup of PID and log files
+- **Notes**: 
+  - All configuration now centralized at root level for simpler management
+  - Single `.env` file shared by both backend and frontend
+  - Scripts provide convenient one-command setup for development
+  - Both servers can now be started/stopped together easily
+  - All acceptance criteria met and verified
+  - Phase 1 (Project Scaffolding) complete - ready for Phase 2 (Core Backend Logic)
+  - Next task: Task 2.1 - Data Models
+
+---
+
+### Task 2.1: Data Models
+- **Status**: Completed ✅
+- **Changes**:
+  - Created `backend/models/game.py` with core game data structures:
+    - **Enums:**
+      - `FieldState` - Field states (DRY, FLOODED)
+      - `PlayerRole` - Player roles (JOURNEYMAN, WEATHER)
+      - `GameStatus` - Game status (WAITING, CONFIGURING, ACTIVE, ENDED)
+    - **Models:**
+      - `Position` - Grid coordinates with non-negative validation
+      - Implements `__eq__` and `__hash__` for use in sets/dicts
+      - `GameRoom` - Complete game room state with:
+        - `room_id`, `grid_size` (3-10), `grid` (2D array)
+        - `journeyman_position`, `current_turn` (1-365), `current_role`
+        - `players` dict (tracks filled roles), `game_status`, `winner`
+        - `created_at`, `ended_at` timestamps
+    - **Validators:**
+      - Grid size range enforcement (3-10)
+      - Grid dimensions validation against grid_size
+      - Position coordinates non-negative validation
+      - Turn range validation (1-365)
+  - Created `backend/models/messages.py` with WebSocket message types:
+    - **Client → Server Messages:**
+      - `SelectRoleMessage` - Role selection with PlayerRole validation
+      - `ConfigureGridMessage` - Grid size configuration (3-10 validated)
+      - `MoveMessage` - Journeyman movement with Position
+      - `FloodMessage` - Weather flooding with 0-2 positions validator
+      - `EndTurnMessage` - Turn completion signal
+    - **Server → Client Messages:**
+      - `RoomStateMessage` - Full room state synchronization
+      - `GameUpdateMessage` - Game state updates
+      - `GameOverMessage` - Game end with winner and statistics
+      - `ErrorMessage` - Error notifications with description
+      - `PlayerDisconnectedMessage` - Player disconnection alerts
+      - `PlayerReconnectedMessage` - Player reconnection alerts
+    - All messages use Literal types for type discrimination
+  - Updated `backend/models/__init__.py`:
+    - Exported all game models and message types
+    - Clean imports with organized comments
+    - Proper `__all__` declaration for module interface
+  - **Verification:**
+    - No linter errors
+    - All models properly typed with Pydantic
+    - Field validators working correctly
+    - JSON encoders configured for datetime and enums
+- **Notes**: 
+  - Full type safety established for backend with Pydantic
+  - Message types support WebSocket protocol specification
+  - Position model is hashable for efficient lookups in game logic
+  - Grid validation ensures consistency between grid_size and actual grid dimensions
+  - All message types use discriminated unions (Literal types) for easy parsing
+  - Models ready for use in game logic, room management, and WebSocket handlers
+  - All acceptance criteria met and verified
+  - Next task: Task 2.2 - Game Logic - Board Management
+
+---
+
 ### Task 2.2: Game Logic - Board Management
 - **Status**: Completed ✅
 - **Changes**:
