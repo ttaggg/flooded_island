@@ -38,6 +38,46 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 1.1: Backend Project Setup
+- **Status**: Completed ✅
+- **Changes**:
+  - Created `backend/` directory structure with organized folders
+  - Created `requirements.txt` with core dependencies:
+    - FastAPI (>=0.104.0) for web framework
+    - Uvicorn (>=0.24.0) for ASGI server
+    - python-dotenv (>=1.0.0) for environment management
+    - websockets (>=12.0) for WebSocket support
+  - Created folder structure:
+    - `game/` for game logic modules
+    - `models/` for Pydantic data models
+    - `routers/` for API routes and WebSocket handlers
+  - Created `main.py` with:
+    - FastAPI application initialization
+    - CORS middleware configured for `http://localhost:5173`
+    - Health check endpoint at `/` returning API status
+    - Startup/shutdown event handlers
+    - Uvicorn configuration for development
+  - Created `.env.example` template with:
+    - BACKEND_PORT=8000
+    - FRONTEND_URL=http://localhost:5173
+    - ROOM_CLEANUP_MINUTES=5
+  - Created `backend/README.md` with setup instructions and project structure documentation
+  - **Environment Setup Completed:**
+    - Created virtual environment using `uv venv` with Python 3.13.5
+    - Installed all 19 dependencies using `uv pip install -r requirements.txt`
+    - Successfully tested server startup
+    - Verified health check endpoint responds correctly: `{"status":"ok","message":"Flooding Islands API is running","version":"1.0.0"}`
+- **Notes**: 
+  - Using `uv` for fast Python package management (significantly faster than pip)
+  - Python 3.13.5 used for development
+  - Virtual environment created at `backend/.venv`
+  - Server tested and confirmed working on port 8000
+  - Backend fully functional and ready for Phase 2 game logic implementation
+  - All acceptance criteria met and verified
+  - Next task: Task 1.2 - Frontend Project Setup
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]

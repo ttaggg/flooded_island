@@ -4,9 +4,10 @@
 
 ### Backend
 - **Framework**: FastAPI (Python)
-- **Language**: Python 3.11+
+- **Language**: Python 3.13 (minimum 3.11+)
 - **WebSockets**: FastAPI WebSocket support
 - **API Style**: RESTful + WebSocket connections
+- **Package Manager**: uv (fast Python package installer)
 
 ### Frontend
 - **Framework**: React

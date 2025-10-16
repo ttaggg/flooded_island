@@ -7,15 +7,15 @@ Task 1.1: Backend Project Setup
 Phase 1: Project Scaffolding (Foundation)
 
 ## Status
-Not started
+Completed
 
 ## Description
 Set up the backend project structure with FastAPI, create the necessary directory structure, initialize Python virtual environment, and configure basic dependencies. This establishes the foundation for the backend API and WebSocket communication.
 
 ## Requirements
-- Python 3.11+ installed
+- Python 3.13 installed (minimum 3.11+)
 - Create `backend/` directory with proper structure
-- Python virtual environment
+- Python virtual environment (using uv)
 - `requirements.txt` with core dependencies
 - Basic FastAPI application with health check endpoint
 - Environment configuration template
@@ -68,16 +68,19 @@ ROOM_CLEANUP_MINUTES=5
 - CORS allows frontend origin
 
 ## Current Progress
-- [ ] Create `backend/` directory
-- [ ] Initialize Python virtual environment
-- [ ] Create `requirements.txt`
-- [ ] Install dependencies
-- [ ] Create folder structure (game/, models/, routers/)
-- [ ] Create `main.py` with FastAPI app
-- [ ] Add health check endpoint
-- [ ] Configure CORS middleware
-- [ ] Create `.env.example`
-- [ ] Test server startup
+- [x] Create `backend/` directory
+- [x] Initialize Python virtual environment using `uv venv` (creates `.venv`)
+- [x] Create `requirements.txt`
+- [x] Install dependencies using `uv pip install -r requirements.txt` ✅
+- [x] Create folder structure (game/, models/, routers/)
+- [x] Create `main.py` with FastAPI app
+- [x] Add health check endpoint
+- [x] Configure CORS middleware
+- [x] Create `.env.example`
+- [x] Test server startup - Successfully verified ✅
+  - Server runs on http://localhost:8000
+  - Health check returns: `{"status":"ok","message":"Flooding Islands API is running","version":"1.0.0"}`
+  - CORS configured correctly for frontend
 
 ## Acceptance Criteria
 - ✅ Backend directory exists with proper structure
@@ -93,5 +96,6 @@ Task 1.2: Frontend Project Setup
 
 ## Blockers/Notes
 - No blockers currently
-- Ensure Python 3.11+ is installed on the system
+- Python 3.13.5 confirmed installed and working
+- Virtual environment created at `backend/.venv` using uv
 - Virtual environment should be gitignored (will be added in Task 1.3)
