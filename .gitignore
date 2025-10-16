@@ -1,0 +1,8 @@
+# Environment
+.env
+
+# Cursor
+.cursor
+
+# Misc
+.DS_Store
