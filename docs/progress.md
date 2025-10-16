@@ -748,6 +748,150 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 3.4: Message Handlers - Gameplay (Move & Flood)
+- **Date**: 2025-10-16
+- **Status**: Completed ✅
+- **Duration**: ~3 hours
+- **Changes**:
+  - **Imports Added** (`backend/routers/websocket.py`):
+    - `MoveMessage`, `FloodMessage`, `GameOverMessage` from models.messages
+    - `validate_journeyman_move`, `validate_weather_flood` from game.validator
+    - `check_win_condition` from game.win_checker
+    - `FieldState` from models.game
+  - **Move Handler Implementation** (lines 496-640):
+    - Parse and validate `MoveMessage` with Pydantic
+    - Role validation (must be JOURNEYMAN)
+    - Game state validation (must be ACTIVE)
+    - Turn validation (must be journeyman's turn)
+    - Position validation via `validate_journeyman_move()`
+    - Update journeyman position
+    - Dry adjacent fields in 4 directions (N, E, S, W)
+    - Switch turn to weather
+    - Check win condition (365 turns = journeyman victory)
+    - Broadcast `RoomStateMessage` or `GameOverMessage`
+    - Comprehensive error handling
+  - **Flood Handler Implementation** (lines 642-780):
+    - Parse and validate `FloodMessage` with Pydantic
+    - Role validation (must be WEATHER)
+    - Game state validation (must be ACTIVE)
+    - Turn validation (must be weather's turn)
+    - Position validation via `validate_weather_flood()`
+    - Flood 0-2 specified positions
+    - Increment turn counter
+    - Switch turn to journeyman
+    - Check win condition (journeyman trapped = weather victory)
+    - Broadcast `RoomStateMessage` or `GameOverMessage`
+    - Comprehensive error handling
+  - **Test Suite Created**:
+    - `test_simple_gameplay.py`: Basic functionality verification
+    - `test_final_gameplay.py`: Comprehensive test suite (6 tests, all passing)
+- **Test Results**:
+  - ✅ Basic move/flood cycle
+  - ✅ Wrong role validation (weather can't move, journeyman can't flood)
+  - ✅ Turn management (out-of-turn actions blocked)
+  - ✅ Flood zero fields allowed
+  - ✅ Cannot flood journeyman position
+  - ✅ Cannot re-flood already flooded field
+  - ✅ All 6 comprehensive tests passed
+- **Game Logic Verified**:
+  - **Journeyman Move**:
+    - Validates adjacency (8 directions for movement)
+    - Validates target field is dry
+    - Updates position
+    - Dries adjacent fields in 4 cardinal directions
+    - Turn stays same number but switches role to weather
+  - **Weather Flood**:
+    - Validates 0-2 positions
+    - Validates positions are dry
+    - Validates positions are not journeyman's location
+    - Floods specified positions
+    - Increments turn counter
+    - Switches role to journeyman
+  - **Turn Management**:
+    - Turn 1: Journeyman moves → Weather floods → Turn 2
+    - Turn counter only increments on weather's action
+    - Represents one complete "day" cycle
+  - **Win Conditions**:
+    - Journeyman wins after 365 turns
+    - Weather wins if journeyman is trapped (no adjacent dry fields)
+    - Game transitions to ENDED status
+    - Broadcasts `GameOverMessage` with winner and statistics
+- **Validation Layers**:
+  - Layer 1: Player has role assigned
+  - Layer 2: Player has correct role for action
+  - Layer 3: Game is in ACTIVE status
+  - Layer 4: It's player's turn
+  - Layer 5: Specific action is valid (positions, adjacency, etc.)
+- **Error Handling**:
+  - ✅ No role assigned
+  - ✅ Wrong role for action
+  - ✅ Game not active
+  - ✅ Out of turn
+  - ✅ Invalid positions (out of bounds, flooded, non-adjacent)
+  - ✅ Flooding journeyman's position
+  - ✅ Flooding already flooded field
+  - ✅ Too many flood positions (>2)
+  - ✅ Malformed messages (Pydantic validation)
+  - ✅ Room not found
+- **Broadcasting**:
+  - Both players receive synchronized updates after each action
+  - `RoomStateMessage` for ongoing game
+  - `GameOverMessage` when game ends
+  - Broadcast count logged for verification
+- **Integration Points**:
+  - Board class: `Board.get_adjacent_positions(pos, include_diagonals)`
+  - Board class: `Board.set_field_state(pos, state)`
+  - Validator: `validate_journeyman_move(board, current, target)`
+  - Validator: `validate_weather_flood(board, positions, journeyman_pos)`
+  - Win checker: `check_win_condition(board, pos, turn, role)`
+  - Connection manager: `get_player_role()`, `broadcast()`
+  - Room manager: `get_room()`, `update_room()`
+- **Verification**:
+  - No linter errors
+  - All 6 comprehensive tests passing
+  - Simple gameplay test passing
+  - Move validation working (adjacency, dry fields)
+  - Flood validation working (count, dry fields, not journeyman)
+  - Drying logic working (4 directions)
+  - Turn management working (switching, incrementing)
+  - Broadcasting synchronized
+  - State persistence working
+- **Technical Decisions**:
+  - Move uses 8-direction adjacency for validation
+  - Drying uses 4-direction adjacency (cardinal only)
+  - Turn counter increments on weather's action (represents "day")
+  - Win condition checking after each action
+  - Board state synchronized via `room.grid = board.grid`
+  - Separate error messages for different validation failures
+- **Edge Cases Handled**:
+  - ✅ Player without role assignment
+  - ✅ Wrong role attempting action
+  - ✅ Out-of-turn actions
+  - ✅ Moving to flooded field
+  - ✅ Moving to non-adjacent field
+  - ✅ Moving out of bounds
+  - ✅ Flooding too many positions
+  - ✅ Flooding journeyman's position
+  - ✅ Flooding already flooded field
+  - ✅ Flooding out of bounds
+  - ✅ Empty flood (0 positions) - allowed
+- **Message Flow Examples**:
+  - **Move**: Client sends `{type: "move", position: {x, y}}` → Server validates → Updates state → Broadcasts to both players
+  - **Flood**: Client sends `{type: "flood", positions: [{x, y}, ...]}` → Server validates → Updates state → Increments turn → Broadcasts to both players
+  - **Game Over**: After action → Check win → If won → Broadcast `{type: "game_over", winner: "...", stats: {...}}`
+- **Notes**: 
+  - Core gameplay loop fully implemented and tested
+  - All validation layers working correctly
+  - Turn management robust and reliable
+  - Win condition checking in place (will trigger during long games)
+  - Broadcasting ensures both players stay synchronized
+  - Ready for frontend integration
+  - Backend gameplay complete - can now play full games via WebSocket
+  - Next phase: Frontend implementation (Task 3.5 or Phase 4)
+  - Suggestion: Consider adding a "skip" or "end_turn" message for weather to explicitly pass without flooding
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]
