@@ -1,110 +1,113 @@
 # Current Active Task
 
 ## Task
-Task 1.2: Frontend Project Setup
+Task 2.2: Game Logic - Board Management
 
 ## Phase
-Phase 1: Project Scaffolding (Foundation)
+Phase 2: Core Backend Logic
 
 ## Status
 Completed
 
 ## Description
-Initialize the frontend project with Vite, React, and TypeScript. Configure Tailwind CSS with an indigo theme and create a basic app structure. This establishes the foundation for the game's user interface and prepares the development environment.
+Implement the core board management logic for the Flooding Islands game. This module handles grid initialization, field state management, position validation, and adjacency calculations for both movement (8 directions) and drying (4 directions).
 
 ## Requirements
-- Node.js 18+ installed
-- Create frontend project with Vite + React + TypeScript
-- Install and configure Tailwind CSS with indigo theme
-- Set up proper folder structure for components, hooks, types, and utils
-- Create basic App component with indigo gradient
-- Configure environment variables for backend connection
-- Verify dev server works correctly
+- Python 3.13+ installed
+- Create `game/board.py` with Board class
+- Initialize grid with configurable size (3-10)
+- Implement field state get/set operations
+- Validate position bounds
+- Calculate adjacent positions for 8 directions (movement) and 4 directions (drying)
+- Use existing Position and FieldState models from `models/game.py`
 
 ## Implementation Steps
 
-### 1. Initialize Vite Project
-- Create `package.json` with Vite, React, and TypeScript dependencies
-- Set up TypeScript configuration (`tsconfig.json`, `tsconfig.node.json`)
-- Create Vite config (`vite.config.ts`) with port 5173
-- Set up ESLint configuration
+### 1. Create Board Class
+- Initialize with grid_size (3-10)
+- Validate grid size in constructor
+- Create NxN grid with all fields initially DRY
+- Store grid as `list[list[FieldState]]`
 
-### 2. Install Dependencies
-- Install core dependencies: react, react-dom, typescript, vite
-- Install Tailwind CSS: tailwindcss, postcss, autoprefixer
-- Install dev dependencies for linting and TypeScript support
+### 2. Field State Management
+- `get_field_state(position: Position) -> FieldState` - Get state at position
+- `set_field_state(position: Position, state: FieldState)` - Update field state
+- Validate positions before accessing grid
 
-### 3. Configure Tailwind CSS
-- Create `tailwind.config.js` with:
-  - Content paths for React files
-  - Extended indigo color palette
-  - Custom colors for dry (yellow) and flooded (blue) fields
-  - Custom animations (flip effect for field state changes)
-- Create `postcss.config.js`
-- Update `src/index.css` with Tailwind directives
+### 3. Position Validation
+- `is_valid_position(position: Position) -> bool` - Check bounds
+- Ensure 0 <= x < grid_size and 0 <= y < grid_size
 
-### 4. Create React App Structure
-- Create `src/main.tsx` - React entry point
-- Create `src/App.tsx` - Main app component with indigo gradient
-- Create `src/index.css` - Global styles with Tailwind
-- Create `src/vite-env.d.ts` - Vite type definitions
-- Create `index.html` - HTML template
-
-### 5. Environment Configuration
-- Create `frontend/README.md` documenting environment variables:
-  - `VITE_BACKEND_URL=http://localhost:8000`
-  - `VITE_WS_URL=ws://localhost:8000`
-
-### 6. Verification
-- Run `npm install` to install all dependencies
-- Run `npm run dev` to start development server
-- Verify app loads at http://localhost:5173
-- Check TypeScript compilation with no errors
-- Verify Tailwind CSS works (indigo gradient displays)
+### 4. Adjacency Calculation
+- `get_adjacent_positions(position, include_diagonals=True) -> list[Position]`
+- 8 directions (N, NE, E, SE, S, SW, W, NW) when include_diagonals=True
+- 4 directions (N, E, S, W) when include_diagonals=False
+- Filter out positions outside grid bounds
+- Handle edge cases (corners, edges with fewer neighbors)
 
 ## Current Progress
-- [x] Create `frontend/` directory with folder structure (components/, hooks/, types/, utils/)
-- [x] Create `package.json` with all dependencies
-- [x] Create TypeScript configuration files
-- [x] Create Vite configuration
-- [x] Install all dependencies using `npm install` ✅
-  - Installed 316 packages successfully
-- [x] Configure Tailwind CSS with indigo theme ✅
-  - Created `tailwind.config.js` with custom colors for fields
-  - Added flip animation for field state changes
-  - Created `postcss.config.js`
-- [x] Create React app structure ✅
-  - Created `src/main.tsx` entry point
-  - Created `src/App.tsx` with indigo gradient background
-  - Created `src/index.css` with Tailwind directives
-  - Created `index.html` template
-- [x] Create frontend README with environment variable documentation
-- [x] Test server startup - Successfully verified ✅
-  - Server runs on http://localhost:5173
-  - React app renders correctly with TypeScript
-  - Tailwind CSS working (indigo gradient displays)
-  - No TypeScript compilation errors
-  - Hot module replacement working
+- [x] Create `backend/game/board.py` ✅
+- [x] Implement Board class with grid initialization ✅
+  - Grid size validation (3-10)
+  - Initialize all fields as DRY
+- [x] Implement `get_field_state` method ✅
+  - Position validation
+  - Return FieldState at position
+- [x] Implement `set_field_state` method ✅
+  - Position validation
+  - Update field state
+- [x] Implement `is_valid_position` method ✅
+  - Bounds checking (0 <= x,y < grid_size)
+- [x] Implement `get_adjacent_positions` method ✅
+  - 8-directional support (include_diagonals=True)
+  - 4-directional support (include_diagonals=False)
+  - Proper bounds checking before creating Position objects
+  - Handles corners, edges, and center positions correctly
+- [x] Create `backend/game/__init__.py` ✅
+  - Export Board class
+- [x] Set up virtual environment and install dependencies ✅
+  - Installed FastAPI, Pydantic, and other requirements
+- [x] Verify implementation ✅
+  - All tests passed successfully
+  - No linter errors
 
 ## Acceptance Criteria
-- ✅ Frontend directory exists with proper structure
-- ✅ Vite project initialized with React and TypeScript
-- ✅ All dependencies install successfully (316 packages)
-- ✅ Tailwind CSS configured with indigo theme and custom colors
-- ✅ Dev server runs successfully on http://localhost:5173
-- ✅ React app renders with indigo gradient background
-- ✅ TypeScript compilation works with no errors
-- ✅ Hot module replacement works
-- ✅ Custom colors defined for dry (yellow) and flooded (blue) fields
-- ✅ Flip animation configured for field state changes
+- ✅ Board class created in `backend/game/board.py`
+- ✅ Grid initializes correctly with all DRY fields
+- ✅ Grid size validation enforces 3-10 range
+- ✅ Field states can be get/set properly with position validation
+- ✅ Position validation works for valid and invalid positions
+- ✅ 8-directional adjacency returns correct neighbors (8 for center, 3 for corner, 5 for edge)
+- ✅ 4-directional adjacency returns correct neighbors (4 for center, 2 for corner, 3 for edge)
+- ✅ Edge/corner positions return correct number of neighbors
+- ✅ No linter errors
+- ✅ Proper error handling for out-of-bounds positions
+- ✅ Proper handling of Position model validation (x,y >= 0)
+
+## Test Results
+```
+✓ Grid initialized with size 5
+✓ Field at (0,0) is dry
+✓ Field at (2,2) changed to flooded
+✓ Position (4,4) is valid: True
+✓ Position (5,5) is valid: False
+✓ 8-directional adjacency from center (2,2): 8 neighbors
+✓ 4-directional adjacency from center (2,2): 4 neighbors
+✓ 8-directional adjacency from corner (0,0): 3 neighbors
+✓ 4-directional adjacency from corner (0,0): 2 neighbors
+✓ Grid size validation works
+✓ 8-directional adjacency from edge (0,2): 5 neighbors
+✓ 4-directional adjacency from edge (0,2): 3 neighbors
+
+✅ All tests passed!
+```
 
 ## Next Task
-Task 1.3: Root Configuration
+Task 2.3: Game Logic - Move Validation
 
 ## Blockers/Notes
-- No blockers currently
-- Node.js and npm working correctly
-- 316 npm packages installed successfully
-- Frontend `.gitignore` created
-- Environment variables documented in README (`.env.example` blocked by gitignore)
-- Dev server tested and confirmed working
+- No blockers
+- Virtual environment created and dependencies installed
+- Position model validates x,y >= 0, so adjacency calculation checks bounds before creating Position objects
+- Grid coordinates: (0,0) is top-left, (n-1, n-1) is bottom-right
+- Implementation ready for use in move validation and other game logic

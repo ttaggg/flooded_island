@@ -136,6 +136,41 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 2.2: Game Logic - Board Management
+- **Status**: Completed ✅
+- **Changes**:
+  - Created `backend/game/board.py` with Board class:
+    - Grid initialization with configurable size (3-10)
+    - All fields start as DRY state
+    - Grid size validation in constructor
+  - **Field State Management:**
+    - `get_field_state(position)` - Retrieve state at position with validation
+    - `set_field_state(position, state)` - Update field state with validation
+    - Proper error handling for out-of-bounds positions
+  - **Position Validation:**
+    - `is_valid_position(position)` - Check if position is within grid bounds
+    - Validates 0 <= x,y < grid_size
+  - **Adjacency Calculation:**
+    - `get_adjacent_positions(position, include_diagonals)` - Get neighboring positions
+    - 8-directional support (N, NE, E, SE, S, SW, W, NW) when include_diagonals=True
+    - 4-directional support (N, E, S, W) when include_diagonals=False
+    - Proper bounds checking before creating Position objects
+    - Correctly handles corners (3/2 neighbors), edges (5/3 neighbors), and center (8/4 neighbors)
+  - Created `backend/game/__init__.py` to expose Board class
+  - Set up Python virtual environment and installed dependencies
+  - **Verification:**
+    - All tests passed successfully
+    - No linter errors
+    - Verified grid initialization, field state operations, position validation, and adjacency calculations
+- **Notes**: 
+  - Grid coordinates: (0,0) is top-left, (n-1, n-1) is bottom-right
+  - Position model from Pydantic validates x,y >= 0, so adjacency calculation checks bounds before creating Position objects
+  - Board class ready for use in move validation and other game logic modules
+  - All acceptance criteria met and verified
+  - Next task: Task 2.3 - Game Logic - Move Validation
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]
