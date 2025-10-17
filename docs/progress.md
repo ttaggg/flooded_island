@@ -979,6 +979,33 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 4.1: TypeScript Types
+- **Date**: 2025-10-17
+- **Status**: Completed
+- **Changes**:
+  - Created `frontend/src/types/game.ts` with core game type definitions
+    - `FieldState` enum: DRY, FLOODED
+    - `PlayerRole` enum: JOURNEYMAN, WEATHER
+    - `GameStatus` enum: WAITING, CONFIGURING, ACTIVE, ENDED
+    - `Position` interface: x, y coordinates
+    - `GameState` interface: complete room state with all game data
+  - Created `frontend/src/types/messages.ts` with WebSocket message types
+    - Client messages: SelectRole, ConfigureGrid, Move, Flood, EndTurn
+    - Server messages: RoomState, GameUpdate, GameOver, Error, PlayerDisconnected, PlayerReconnected
+    - `ClientMessage` and `ServerMessage` discriminated union types
+  - Created `frontend/src/types/index.ts` as barrel export for convenient imports
+  - All types mirror backend Pydantic models exactly
+  - Added comprehensive JSDoc comments throughout
+- **Notes**: 
+  - Types provide full type safety for frontend development
+  - Discriminated unions enable type-safe message handling based on the `type` field
+  - Enums match backend string enum values exactly
+  - Timestamps use ISO string format as received from backend
+  - Ready to implement WebSocket and game state hooks in Task 4.2
+  - Zero linter errors
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]
