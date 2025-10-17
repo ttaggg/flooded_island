@@ -14,7 +14,7 @@ A turn-based multiplayer strategy game where two players compete on a flooding g
 
 ### Prerequisites
 
-- **Python 3.11+** (backend)
+- **Python 3.11+ (3.13+ recommended)** (backend)
 - **Node.js 18+** (frontend)
 - **[uv](https://github.com/astral-sh/uv)** - Fast Python package installer
 
