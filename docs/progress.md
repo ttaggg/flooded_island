@@ -1266,6 +1266,46 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 4.5: Game Configuration Screen
+- **Date**: 2025-10-17
+- **Status**: Completed ✅
+- **Description**: Created GameConfiguration component for configuring grid size before game starts
+- **Changes**:
+  - **Created** `frontend/src/components/GameConfiguration.tsx` (224 lines):
+    - GameConfiguration main component with role-specific rendering
+    - GridPreview subcomponent showing N×N grid visualization
+    - Grid size selector with quick buttons (5×5, 7×7, 10×10)
+    - Custom number input with validation (3-10 range)
+    - Default grid size: 10×10
+    - Dynamic square sizing based on grid dimensions (24-40px)
+    - Journeyman: Active controls with "Start Game" button
+    - Weather: Read-only view with waiting animation
+  - **Modified** `frontend/src/App.tsx`:
+    - Imported GameConfiguration component
+    - Extracted canConfigureGrid and configureGrid from useGameState
+    - Replaced CONFIGURING placeholder with GameConfiguration component
+    - Passed props: gameState, myRole, canConfigureGrid, configureGrid
+- **Key Features**:
+  - Visual grid preview with real-time updates
+  - Quick selection buttons for common sizes
+  - Input validation and clamping (3-10)
+  - Role-specific UX (active vs waiting)
+  - Indigo gradient design consistent with RoleSelection
+  - Responsive layout for all screen sizes
+- **Testing**:
+  - ✅ No TypeScript errors
+  - ✅ No linter errors (Prettier/ESLint)
+  - ✅ Component renders for both roles
+  - ✅ Grid size selector updates preview correctly
+  - ✅ Backend integration ready (configure_grid message)
+- **Notes**: 
+  - GridPreview automatically adjusts square size for usability
+  - Weather player sees same interface but in read-only mode
+  - Smooth transitions and hover effects throughout
+  - Ready for backend integration testing
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]

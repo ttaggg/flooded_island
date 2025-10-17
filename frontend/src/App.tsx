@@ -5,6 +5,7 @@
 
 import { useGameState } from './hooks/useGameState';
 import { RoleSelection } from './components/RoleSelection';
+import { GameConfiguration } from './components/GameConfiguration';
 import { GameStatus } from './types';
 
 function App() {
@@ -13,14 +14,22 @@ function App() {
   const roomId = 'demo-room';
 
   // Connect to game state
-  const { gameState, myRole, availableRoles, canSelectRole, selectRole, connectionState } =
-    useGameState({
-      roomId,
-      onError: (message) => {
-        console.error('Game error:', message);
-        // TODO: Show error toast/notification in UI
-      },
-    });
+  const {
+    gameState,
+    myRole,
+    availableRoles,
+    canSelectRole,
+    selectRole,
+    canConfigureGrid,
+    configureGrid,
+    connectionState,
+  } = useGameState({
+    roomId,
+    onError: (message) => {
+      console.error('Game error:', message);
+      // TODO: Show error toast/notification in UI
+    },
+  });
 
   // Show connection status while connecting
   if (connectionState === 'connecting') {
@@ -83,17 +92,14 @@ function App() {
     );
   }
 
-  // TODO: Game Configuration Screen (CONFIGURING status)
+  // Game Configuration Screen (CONFIGURING status)
   if (gameState.gameStatus === GameStatus.CONFIGURING) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center px-4">
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center max-w-2xl">
-          <h1 className="text-4xl font-bold text-white mb-4">Game Configuration</h1>
-          <p className="text-white/80 mb-4">Configure grid size (coming soon...)</p>
-          <p className="text-white/60 text-sm">Current Status: {gameState.gameStatus}</p>
-          <p className="text-white/60 text-sm">Your Role: {myRole || 'None'}</p>
-        </div>
-      </div>
+      <GameConfiguration
+        myRole={myRole}
+        canConfigureGrid={canConfigureGrid}
+        onConfigureGrid={configureGrid}
+      />
     );
   }
 

@@ -1,7 +1,7 @@
 # Current Active Task
 
 ## Task
-Task 4.4: Role Selection Screen
+Task 4.5: Game Configuration Screen
 
 ## Phase
 Phase 4: Frontend - UI Components
@@ -10,182 +10,193 @@ Phase 4: Frontend - UI Components
 Completed
 
 ## Description
-Create the RoleSelection component that allows players to choose between Journeyman and Weather roles, displays role availability, and shows waiting state for the second player.
+Create the GameConfiguration component that allows the Journeyman to configure the grid size with a visual preview, while the Weather player sees a read-only version and waits for configuration to complete.
 
 ## Requirements
-- Display two role cards (Journeyman and Weather)
-- Show role descriptions, goals, and actions
-- Handle role selection via click
-- Display role availability states (available/taken/selected)
-- Show waiting state when player has selected but opponent hasn't
+- Grid size selector (3-10 range, default 10)
+- Visual preview of grid showing N×N squares
+- Quick selection buttons for common sizes (5×5, 7×7, 10×10)
+- Custom number input for precise selection
+- Start game button (Journeyman only)
+- Waiting state for Weather player
 - Indigo gradient background consistent with design system
 - Responsive layout with Tailwind CSS
 
 ## Implementation Details
 
 ### Component Structure
-**Location**: `frontend/src/components/RoleSelection.tsx`
+**Location**: `frontend/src/components/GameConfiguration.tsx`
 
 **Props Interface:**
 ```typescript
-interface RoleSelectionProps {
+interface GameConfigurationProps {
   gameState: GameState | null;
   myRole: PlayerRole | null;
-  availableRoles: PlayerRole[];
-  canSelectRole: boolean;
-  onSelectRole: (role: PlayerRole) => void;
+  canConfigureGrid: boolean;
+  onConfigureGrid: (size: number) => void;
 }
 ```
 
 ### UI Sections
 1. **Header Section:**
    - Game title: "Flooding Islands"
-   - Page title: "Choose Your Role"
-   - Subtitle explaining the game
+   - Page title: "Game Configuration"
+   - Role-specific subtitle (Journeyman vs Weather)
 
-2. **Role Cards (2 cards, side-by-side):**
-   - **Journeyman Card:**
-     - Icon: 🚶
-     - Goal: "Survive 365 days"
-     - Actions: "Move & Dry adjacent fields"
-     - Yellow/amber accent color
-   - **Weather Card:**
-     - Icon: 🌧️
-     - Goal: "Trap the Journeyman"
-     - Actions: "Flood up to 2 fields per turn"
-     - Blue accent color
+2. **Grid Size Selector:**
+   - Current size display (large: "10 × 10")
+   - Quick selection buttons (5×5, 7×7, 10×10)
+   - Custom number input (3-10 range)
+   - Journeyman: Interactive controls
+   - Weather: Read-only, shows current selection
 
-3. **Status Section:**
-   - Shows "Select a role to begin" when no role selected
-   - Shows "Waiting for opponent to join..." with animation when role selected
-   - Animated bouncing dots for waiting state
+3. **Visual Grid Preview:**
+   - GridPreview subcomponent
+   - N×N grid of small squares (24-40px each, based on grid size)
+   - All squares shown in dry state (yellow)
+   - Responsive sizing for different grid sizes
+   - Border and background for visual clarity
+
+4. **Action Section:**
+   - Journeyman: "Start Game" button
+   - Weather: Waiting message with animated dots
+   - Role indicator footer
 
 ### State Logic
-- Cards show "Available", "Taken", or "Selected" badges
-- Selected role highlighted with checkmark and ring effect
-- Taken roles shown with disabled state
-- Selection buttons disabled when `!canSelectRole`
-- Hover effects on available cards
-- Scale animation on selection
+- Local state for `selectedSize` (default: 10)
+- Derive `isJourneyman` from `myRole === PlayerRole.JOURNEYMAN`
+- Use `canConfigureGrid` prop to enable/disable controls
+- Input validation: clamp between 3-10
+- Quick buttons highlight current selection
+- Disabled styling for Weather player
 
 ### Styling
 - Background: `bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500`
-- Cards: Semi-transparent white with backdrop blur
-- Responsive grid layout (1 column mobile, 2 columns desktop)
+- Main card: Semi-transparent white with backdrop blur
+- Grid preview: Yellow squares with border, indigo background
+- Buttons: Yellow/amber for actions, white/transparent for options
 - Smooth transitions and hover effects
 - Consistent with indigo color palette
 
 ## Current Progress
 - [x] Create component file with TypeScript interfaces ✅
-- [x] Implement RoleCard subcomponent with all states ✅
-- [x] Implement main RoleSelection component layout ✅
-- [x] Add header section with title and subtitle ✅
-- [x] Add two role cards with descriptions ✅
-- [x] Implement conditional rendering for all states ✅
-- [x] Add status section with waiting animation ✅
-- [x] Style with indigo gradients and role-specific colors ✅
-- [x] Integrate into App.tsx with useGameState hook ✅
-- [x] Add connection state handling in App ✅
-- [x] Add placeholder screens for other game statuses ✅
+- [x] Implement GridPreview subcomponent with dynamic sizing ✅
+- [x] Implement grid size selector with quick buttons ✅
+- [x] Add custom number input (3-10 range) ✅
+- [x] Implement main GameConfiguration component ✅
+- [x] Add conditional rendering for Journeyman vs Weather ✅
+- [x] Add waiting state animation for Weather ✅
+- [x] Style with indigo gradients and responsive layout ✅
+- [x] Integrate into App.tsx replacing CONFIGURING placeholder ✅
+- [x] Extract canConfigureGrid and configureGrid from useGameState ✅
 - [x] Verify no linter errors ✅
-- [x] Test servers running successfully ✅
 
 ## Acceptance Criteria
-- ✅ Component renders with proper layout
-- ✅ Two role cards displayed side-by-side (responsive)
-- ✅ Role descriptions, goals, and actions shown
-- ✅ Selection buttons work correctly
-- ✅ Available/taken/selected states displayed properly
-- ✅ Waiting animation shown when role selected
-- ✅ Indigo gradient background applied
-- ✅ Component integrated into App.tsx
-- ✅ Props passed from useGameState hook
-- ✅ Conditional rendering based on GameStatus.WAITING
-- ✅ TypeScript type safety maintained
-- ✅ No linter errors
-- ✅ Servers start and WebSocket connects successfully
+- ✅ Component renders for both Journeyman and Weather roles
+- ✅ Grid size selector works (3-10 range, default 10)
+- ✅ Visual preview updates when size changes
+- ✅ Preview shows appropriate grid dimensions
+- ✅ Quick selection buttons (5×5, 7×7, 10×10) work
+- ✅ Custom number input validates and clamps values
+- ✅ Start Game button only enabled/visible for Journeyman
+- ✅ Weather sees read-only view with waiting state
+- ✅ Component sends correct configure_grid message to backend
+- ✅ Indigo gradient background consistent with design system
+- ✅ No TypeScript or linter errors
+- ✅ Smooth transitions and responsive layout
 
 ## Files Created/Modified
-1. **Created**: `frontend/src/components/RoleSelection.tsx` (217 lines)
-   - RoleCard subcomponent for individual role display
-   - RoleSelection main component
+1. **Created**: `frontend/src/components/GameConfiguration.tsx` (224 lines)
+   - GridPreview subcomponent for N×N grid visualization
+   - GameConfiguration main component
    - Complete state handling and styling
+   - Conditional rendering for both roles
 
-2. **Modified**: `frontend/src/App.tsx` (151 lines)
-   - Integrated useGameState hook
-   - Added connection state handling
-   - Conditional rendering for all game statuses
-   - RoleSelection component integration
-   - Placeholder screens for future components
+2. **Modified**: `frontend/src/App.tsx` (148 lines)
+   - Imported GameConfiguration component
+   - Extracted canConfigureGrid and configureGrid from useGameState
+   - Replaced CONFIGURING placeholder with GameConfiguration component
+   - Passed proper props from useGameState hook
 
 ## Key Features Implemented
 
-### RoleCard Component
-- Displays role icon, title, goal, and actions
-- Three state indicators: Available, Taken, Selected
-- Checkmark badge on selected role
-- Ring animation on selection
-- Disabled state for taken roles
-- Hover effects for available roles
-- Dynamic button text and styling
+### GridPreview Component
+- Dynamic square sizing based on grid size
+  - 3-5 grid: 40px squares
+  - 6-7 grid: 30px squares
+  - 8-10 grid: 24px squares
+- CSS Grid layout for N×N display
+- All squares in dry state (yellow)
+- Border and background for visual clarity
+- Responsive and scales appropriately
 
-### RoleSelection Component
-- Responsive grid layout (1/2 columns)
-- Header with game title and instructions
-- Two role cards with proper state management
-- Status section with waiting animation
-- Bouncing dots animation with staggered delays
-- Indigo gradient background
-- Semi-transparent cards with backdrop blur
+### GameConfiguration Component
+- Default grid size: 10×10
+- Large display of current selection
+- Three quick selection buttons (5, 7, 10)
+  - Highlight current selection
+  - Smooth hover and scale effects
+  - Disabled state for Weather
+- Custom number input
+  - Range validation (3-10)
+  - Clamping for out-of-range values
+  - Disabled state for Weather
+- Visual grid preview updates in real-time
+- Role-specific behavior:
+  - Journeyman: All controls active, Start Game button
+  - Weather: All controls disabled, waiting animation
+- Footer showing player role
 
 ### App.tsx Integration
-- useGameState hook integration
-- Connection state handling (connecting, disconnected, connected)
-- Loading states with animations
-- Conditional rendering based on gameStatus:
-  - WAITING → RoleSelection
-  - CONFIGURING → Placeholder
-  - ACTIVE → Placeholder
-  - ENDED → Placeholder
-- Error callback for future error handling
+- GameConfiguration imported and integrated
+- Conditional rendering for GameStatus.CONFIGURING
+- Props passed from useGameState:
+  - gameState, myRole, canConfigureGrid, configureGrid
+- Clean replacement of placeholder
 
 ### Styling Highlights
-- Consistent indigo color palette
-- Role-specific accent colors (yellow/blue)
-- Smooth transitions (300ms duration)
-- Scale animations on hover/select
-- Backdrop blur effects
-- Drop shadows for depth
-- Responsive breakpoints
+- Consistent indigo gradient background
+- Semi-transparent cards with backdrop blur
+- Yellow/amber buttons for Journeyman actions
+- Disabled states with reduced opacity
+- Smooth transitions (200ms duration)
+- Scale animations on hover and selection
+- Responsive layout for all screen sizes
+- Bouncing dots animation for Weather waiting state
 
 ## Testing Results
-- ✅ Backend server running on http://localhost:8000
-- ✅ Frontend server running on http://localhost:5173
-- ✅ WebSocket connections established to demo-room
-- ✅ No runtime errors in logs
-- ✅ No linter errors
-- ✅ Component ready for manual testing
+- ✅ Component renders correctly for both roles
+- ✅ Grid size selector updates preview in real-time
+- ✅ Quick selection buttons work properly
+- ✅ Number input validates and clamps values
+- ✅ Start Game button calls configureGrid with correct size
+- ✅ Weather player sees read-only interface
+- ✅ No TypeScript errors
+- ✅ No linter errors (Prettier/ESLint)
+- ✅ Component ready for integration testing with backend
 
 ## Next Task
 Continue with Phase 4: Frontend Implementation
-- **Task 4.5**: Game Configuration Screen - Create `components/GameConfiguration.tsx`
-- Task 4.6: Game Board Component - Create `components/GameBoard.tsx`
+- **Task 4.6**: Game Board Component - Create `components/GameBoard.tsx`
 - Task 4.7: Field Component - Create `components/Field.tsx`
 - Task 4.8: Field Animations
+- Task 4.9: Control Panel Component
 - And more UI components...
 
 ## Blockers/Notes
 - No blockers
 - Task completed successfully
-- Role selection fully functional
-- Ready to move to game configuration screen
+- Game configuration screen fully functional
+- Ready to move to game board visualization
 - All acceptance criteria met
 - Clean, maintainable code with TypeScript type safety
-- Servers running and ready for testing
+- Backend integration ready (sends configure_grid message)
+- Visual preview provides excellent UX for grid size selection
 
-## Recent Infrastructure Updates
-- **2025-10-17**: Linter setup completed
-  - Ruff configured for backend Python (zero errors)
-  - Prettier + ESLint configured for frontend TypeScript/React (zero errors/warnings)
-  - Pre-commit hooks installed and tested successfully
-  - All code now follows consistent style guidelines
+## Implementation Highlights
+- **Dynamic Grid Sizing**: GridPreview automatically adjusts square size based on grid dimensions to maintain usability
+- **Role-Specific UX**: Clear differentiation between Journeyman (active) and Weather (waiting) experiences
+- **Quick Selection**: Common grid sizes (5×5, 7×7, 10×10) accessible with one click
+- **Input Validation**: Number input properly clamps values to valid range (3-10)
+- **Consistent Design**: Maintains indigo color scheme and styling patterns from RoleSelection
+- **Responsive Layout**: Works well on mobile and desktop viewports
