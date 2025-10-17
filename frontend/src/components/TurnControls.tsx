@@ -1,22 +1,49 @@
 /**
  * Turn Controls Component
- * Displays turn information and action controls for players
+ *
+ * Displays turn information and provides action controls for players during
+ * active gameplay. Shows current day, turn status, and role-specific controls
+ * for executing game actions.
+ *
+ * Features:
+ * - Day counter and turn information display
+ * - Role-specific action buttons (End Turn, Clear Selection)
+ * - Weather player flood selection counter
+ * - Turn status indicators with visual feedback
+ * - Responsive layout with glass morphism styling
  */
 
 import { GameState, PlayerRole, Position } from '../types';
 
+/**
+ * Props for the TurnControls component
+ */
 interface TurnControlsProps {
+  /** Current game state including turn and role information */
   gameState: GameState;
+  /** Player's assigned role (JOURNEYMAN, WEATHER, or null) */
   myRole: PlayerRole | null;
+  /** Whether it's currently the player's turn */
   isMyTurn: boolean;
+  /** Whether the player can currently flood fields (weather's turn) */
   canFlood: boolean;
+  /** Currently selected positions for weather flooding (0-2 positions) */
   selectedFloodPositions: Position[];
+  /** Function to submit weather's flood action and end turn */
   submitFlood: () => void;
+  /** Function to clear weather's flood selection */
   clearFloodSelection: () => void;
 }
 
 /**
  * TurnControls component - provides turn information and action buttons
+ *
+ * Renders turn status information and role-specific controls for player actions.
+ * Weather players see flood selection controls, while journeyman players see
+ * movement instructions.
+ *
+ * @param props - Component props
+ * @returns JSX element representing turn controls
  */
 export function TurnControls({
   gameState,
@@ -33,14 +60,22 @@ export function TurnControls({
   const selectionCount = selectedFloodPositions.length;
   const hasSelection = selectionCount > 0;
 
-  // Handle End Turn button click
+  /**
+   * Handle End Turn button click for weather player
+   *
+   * Submits the current flood selection and ends the turn.
+   */
   const handleEndTurn = () => {
     if (canFlood) {
       submitFlood();
     }
   };
 
-  // Handle Clear Selection button click
+  /**
+   * Handle Clear Selection button click for weather player
+   *
+   * Clears all currently selected flood positions.
+   */
   const handleClearSelection = () => {
     clearFloodSelection();
   };

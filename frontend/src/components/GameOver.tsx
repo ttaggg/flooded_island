@@ -1,24 +1,52 @@
 /**
  * Game Over Screen Component
- * Displays winner, final statistics, and Play Again button
+ *
+ * Displays the end-game screen with winner announcement, final statistics,
+ * and a Play Again button. Provides visual feedback for both victory conditions
+ * with role-specific styling and comprehensive game statistics.
+ *
+ * Features:
+ * - Winner-specific styling and messaging
+ * - Comprehensive statistics display (days survived, fields flooded, etc.)
+ * - Play Again functionality with new room generation
+ * - Responsive grid layout for statistics
+ * - Glass morphism design consistent with app theme
  */
 
 import { PlayerRole } from '../types';
 
+/**
+ * Props for the GameOver component
+ */
 interface GameOverProps {
+  /** The winning player role */
   winner: PlayerRole;
+  /** Game statistics object from backend */
   stats: Record<string, unknown>;
+  /** Function called when Play Again button is clicked */
   onPlayAgain: () => void;
 }
 
+/**
+ * Props for the StatCard component
+ */
 interface StatCardProps {
+  /** Display label for the statistic */
   label: string;
+  /** Value to display (number or string) */
   value: number | string;
+  /** Emoji icon for the statistic */
   icon: string;
 }
 
 /**
- * Individual stat card component
+ * Individual stat card component for displaying game statistics
+ *
+ * Renders a single statistic with icon, value, and label in a
+ * glass morphism card design.
+ *
+ * @param props - Component props
+ * @returns JSX element representing a statistic card
  */
 function StatCard({ label, value, icon }: StatCardProps) {
   return (
@@ -32,6 +60,13 @@ function StatCard({ label, value, icon }: StatCardProps) {
 
 /**
  * Game Over screen component
+ *
+ * Renders the complete end-game interface with winner announcement,
+ * statistics grid, and Play Again functionality. Handles both victory
+ * conditions with appropriate styling and messaging.
+ *
+ * @param props - Component props
+ * @returns JSX element representing the game over screen
  */
 export function GameOver({ winner, stats, onPlayAgain }: GameOverProps) {
   // Extract statistics with safe defaults

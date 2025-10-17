@@ -1,39 +1,81 @@
 /**
  * Role Selection Screen Component
- * Allows players to choose between Journeyman and Weather roles.
+ *
+ * Allows players to choose between Journeyman and Weather roles before
+ * starting the game. Displays role descriptions, availability status,
+ * and handles role selection with visual feedback.
+ *
+ * Features:
+ * - Two role cards with descriptions and goals
+ * - Visual status indicators (Available, Taken, Selected)
+ * - Role-specific styling and animations
+ * - Waiting animation when opponent hasn't joined
+ * - Responsive layout with glass morphism design
+ * - Connection status monitoring
  */
 
 import { GameState, PlayerRole } from '../types';
 import { ConnectionStatus } from './ConnectionStatus';
 
+/**
+ * Props for the RoleSelection component
+ */
 interface RoleSelectionProps {
+  /** Current game state */
   gameState: GameState | null;
+  /** Player's currently selected role */
   myRole: PlayerRole | null;
+  /** List of roles that are still available for selection */
   availableRoles: PlayerRole[];
+  /** Whether the player can select a role */
   canSelectRole: boolean;
+  /** Function called when a role is selected */
   onSelectRole: (role: PlayerRole) => void;
-  // Connection status props
+  /** Current WebSocket connection state */
   connectionState: 'disconnected' | 'connecting' | 'connected' | 'error';
+  /** Last error message received from server */
   lastError: string | null;
+  /** Function to clear the current error state */
   onClearError: () => void;
+  /** Whether the opponent player is currently disconnected */
   opponentDisconnected: boolean;
 }
 
+/**
+ * Props for the RoleCard component
+ */
 interface RoleCardProps {
+  /** Display title for the role */
   title: string;
+  /** Emoji icon for the role */
   icon: string;
+  /** Description of the role's goal */
   goal: string;
+  /** Description of the role's actions */
   actions: string;
+  /** Accent color for the role */
   accentColor: string;
+  /** Whether the role is available for selection */
   isAvailable: boolean;
+  /** Whether the role is taken by another player */
   isTaken: boolean;
+  /** Whether the role is selected by the current player */
   isSelected: boolean;
+  /** Whether the player can select this role */
   canSelect: boolean;
+  /** Function called when the role is clicked */
   onSelect: () => void;
 }
 
 /**
  * Individual role card component
+ *
+ * Renders a single role with its description, status, and interaction
+ * capabilities. Handles different visual states based on availability
+ * and selection status.
+ *
+ * @param props - Component props
+ * @returns JSX element representing a role card
  */
 function RoleCard({
   title,

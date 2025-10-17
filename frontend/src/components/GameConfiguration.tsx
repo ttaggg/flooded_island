@@ -1,36 +1,75 @@
 /**
  * Game Configuration Screen Component
- * Allows Journeyman to configure grid size with visual preview.
- * Weather player sees read-only view while waiting.
+ *
+ * Allows the Journeyman player to configure grid dimensions with a visual
+ * preview before starting the game. Weather player sees a read-only waiting
+ * view while the Journeyman configures the grid.
+ *
+ * Features:
+ * - Interactive grid size configuration (3-10 range)
+ * - Real-time visual preview of grid dimensions
+ * - Quick selection buttons for common sizes
+ * - Role-specific UI (active vs waiting)
+ * - Input validation and clamping
+ * - Responsive layout with glass morphism design
  */
 
 import { useState } from 'react';
 import { PlayerRole, GameState } from '../types';
 import { ConnectionStatus } from './ConnectionStatus';
 
+/**
+ * Props for the GameConfiguration component
+ */
 interface GameConfigurationProps {
+  /** Player's assigned role (JOURNEYMAN, WEATHER, or null) */
   myRole: PlayerRole | null;
+  /** Whether the player can configure the grid (journeyman only) */
   canConfigureGrid: boolean;
+  /** Function to configure grid with specified dimensions */
   onConfigureGrid: (width: number, height: number) => void;
-  // Connection status props
+  /** Current WebSocket connection state */
   connectionState: 'disconnected' | 'connecting' | 'connected' | 'error';
+  /** Current game state */
   gameState: GameState | null;
+  /** Last error message received from server */
   lastError: string | null;
+  /** Function to clear the current error state */
   onClearError: () => void;
+  /** Whether the opponent player is currently disconnected */
   opponentDisconnected: boolean;
 }
 
+/**
+ * Props for the GridPreview component
+ */
 interface GridPreviewProps {
+  /** Width of the grid to preview */
   width: number;
+  /** Height of the grid to preview */
   height: number;
 }
 
 /**
  * Visual grid preview component
- * Shows width×height grid of placeholder squares
+ *
+ * Shows a width×height grid of placeholder squares to give players
+ * a visual representation of the grid size before starting the game.
+ *
+ * @param props - Component props
+ * @returns JSX element representing the grid preview
  */
 function GridPreview({ width, height }: GridPreviewProps) {
-  // Calculate square size based on grid dimensions (smaller squares for larger grids)
+  /**
+   * Calculate appropriate square size for grid preview based on dimensions
+   *
+   * Uses the maximum dimension to determine square size for optimal visibility.
+   * Larger grids get smaller squares to fit within the preview area.
+   *
+   * @param w - Grid width
+   * @param h - Grid height
+   * @returns Square size in pixels (24-40px range)
+   */
   const getSquareSize = (w: number, h: number): number => {
     const maxDim = Math.max(w, h);
     if (maxDim <= 5) return 40;

@@ -6,6 +6,66 @@ Running log of completed tasks and changes to the project.
 
 ## 2025-01-27
 
+### Task 6.1: Code Documentation
+- **Status**: Completed ✅
+- **Task**: Add comprehensive docstrings to Python functions and TypeScript JSDoc comments
+- **Changes**:
+  - **Frontend Components Enhanced**:
+    - **GameBoard.tsx**: Added comprehensive JSDoc for component, props interface, and all helper functions
+      - Documented component purpose, features, and behavior
+      - Added JSDoc for all helper functions (getCellSize, getCardinalAdjacent, isJourneymanAt, etc.)
+      - Documented event handlers and their parameters
+    - **Field.tsx**: Enhanced JSDoc for component and styling functions
+      - Documented component features and accessibility support
+      - Added JSDoc for all CSS class generation functions
+      - Documented animation and interaction handling
+    - **TurnControls.tsx**: Added JSDoc for component and action handlers
+      - Documented component purpose and role-specific controls
+      - Added JSDoc for event handler functions
+    - **GameOver.tsx**: Enhanced JSDoc for component and subcomponents
+      - Documented component features and statistics display
+      - Added JSDoc for StatCard subcomponent
+    - **GameConfiguration.tsx**: Added JSDoc for component and grid preview
+      - Documented component purpose and role-specific UI
+      - Added JSDoc for GridPreview component and helper functions
+    - **RoleSelection.tsx**: Enhanced JSDoc for component and role cards
+      - Documented component features and role selection logic
+      - Added JSDoc for RoleCard subcomponent
+  - **Frontend Hooks**: Already had comprehensive JSDoc documentation
+    - **useWebSocket.ts**: Complete JSDoc for all interfaces and functions
+    - **useGameState.ts**: Complete JSDoc for all interfaces and functions
+  - **Frontend Utilities**: Already had comprehensive JSDoc documentation
+    - **websocket.ts**: Complete JSDoc for all utility functions
+    - **roomId.ts**: Complete JSDoc for all utility functions
+  - **Frontend Types**: Already had comprehensive JSDoc documentation
+    - **game.ts**: Complete JSDoc for all enums and interfaces
+    - **messages.ts**: Complete JSDoc for all message types
+  - **Python Backend**: Already had comprehensive docstrings
+    - **All modules**: Complete Google-style docstrings with Args, Returns, Raises
+    - **main.py**: Complete docstrings for all functions
+    - **websocket.py**: Complete docstrings for all classes and methods
+    - **Game modules**: Complete docstrings for all functions and classes
+- **Documentation Standards Applied**:
+  - **Python**: Google-style docstrings with Args, Returns, Raises format
+  - **TypeScript**: JSDoc format with @param, @returns, @example tags
+  - **Consistent formatting**: All documentation follows project standards
+  - **Comprehensive coverage**: All exported functions and public APIs documented
+- **Quality Assurance**:
+  - All linting checks pass (ESLint, Prettier, Ruff)
+  - No TypeScript compilation errors
+  - Consistent documentation style throughout codebase
+  - Zero linter warnings related to missing documentation
+- **Benefits**:
+  - Improved code maintainability and developer experience
+  - Clear API documentation for all public interfaces
+  - Better IDE support with IntelliSense and hover documentation
+  - Easier onboarding for new developers
+  - Consistent documentation standards across the entire project
+
+---
+
+## 2025-01-27
+
 ### Task 5.1: Main App Routing
 - **Status**: Completed ✅
 - **Task**: Add a dedicated home/landing page with "Create New Game" and "Join Game" functionality

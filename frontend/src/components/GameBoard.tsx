@@ -1,6 +1,17 @@
 /**
  * Game Board Component
- * Displays the N×N game grid with field states and journeyman position
+ *
+ * Displays the interactive game grid with field states, journeyman position,
+ * and handles all player interactions during active gameplay. Provides visual
+ * feedback for selectable fields, hover states, and drying previews.
+ *
+ * Features:
+ * - Responsive grid rendering based on game dimensions
+ * - Interactive field selection for both player roles
+ * - Visual feedback for valid moves and flood selections
+ * - Drying preview on hover for journeyman movement
+ * - Turn controls and game status display
+ * - Connection status monitoring
  */
 
 import { useState } from 'react';
@@ -9,27 +20,55 @@ import { Field } from './Field';
 import { TurnControls } from './TurnControls';
 import { ConnectionStatus } from './ConnectionStatus';
 
+/**
+ * Props for the GameBoard component
+ */
 interface GameBoardProps {
+  /** Current game state including grid, positions, and turn info */
   gameState: GameState;
+  /** Player's assigned role (JOURNEYMAN, WEATHER, or null) */
   myRole: PlayerRole | null;
+  /** Function to execute journeyman movement to a position */
   move: (position: Position) => void;
+  /** Function to add a position to weather's flood selection */
   addFloodPosition: (position: Position) => void;
+  /** Function to remove a position from weather's flood selection */
   removeFloodPosition: (position: Position) => void;
+  /** Currently selected positions for weather flooding (0-2 positions) */
   selectedFloodPositions: Position[];
+  /** Whether the player can currently move (journeyman's turn) */
   canMove: boolean;
+  /** Whether the player can currently flood fields (weather's turn) */
   canFlood: boolean;
+  /** Whether it's currently the player's turn */
   isMyTurn: boolean;
+  /** Function to submit weather's flood action and end turn */
   submitFlood: () => void;
+  /** Function to clear weather's flood selection */
   clearFloodSelection: () => void;
-  // Connection status props
+  /** Current WebSocket connection state */
   connectionState: 'disconnected' | 'connecting' | 'connected' | 'error';
+  /** Last error message received from server */
   lastError: string | null;
+  /** Function to clear the current error state */
   onClearError: () => void;
+  /** Whether the opponent player is currently disconnected */
   opponentDisconnected: boolean;
 }
 
 /**
- * Main GameBoard component
+ * Main GameBoard component for active gameplay
+ *
+ * Renders the complete game interface including:
+ * - Game header with day counter and turn information
+ * - Interactive grid with field states and journeyman position
+ * - Visual feedback for selectable fields and hover states
+ * - Drying preview for journeyman movement
+ * - Turn controls for player actions
+ * - Connection status monitoring
+ *
+ * @param props - Component props
+ * @returns JSX element representing the game board
  */
 export function GameBoard({
   gameState,
@@ -65,7 +104,16 @@ export function GameBoard({
     );
   }
 
-  // Calculate cell size based on grid dimensions (using the max dimension)
+  /**
+   * Calculate appropriate cell size based on grid dimensions
+   *
+   * Uses the maximum dimension to determine cell size for optimal visibility.
+   * Smaller grids get larger cells for better interaction.
+   *
+   * @param width - Grid width
+   * @param height - Grid height
+   * @returns Cell size in pixels (40-60px range)
+   */
   const getCellSize = (width: number, height: number): number => {
     const maxDim = Math.max(width, height);
     if (maxDim <= 5) return 60;
@@ -75,7 +123,16 @@ export function GameBoard({
 
   const cellSize = getCellSize(gridWidth, gridHeight);
 
-  // Helper function to get cardinal adjacent positions (N/S/E/W only)
+  /**
+   * Get cardinal adjacent positions (N/S/E/W only) for drying preview
+   *
+   * Returns the four cardinal directions from a position, filtering out
+   * positions that are outside the grid bounds. Used specifically for
+   * showing which fields will be dried when journeyman moves.
+   *
+   * @param position - Center position to find adjacents for
+   * @returns Array of valid adjacent positions in cardinal directions
+   */
   const getCardinalAdjacent = (position: Position): Position[] => {
     const positions: Position[] = [];
     const directions = [
@@ -95,12 +152,27 @@ export function GameBoard({
     return positions;
   };
 
-  // Helper function to check if journeyman is at a position
+  /**
+   * Check if the journeyman is positioned at the given coordinates
+   *
+   * @param row - Row index to check
+   * @param col - Column index to check
+   * @returns True if journeyman is at the specified position
+   */
   const isJourneymanAt = (row: number, col: number): boolean => {
     return journeymanPosition.y === row && journeymanPosition.x === col;
   };
 
-  // Helper function to check if a field is selectable
+  /**
+   * Determine if a field is selectable based on current game state and player role
+   *
+   * For Journeyman: Can move to adjacent dry fields (8 directions)
+   * For Weather: Can select any dry field except journeyman's position (max 2)
+   *
+   * @param row - Row index of the field
+   * @param col - Column index of the field
+   * @returns True if the field can be selected by the current player
+   */
   const isFieldSelectable = (row: number, col: number): boolean => {
     const fieldState = grid[row][col];
 
@@ -141,12 +213,26 @@ export function GameBoard({
     return false;
   };
 
-  // Helper function to check if a field is selected (for Weather player)
+  /**
+   * Check if a field is currently selected by the weather player
+   *
+   * @param row - Row index of the field
+   * @param col - Column index of the field
+   * @returns True if the field is in the weather's flood selection
+   */
   const isFieldSelected = (row: number, col: number): boolean => {
     return selectedFloodPositions.some((p) => p.x === col && p.y === row);
   };
 
-  // Click handler for field selection
+  /**
+   * Handle field click events for both player roles
+   *
+   * Journeyman: Immediately moves to the clicked field
+   * Weather: Toggles the field in/out of flood selection
+   *
+   * @param row - Row index of clicked field
+   * @param col - Column index of clicked field
+   */
   const handleFieldClick = (row: number, col: number) => {
     const position: Position = { x: col, y: row };
 
@@ -163,7 +249,15 @@ export function GameBoard({
     }
   };
 
-  // Mouse enter handler
+  /**
+   * Handle mouse enter events for hover effects and drying preview
+   *
+   * Sets the hovered cell state and calculates drying preview positions
+   * for journeyman movement (shows which fields will be dried).
+   *
+   * @param row - Row index of hovered field
+   * @param col - Column index of hovered field
+   */
   const handleMouseEnter = (row: number, col: number) => {
     const position = { x: col, y: row };
     setHoveredCell(position);
@@ -175,7 +269,9 @@ export function GameBoard({
     }
   };
 
-  // Mouse leave handler
+  /**
+   * Handle mouse leave events to clear hover states and previews
+   */
   const handleMouseLeave = () => {
     setHoveredCell(null);
     setDryingPreviewPositions([]);
