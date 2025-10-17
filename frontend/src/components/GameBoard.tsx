@@ -1,5 +1,5 @@
 /**
- * Game Board Component
+ * Game Board Component for Flooded Island
  *
  * Displays the interactive game grid with field states, journeyman position,
  * and handles all player interactions during active gameplay. Provides visual
@@ -292,7 +292,7 @@ export function GameBoard({
       <div className="max-w-6xl w-full">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-5xl font-bold text-white mb-3 drop-shadow-lg">Flooding Islands</h1>
+          <h1 className="text-5xl font-bold text-white mb-3 drop-shadow-lg">Flooded Island</h1>
           <div className="flex items-center justify-center gap-8 text-white/90">
             <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-2">
               <span className="text-sm text-white/70">Day:</span>{' '}

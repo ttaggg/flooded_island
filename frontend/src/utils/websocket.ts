@@ -1,5 +1,5 @@
 /**
- * WebSocket utility functions for Flooding Islands.
+ * WebSocket utility functions for Flooded Island.
  * Handles URL construction and message validation.
  */
 

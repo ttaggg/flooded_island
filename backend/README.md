@@ -1,6 +1,6 @@
-# Flooding Islands - Backend
+# Flooded Island - Backend
 
-FastAPI backend for the Flooding Islands multiplayer game.
+FastAPI backend for the Flooded Island multiplayer game.
 
 ## Prerequisites
 
@@ -71,7 +71,7 @@ uvicorn main:app --reload --port 8000
 - Virtual environment created with uv (Python 3.13.5)
 - All dependencies installed successfully (19 packages)
 - Server starts on port 8000
-- Health check endpoint returns: `{"status":"ok","message":"Flooding Islands API is running","version":"1.0.0"}`
+- Health check endpoint returns: `{"status":"ok","message":"Flooded Island API is running","version":"1.0.0"}`
 
 Once the server is running, visit:
 - Health check: http://localhost:8000

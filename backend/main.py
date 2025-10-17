@@ -1,5 +1,5 @@
 """
-FastAPI application entry point for Flooding Islands game.
+FastAPI application entry point for Flooded Island game.
 Provides health check endpoint and configures CORS for frontend communication.
 """
 
@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
     Replaces deprecated @app.on_event decorators.
     """
     # Startup
-    print("🌊 Flooding Islands API starting up...")
+    print("🌊 Flooded Island API starting up...")
     print(f"📡 CORS enabled for: {frontend_url}")
 
     # Start background cleanup task
@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
     yield
 
     # Shutdown
-    print("🌊 Flooding Islands API shutting down...")
+    print("🌊 Flooded Island API shutting down...")
     cleanup_task.cancel()
     with suppress(asyncio.CancelledError):
         await cleanup_task
@@ -46,8 +46,8 @@ async def lifespan(app: FastAPI):
 
 # Initialize FastAPI application
 app = FastAPI(
-    title="Flooding Islands API",
-    description="Backend API for the Flooding Islands multiplayer game",
+    title="Flooded Island API",
+    description="Backend API for the Flooded Island multiplayer game",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -73,7 +73,7 @@ async def health_check():
     """
     return {
         "status": "ok",
-        "message": "Flooding Islands API is running",
+        "message": "Flooded Island API is running",
         "version": "1.0.0",
     }
 

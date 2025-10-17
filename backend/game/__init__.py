@@ -1,5 +1,5 @@
 """
-Game logic module for Flooding Islands.
+Game logic module for Flooded Island.
 
 Contains core game mechanics including board management, move validation,
 win condition checking, and room management.

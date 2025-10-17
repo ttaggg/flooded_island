@@ -1,5 +1,5 @@
 """
-Move validation logic for Flooding Islands game.
+Move validation logic for Flooded Island game.
 
 Provides validation functions for journeyman movement, weather flooding,
 trap detection, and grid configuration.

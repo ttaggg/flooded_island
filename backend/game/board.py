@@ -1,5 +1,5 @@
 """
-Board management for Flooding Islands game.
+Board management for Flooded Island game.
 
 Handles grid initialization, field state management, position validation,
 and adjacency calculations for both movement (8 directions) and drying (4 directions).

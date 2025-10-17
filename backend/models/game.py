@@ -1,5 +1,5 @@
 """
-Game state data models for Flooding Islands.
+Game state data models for Flooded Island.
 
 Defines core game entities including field states, positions, player roles,
 game status, and the complete game room state.

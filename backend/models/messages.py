@@ -1,5 +1,5 @@
 """
-WebSocket message models for Flooding Islands.
+WebSocket message models for Flooded Island.
 
 Defines all message types for client-to-server and server-to-client communication.
 """

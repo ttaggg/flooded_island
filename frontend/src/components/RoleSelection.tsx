@@ -1,5 +1,5 @@
 /**
- * Role Selection Screen Component
+ * Role Selection Screen Component for Flooded Island
  *
  * Allows players to choose between Journeyman and Weather roles before
  * starting the game. Displays role descriptions, availability status,
@@ -232,7 +232,7 @@ export function RoleSelection({
       <div className="max-w-6xl w-full">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-6xl font-bold text-white mb-4 drop-shadow-lg">Flooding Islands</h1>
+          <h1 className="text-6xl font-bold text-white mb-4 drop-shadow-lg">Flooded Island</h1>
           <h2 className="text-3xl font-semibold text-white/90 mb-3">Choose Your Role</h2>
           <p className="text-white/70 text-lg max-w-2xl mx-auto">
             Two players, two roles. The Journeyman must survive 365 days while the Weather tries to

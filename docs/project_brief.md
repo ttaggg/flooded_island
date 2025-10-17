@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Project Name
-Flooding Islands
+Flooded Island
 
 ## Overview
 A turn-based web game for two players where one player (journeyman) tries to survive on a flooding island while the other player (weather) attempts to trap them by flooding squares. The game is played on a configurable grid where the journeyman must strategically move and dry adjacent fields while the weather floods up to two fields per turn.

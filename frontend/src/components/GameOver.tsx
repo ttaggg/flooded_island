@@ -1,5 +1,5 @@
 /**
- * Game Over Screen Component
+ * Game Over Screen Component for Flooded Island
  *
  * Displays the end-game screen with winner announcement, final statistics,
  * and a Play Again button. Provides visual feedback for both victory conditions
@@ -121,7 +121,7 @@ export function GameOver({ winner, stats, onPlayAgain }: GameOverProps) {
 
           {/* Footer Message */}
           <div className="mt-6 text-center">
-            <p className="text-white/50 text-sm">Thank you for playing Flooding Islands!</p>
+            <p className="text-white/50 text-sm">Thank you for playing Flooded Island!</p>
           </div>
         </div>
       </div>

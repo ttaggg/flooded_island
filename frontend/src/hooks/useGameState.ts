@@ -1,5 +1,5 @@
 /**
- * Game state management hook for Flooding Islands.
+ * Game state management hook for Flooded Island.
  * Wraps useWebSocket to manage game state, player role, selections, and actions.
  */
 

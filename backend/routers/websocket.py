@@ -1,5 +1,5 @@
 """
-WebSocket connection handler for Flooding Islands game.
+WebSocket connection handler for Flooded Island game.
 
 Manages real-time multiplayer communication including connection management,
 message routing, and broadcasting to players in game rooms.

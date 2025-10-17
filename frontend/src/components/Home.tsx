@@ -1,5 +1,5 @@
 /**
- * Home Page Component for Flooding Islands
+ * Home Page Component for Flooded Island
  * Landing page with Create New Game and Join Game functionality
  */
 
@@ -70,7 +70,7 @@ function Home() {
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-white mb-4">Flooding Islands</h1>
+          <h1 className="text-5xl font-bold text-white mb-4">Flooded Island</h1>
           <p className="text-white/80 text-lg max-w-md mx-auto">
             A strategic 2-player game where the Journeyman tries to survive 365 days while the
             Weather tries to trap them with floods.

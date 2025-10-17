@@ -1,5 +1,5 @@
 /**
- * Room ID utilities for Flooding Islands
+ * Room ID utilities for Flooded Island
  * Handles generation, validation, and formatting of room codes
  */
 

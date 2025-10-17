@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Flooding Islands - Stop Script
+# Flooded Island - Stop Script
 # Stops both backend and frontend development servers
 
-echo "🛑 Stopping Flooding Islands servers..."
+echo "🛑 Stopping Flooded Island servers..."
 echo ""
 
 # Get the directory where this script is located

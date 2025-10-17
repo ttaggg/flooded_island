@@ -1,6 +1,6 @@
-# Flooding Islands - Frontend
+# Flooded Island - Frontend
 
-React + TypeScript + Vite frontend for the Flooding Islands game.
+React + TypeScript + Vite frontend for the Flooded Island game.
 
 ## Setup
 

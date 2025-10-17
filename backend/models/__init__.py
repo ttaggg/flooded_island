@@ -1,5 +1,5 @@
 """
-Pydantic data models for Flooding Islands backend.
+Pydantic data models for Flooded Island backend.
 
 This module exports all game models and WebSocket message types.
 """

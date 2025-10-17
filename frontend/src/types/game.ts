@@ -1,5 +1,5 @@
 /**
- * Core game type definitions for Flooding Islands.
+ * Core game type definitions for Flooded Island.
  * Mirrors the backend models from backend/models/game.py
  */
 

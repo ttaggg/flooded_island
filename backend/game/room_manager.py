@@ -1,5 +1,5 @@
 """
-Room management for Flooding Islands game.
+Room management for Flooded Island game.
 
 Handles room lifecycle including creation, storage, retrieval, updates,
 and automatic cleanup of ended games after 5 minutes.

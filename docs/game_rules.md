@@ -1,4 +1,4 @@
-# Game Rules - Flooding Islands
+# Game Rules - Flooded Island
 
 ## Overview
 Two-player turn-based strategy game where journeyman tries to survive on an island while weather attempts to flood them.

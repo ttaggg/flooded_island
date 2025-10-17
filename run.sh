@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Flooding Islands - Start Script
+# Flooded Island - Start Script
 # Starts both backend and frontend development servers
 
 set -e
 
-echo "🌊 Starting Flooding Islands..."
+echo "🌊 Starting Flooded Island..."
 echo ""
 
 # Get the directory where this script is located

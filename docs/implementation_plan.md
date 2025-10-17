@@ -1,4 +1,4 @@
-# Implementation Plan - Flooding Islands
+# Implementation Plan - Flooded Island
 
 ## General Idea
 Build a 2-player online turn-based strategy game where:

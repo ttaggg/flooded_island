@@ -354,7 +354,7 @@ Running log of completed tasks and changes to the project.
     - Created virtual environment using `uv venv` with Python 3.13.5
     - Installed all 19 dependencies using `uv pip install -r requirements.txt`
     - Successfully tested server startup
-    - Verified health check endpoint responds correctly: `{"status":"ok","message":"Flooding Islands API is running","version":"1.0.0"}`
+    - Verified health check endpoint responds correctly: `{"status":"ok","message":"Flooded Island API is running","version":"1.0.0"}`
 - **Notes**: 
   - Using `uv` for fast Python package management (significantly faster than pip)
   - Python 3.13.5 used for development
@@ -395,7 +395,7 @@ Running log of completed tasks and changes to the project.
     - `src/main.tsx` - React entry point with StrictMode
     - `src/App.tsx` - Main app component with:
       - Indigo gradient background (from-indigo-900 via-indigo-700 to-indigo-500)
-      - "Flooding Islands" title
+      - "Flooded Island" title
       - Sample dry/flooded field color preview
       - Test counter to verify interactivity
     - `src/index.css` - Global styles with Tailwind

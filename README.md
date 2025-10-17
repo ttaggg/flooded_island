@@ -1,4 +1,4 @@
-# Flooding Islands
+# Flooded Island
 
 A turn-based multiplayer strategy game where two players compete on a flooding grid. One player (the Journeyman) tries to survive 365 days by moving strategically and drying adjacent fields, while the other player (the Weather) attempts to trap them by flooding the island.
 
@@ -71,7 +71,7 @@ See [frontend/README.md](frontend/README.md) for detailed frontend setup instruc
 ## 📁 Project Structure
 
 ```
-flooding_islands/
+flooded_island/
 ├── backend/              # FastAPI backend
 │   ├── game/            # Game logic modules
 │   ├── models/          # Pydantic data models

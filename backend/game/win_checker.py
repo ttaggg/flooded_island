@@ -1,5 +1,5 @@
 """
-Win condition checking and game statistics for Flooding Islands.
+Win condition checking and game statistics for Flooded Island.
 
 Provides functions to check victory conditions for both players
 and calculate game statistics.

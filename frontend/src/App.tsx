@@ -1,5 +1,5 @@
 /**
- * Main App Component for Flooding Islands
+ * Main App Component for Flooded Island
  * Manages routing and game state
  */
 
@@ -201,7 +201,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center px-4">
       <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center max-w-2xl">
-        <h1 className="text-4xl font-bold text-white mb-4">Flooding Islands</h1>
+        <h1 className="text-4xl font-bold text-white mb-4">Flooded Island</h1>
         <p className="text-white/80">Unknown game state</p>
       </div>
     </div>

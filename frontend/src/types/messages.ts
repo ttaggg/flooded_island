@@ -1,5 +1,5 @@
 /**
- * WebSocket message type definitions for Flooding Islands.
+ * WebSocket message type definitions for Flooded Island.
  * Mirrors the backend models from backend/models/messages.py
  */
 

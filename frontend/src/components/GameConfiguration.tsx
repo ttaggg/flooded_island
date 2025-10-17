@@ -1,5 +1,5 @@
 /**
- * Game Configuration Screen Component
+ * Game Configuration Screen Component for Flooded Island
  *
  * Allows the Journeyman player to configure grid dimensions with a visual
  * preview before starting the game. Weather player sees a read-only waiting
@@ -176,7 +176,7 @@ export function GameConfiguration({
       <div className="max-w-4xl w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-6xl font-bold text-white mb-4 drop-shadow-lg">Flooding Islands</h1>
+          <h1 className="text-6xl font-bold text-white mb-4 drop-shadow-lg">Flooded Island</h1>
           <h2 className="text-3xl font-semibold text-white/90 mb-3">Game Configuration</h2>
           <p className="text-white/70 text-lg max-w-2xl mx-auto">
             {isJourneyman
