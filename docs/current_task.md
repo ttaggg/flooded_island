@@ -1,7 +1,7 @@
 # Current Active Task
 
 ## Task
-Task 4.5: Game Configuration Screen
+Task 4.6: Game Board Component
 
 ## Phase
 Phase 4: Frontend - UI Components
@@ -10,193 +10,186 @@ Phase 4: Frontend - UI Components
 Completed
 
 ## Description
-Create the GameConfiguration component that allows the Journeyman to configure the grid size with a visual preview, while the Weather player sees a read-only version and waits for configuration to complete.
+Create the GameBoard component that displays the N×N game grid with field states (dry/flooded) and the journeyman's current position during active gameplay.
 
 ## Requirements
-- Grid size selector (3-10 range, default 10)
-- Visual preview of grid showing N×N squares
-- Quick selection buttons for common sizes (5×5, 7×7, 10×10)
-- Custom number input for precise selection
-- Start game button (Journeyman only)
-- Waiting state for Weather player
-- Indigo gradient background consistent with design system
-- Responsive layout with Tailwind CSS
+- Render N×N grid based on gameState.gridSize
+- Display field states with proper colors (dry=yellow, flooded=blue)
+- Show journeyman position with visual indicator
+- Responsive sizing for all grid sizes (3-10)
+- Consistent indigo gradient background
+- Display game information (turn count, current role)
+- Turn indicator showing whose turn it is
+- Legend explaining field states and journeyman icon
 
 ## Implementation Details
 
 ### Component Structure
-**Location**: `frontend/src/components/GameConfiguration.tsx`
+**Location**: `frontend/src/components/GameBoard.tsx`
 
 **Props Interface:**
 ```typescript
-interface GameConfigurationProps {
-  gameState: GameState | null;
+interface GameBoardProps {
+  gameState: GameState;
   myRole: PlayerRole | null;
-  canConfigureGrid: boolean;
-  onConfigureGrid: (size: number) => void;
 }
 ```
 
 ### UI Sections
 1. **Header Section:**
    - Game title: "Flooding Islands"
-   - Page title: "Game Configuration"
-   - Role-specific subtitle (Journeyman vs Weather)
+   - Three info cards: Day counter (X/365), Current Turn (role), Your Role
+   - Highlight player's role when it's their turn (yellow ring)
 
-2. **Grid Size Selector:**
-   - Current size display (large: "10 × 10")
-   - Quick selection buttons (5×5, 7×7, 10×10)
-   - Custom number input (3-10 range)
-   - Journeyman: Interactive controls
-   - Weather: Read-only, shows current selection
+2. **Turn Indicator:**
+   - Active player: "🎯 Your Turn - Make Your Move" (yellow, animated pulse)
+   - Waiting: "Waiting for [role] to move..." (white/gray)
 
-3. **Visual Grid Preview:**
-   - GridPreview subcomponent
-   - N×N grid of small squares (24-40px each, based on grid size)
-   - All squares shown in dry state (yellow)
-   - Responsive sizing for different grid sizes
-   - Border and background for visual clarity
+3. **Game Grid:**
+   - N×N CSS Grid layout with responsive cell sizing
+   - Cell sizes: 3-5 grid → 60px, 6-7 grid → 50px, 8-10 grid → 40px
+   - DRY fields: Yellow background (bg-yellow-200, border-yellow-400)
+   - FLOODED fields: Blue background (bg-blue-400, border-blue-600)
+   - Journeyman: Walking emoji (🚶) centered on current position
+   - Smooth transitions on all elements
 
-4. **Action Section:**
-   - Journeyman: "Start Game" button
-   - Weather: Waiting message with animated dots
-   - Role indicator footer
+4. **Legend:**
+   - Visual key for dry fields, flooded fields, and journeyman
+   - Small sample squares with labels
+
+5. **Footer:**
+   - Grid size and room ID information
 
 ### State Logic
-- Local state for `selectedSize` (default: 10)
-- Derive `isJourneyman` from `myRole === PlayerRole.JOURNEYMAN`
-- Use `canConfigureGrid` prop to enable/disable controls
-- Input validation: clamp between 3-10
-- Quick buttons highlight current selection
-- Disabled styling for Weather player
+- Destructure grid, gridSize, journeymanPosition, currentTurn, currentRole from gameState
+- Early return with loading message if grid not initialized
+- Calculate cell size based on gridSize
+- Helper function `isJourneymanAt(row, col)` checks position
+- Helper function `getFieldClasses(fieldState)` returns appropriate CSS classes
+- Determine if it's player's turn: `isMyTurn = myRole === currentRole`
 
 ### Styling
 - Background: `bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500`
-- Main card: Semi-transparent white with backdrop blur
-- Grid preview: Yellow squares with border, indigo background
-- Buttons: Yellow/amber for actions, white/transparent for options
-- Smooth transitions and hover effects
-- Consistent with indigo color palette
+- Main card: `bg-white/10 backdrop-blur-sm rounded-2xl shadow-2xl`
+- Grid container: `bg-indigo-900/30 p-4 rounded-lg border-2 border-white/20`
+- Info cards: `bg-white/10 backdrop-blur-sm rounded-lg`
+- Active turn highlight: `bg-yellow-400/30 ring-2 ring-yellow-400`
+- Consistent with GameConfiguration styling patterns
 
 ## Current Progress
-- [x] Create component file with TypeScript interfaces ✅
-- [x] Implement GridPreview subcomponent with dynamic sizing ✅
-- [x] Implement grid size selector with quick buttons ✅
-- [x] Add custom number input (3-10 range) ✅
-- [x] Implement main GameConfiguration component ✅
-- [x] Add conditional rendering for Journeyman vs Weather ✅
-- [x] Add waiting state animation for Weather ✅
+- [x] Create GameBoard.tsx component file ✅
+- [x] Implement props interface and component structure ✅
+- [x] Add responsive sizing logic (getCellSize function) ✅
+- [x] Implement N×N grid rendering with CSS Grid ✅
+- [x] Add field state colors (dry/flooded) ✅
+- [x] Implement journeyman position indicator (🚶 emoji) ✅
+- [x] Add header with game information ✅
+- [x] Add turn indicator with animation ✅
+- [x] Add legend for field states ✅
 - [x] Style with indigo gradients and responsive layout ✅
-- [x] Integrate into App.tsx replacing CONFIGURING placeholder ✅
-- [x] Extract canConfigureGrid and configureGrid from useGameState ✅
+- [x] Import GameBoard into App.tsx ✅
+- [x] Replace ACTIVE status placeholder with GameBoard ✅
 - [x] Verify no linter errors ✅
 
 ## Acceptance Criteria
-- ✅ Component renders for both Journeyman and Weather roles
-- ✅ Grid size selector works (3-10 range, default 10)
-- ✅ Visual preview updates when size changes
-- ✅ Preview shows appropriate grid dimensions
-- ✅ Quick selection buttons (5×5, 7×7, 10×10) work
-- ✅ Custom number input validates and clamps values
-- ✅ Start Game button only enabled/visible for Journeyman
-- ✅ Weather sees read-only view with waiting state
-- ✅ Component sends correct configure_grid message to backend
-- ✅ Indigo gradient background consistent with design system
+- ✅ Component renders N×N grid based on gameState.gridSize
+- ✅ DRY fields displayed with yellow/amber color
+- ✅ FLOODED fields displayed with blue/cyan color
+- ✅ Journeyman position marked with visible indicator (🚶 emoji)
+- ✅ Responsive sizing works for all grid sizes (3-10)
+- ✅ Consistent indigo theme and styling
+- ✅ Component integrated into App.tsx ACTIVE screen
 - ✅ No TypeScript or linter errors
-- ✅ Smooth transitions and responsive layout
+- ✅ Display-only (no interactions yet - Task 4.7 will add those)
 
 ## Files Created/Modified
-1. **Created**: `frontend/src/components/GameConfiguration.tsx` (224 lines)
-   - GridPreview subcomponent for N×N grid visualization
-   - GameConfiguration main component
-   - Complete state handling and styling
-   - Conditional rendering for both roles
+1. **Created**: `frontend/src/components/GameBoard.tsx` (173 lines)
+   - GameBoard component with full grid visualization
+   - Responsive cell sizing based on grid dimensions
+   - Field state colors (dry=yellow, flooded=blue)
+   - Journeyman position indicator with emoji
+   - Turn indicator and game information display
+   - Legend for field states
 
-2. **Modified**: `frontend/src/App.tsx` (148 lines)
-   - Imported GameConfiguration component
-   - Extracted canConfigureGrid and configureGrid from useGameState
-   - Replaced CONFIGURING placeholder with GameConfiguration component
-   - Passed proper props from useGameState hook
+2. **Modified**: `frontend/src/App.tsx` (133 lines)
+   - Imported GameBoard component
+   - Replaced ACTIVE status placeholder (lines 107-119) with GameBoard
+   - Clean single-line integration: `<GameBoard gameState={gameState} myRole={myRole} />`
 
 ## Key Features Implemented
 
-### GridPreview Component
-- Dynamic square sizing based on grid size
-  - 3-5 grid: 40px squares
-  - 6-7 grid: 30px squares
-  - 8-10 grid: 24px squares
-- CSS Grid layout for N×N display
-- All squares in dry state (yellow)
-- Border and background for visual clarity
-- Responsive and scales appropriately
-
-### GameConfiguration Component
-- Default grid size: 10×10
-- Large display of current selection
-- Three quick selection buttons (5, 7, 10)
-  - Highlight current selection
-  - Smooth hover and scale effects
-  - Disabled state for Weather
-- Custom number input
-  - Range validation (3-10)
-  - Clamping for out-of-range values
-  - Disabled state for Weather
-- Visual grid preview updates in real-time
-- Role-specific behavior:
-  - Journeyman: All controls active, Start Game button
-  - Weather: All controls disabled, waiting animation
-- Footer showing player role
+### GameBoard Component
+- **Dynamic Grid Rendering**: Uses CSS Grid with N×N layout
+- **Responsive Cell Sizing**: 
+  - 3-5 grid: 60px cells
+  - 6-7 grid: 50px cells
+  - 8-10 grid: 40px cells
+- **Field State Visualization**:
+  - DRY: Yellow (bg-yellow-200, border-yellow-400)
+  - FLOODED: Blue (bg-blue-400, border-blue-600)
+- **Journeyman Indicator**: Walking emoji (🚶) sized proportionally to cell
+- **Game Information Display**:
+  - Day counter (X/365)
+  - Current turn (role)
+  - Player's role with turn highlighting
+- **Turn Indicator**:
+  - Active: "🎯 Your Turn - Make Your Move" with pulse animation
+  - Waiting: "Waiting for [role] to move..."
+- **Legend**: Visual key for all game elements
 
 ### App.tsx Integration
-- GameConfiguration imported and integrated
-- Conditional rendering for GameStatus.CONFIGURING
+- GameBoard imported and integrated
+- Conditional rendering for GameStatus.ACTIVE
 - Props passed from useGameState:
-  - gameState, myRole, canConfigureGrid, configureGrid
-- Clean replacement of placeholder
+  - gameState (complete game state)
+  - myRole (player's role)
+- Clean replacement of TODO placeholder
 
 ### Styling Highlights
 - Consistent indigo gradient background
 - Semi-transparent cards with backdrop blur
-- Yellow/amber buttons for Journeyman actions
-- Disabled states with reduced opacity
+- Color-coded field states for clarity
 - Smooth transitions (200ms duration)
-- Scale animations on hover and selection
 - Responsive layout for all screen sizes
-- Bouncing dots animation for Weather waiting state
+- Turn highlighting with yellow ring when active
+- Pulse animation for active turn indicator
+- Proportional emoji sizing based on cell size
 
 ## Testing Results
-- ✅ Component renders correctly for both roles
-- ✅ Grid size selector updates preview in real-time
-- ✅ Quick selection buttons work properly
-- ✅ Number input validates and clamps values
-- ✅ Start Game button calls configureGrid with correct size
-- ✅ Weather player sees read-only interface
+- ✅ Component structure created correctly
+- ✅ Grid renders with proper N×N layout
+- ✅ Field states display with correct colors
+- ✅ Journeyman indicator shows at correct position
+- ✅ Responsive sizing works for all grid sizes
+- ✅ Turn indicator displays correctly
+- ✅ Legend shows all field states
 - ✅ No TypeScript errors
 - ✅ No linter errors (Prettier/ESLint)
 - ✅ Component ready for integration testing with backend
 
 ## Next Task
 Continue with Phase 4: Frontend Implementation
-- **Task 4.6**: Game Board Component - Create `components/GameBoard.tsx`
-- Task 4.7: Field Component - Create `components/Field.tsx`
-- Task 4.8: Field Animations
-- Task 4.9: Control Panel Component
+- **Task 4.7**: Field Component - Create `components/Field.tsx` with click handlers and interactions
+- Task 4.8: Field Animations - Add 3D flip effects for state changes
+- Task 4.9: Turn Controls Component
 - And more UI components...
 
 ## Blockers/Notes
 - No blockers
 - Task completed successfully
-- Game configuration screen fully functional
-- Ready to move to game board visualization
+- Game board visualization fully functional
+- Display-only component - interactions will be added in Task 4.7
 - All acceptance criteria met
 - Clean, maintainable code with TypeScript type safety
-- Backend integration ready (sends configure_grid message)
-- Visual preview provides excellent UX for grid size selection
+- Ready for integration with Field component and interactions
+- Backend integration ready (displays received game state)
 
 ## Implementation Highlights
-- **Dynamic Grid Sizing**: GridPreview automatically adjusts square size based on grid dimensions to maintain usability
-- **Role-Specific UX**: Clear differentiation between Journeyman (active) and Weather (waiting) experiences
-- **Quick Selection**: Common grid sizes (5×5, 7×7, 10×10) accessible with one click
-- **Input Validation**: Number input properly clamps values to valid range (3-10)
-- **Consistent Design**: Maintains indigo color scheme and styling patterns from RoleSelection
-- **Responsive Layout**: Works well on mobile and desktop viewports
+- **Clean Visual Hierarchy**: Header → Turn Indicator → Grid → Legend → Footer
+- **Responsive Design**: Cell sizing automatically adjusts to grid dimensions
+- **Turn Awareness**: Clear indication of whose turn it is with visual highlighting
+- **Information-Rich**: Displays all relevant game information at a glance
+- **Consistent Design**: Maintains indigo color scheme from previous screens
+- **Accessible Legend**: Users can easily understand field states and icons
+- **Smooth Transitions**: All elements transition smoothly for better UX
+- **Emoji Icon**: Using 🧙‍♂️ emoji for journeyman is simple and effective

@@ -6,6 +6,7 @@
 import { useGameState } from './hooks/useGameState';
 import { RoleSelection } from './components/RoleSelection';
 import { GameConfiguration } from './components/GameConfiguration';
+import { GameBoard } from './components/GameBoard';
 import { GameStatus } from './types';
 
 function App() {
@@ -103,19 +104,9 @@ function App() {
     );
   }
 
-  // TODO: Active Game Screen (ACTIVE status)
+  // Active Game Screen (ACTIVE status)
   if (gameState.gameStatus === GameStatus.ACTIVE) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center px-4">
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center max-w-2xl">
-          <h1 className="text-4xl font-bold text-white mb-4">Game In Progress</h1>
-          <p className="text-white/80 mb-4">Game board (coming soon...)</p>
-          <p className="text-white/60 text-sm">Turn: {gameState.currentTurn}</p>
-          <p className="text-white/60 text-sm">Current Role: {gameState.currentRole}</p>
-          <p className="text-white/60 text-sm">Your Role: {myRole || 'None'}</p>
-        </div>
-      </div>
-    );
+    return <GameBoard gameState={gameState} myRole={myRole} />;
   }
 
   // TODO: Game Over Screen (ENDED status)
