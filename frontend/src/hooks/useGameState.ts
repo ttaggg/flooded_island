@@ -25,6 +25,7 @@ export interface UseGameStateReturn {
   gameState: GameState | null;
   myRole: PlayerRole | null;
   lastError: string | null;
+  gameStats: Record<string, unknown> | null;
 
   // Connection
   connectionState: ConnectionState;
@@ -74,6 +75,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
   const [myRole, setMyRole] = useState<PlayerRole | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [selectedFloodPositions, setSelectedFloodPositions] = useState<Position[]>([]);
+  const [gameStats, setGameStats] = useState<Record<string, unknown> | null>(null);
 
   // Refs - stable references that don't trigger re-renders
   const onErrorRef = useRef(onError);
@@ -108,6 +110,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
       case 'game_over':
         // Game ended
         console.log(`🏁 Game over! Winner: ${message.winner}`);
+        setGameStats(message.stats);
         setGameState((prev) => {
           if (!prev) return prev;
           return {
@@ -373,6 +376,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
     gameState,
     myRole,
     lastError,
+    gameStats,
 
     // Connection
     connectionState,

@@ -7,12 +7,35 @@ import { useGameState } from './hooks/useGameState';
 import { RoleSelection } from './components/RoleSelection';
 import { GameConfiguration } from './components/GameConfiguration';
 import { GameBoard } from './components/GameBoard';
+import { GameOver } from './components/GameOver';
 import { GameStatus } from './types';
 
 function App() {
-  // For MVP, we'll use a hardcoded room ID
-  // In future, this would come from routing or room creation
-  const roomId = 'demo-room';
+  /**
+   * Get room ID from URL query parameter, or generate a new one if not present.
+   * URL format: /?room=ABC123
+   */
+  const getRoomIdFromUrl = (): string => {
+    const params = new URLSearchParams(window.location.search);
+    const roomFromUrl = params.get('room');
+
+    if (roomFromUrl && roomFromUrl.length > 0) {
+      return roomFromUrl;
+    }
+
+    // Generate new room ID if not in URL
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const newRoomId = Array.from({ length: 6 }, () =>
+      chars.charAt(Math.floor(Math.random() * chars.length))
+    ).join('');
+
+    // Update URL without reloading
+    window.history.replaceState(null, '', `/?room=${newRoomId}`);
+
+    return newRoomId;
+  };
+
+  const roomId = getRoomIdFromUrl();
 
   // Connect to game state
   const {
@@ -33,6 +56,7 @@ function App() {
     isMyTurn,
     submitFlood,
     clearFloodSelection,
+    gameStats,
   } = useGameState({
     roomId,
     onError: (message) => {
@@ -40,6 +64,20 @@ function App() {
       // TODO: Show error toast/notification in UI
     },
   });
+
+  /**
+   * Handle Play Again button - generate new room ID and navigate to it.
+   * This creates a fresh game room.
+   */
+  const handlePlayAgain = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const newRoomId = Array.from({ length: 6 }, () =>
+      chars.charAt(Math.floor(Math.random() * chars.length))
+    ).join('');
+
+    console.log(`🎮 Starting new game with room: ${newRoomId}`);
+    window.location.href = `/?room=${newRoomId}`;
+  };
 
   // Show connection status while connecting
   if (connectionState === 'connecting') {
@@ -132,16 +170,10 @@ function App() {
     );
   }
 
-  // TODO: Game Over Screen (ENDED status)
+  // Game Over Screen (ENDED status)
   if (gameState.gameStatus === GameStatus.ENDED) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center px-4">
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center max-w-2xl">
-          <h1 className="text-4xl font-bold text-white mb-4">Game Over</h1>
-          <p className="text-white/80 mb-4">Winner: {gameState.winner || 'Unknown'}</p>
-          <p className="text-white/60 text-sm">Game over screen (coming soon...)</p>
-        </div>
-      </div>
+      <GameOver winner={gameState.winner!} stats={gameStats || {}} onPlayAgain={handlePlayAgain} />
     );
   }
 

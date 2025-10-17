@@ -1546,6 +1546,60 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 4.11: Game Over Screen
+- **Date**: 2025-10-17
+- **Status**: Completed ✅
+- **Changes**:
+  - ✅ Created complete Game Over screen with winner announcement, statistics, and Play Again button
+  - ✅ Updated `useGameState.ts`:
+    - Added `gameStats` state to store game statistics from game_over message
+    - Updated game_over handler to capture stats: `setGameStats(message.stats)`
+    - Added `gameStats: Record<string, unknown> | null` to UseGameStateReturn interface
+    - Exposed gameStats in return statement for consumption by components
+  - ✅ Created `GameOver.tsx` component:
+    - Accepts props: winner (PlayerRole), stats (statistics object), onPlayAgain (callback)
+    - Winner-specific styling: gold/yellow for Journeyman, blue for Weather
+    - Role-specific emojis: 🎉 for Journeyman win, 🌧️ for Weather win
+    - Descriptive win condition messages
+    - Statistics grid with 4 StatCard components displaying:
+      - Days Survived 📅
+      - Fields Flooded 💧
+      - Fields Dry 🌤️
+      - Total Fields 🗺️
+    - Play Again button with indigo gradient and hover effects
+    - Glass morphism styling consistent with app theme
+    - Safe stat extraction with nullish coalescing defaults
+  - ✅ Updated `App.tsx`:
+    - Imported GameOver component
+    - Extracted gameStats from useGameState hook
+    - Added `getRoomIdFromUrl()` function to read room ID from URL or generate new one
+    - Room ID now dynamic (from URL ?room=ABC123) instead of hardcoded 'demo-room'
+    - URL automatically updated when no room parameter present
+    - Added `handlePlayAgain()` handler that generates new room ID and navigates
+    - Replaced placeholder game over UI with GameOver component
+    - Passed winner, stats, and onPlayAgain props to GameOver
+  - ✅ Play Again functionality generates new random room ID and navigates to it
+  - ✅ All statistics properly displayed from backend data
+  - ✅ Responsive layout with 2x2 grid (4 columns on medium+ screens)
+  - ✅ Consistent indigo gradient background and glass morphism effects
+  - ✅ Smooth transitions and hover effects throughout
+  - ✅ No TypeScript or linter errors
+- **Notes**: 
+  - Room ID generation matches backend format (ABCDEFGHJKLMNPQRSTUVWXYZ23456789)
+  - Statistics come from backend calculate_statistics() function
+  - Winner-specific colors and emojis make victory condition immediately clear
+  - Component handles missing/undefined stats gracefully with defaults
+  - Play Again creates truly fresh game by generating new room ID
+  - Clean separation between game end and new game start
+  - Visual design provides clear closure and strong call-to-action
+  - Flooding percentage bar was removed due to poor display at low percentages
+  - Fixed Play Again bug: App now reads room ID from URL parameters instead of hardcoded value
+  - Each Play Again creates a new room with fresh state, not reusing ended rooms
+  - URL updates automatically to show current room ID
+  - Task 4.12 will create Connection Status component
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]
