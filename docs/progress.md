@@ -1004,6 +1004,190 @@ Running log of completed tasks and changes to the project.
   - Ready to implement WebSocket and game state hooks in Task 4.2
   - Zero linter errors
 
+### Task 4.2: WebSocket Hook
+- **Date**: 2025-10-17
+- **Status**: Completed
+- **Changes**:
+  - Created `frontend/src/utils/websocket.ts` with WebSocket helper functions
+    - `getBackendUrl()` - Reads from environment variable with fallback to localhost:8000
+    - `getWebSocketUrl(roomId)` - Converts HTTP URL to WebSocket URL and appends room path
+    - `isValidServerMessage(data)` - Type guard for validating server messages
+  - Created `frontend/src/hooks/useWebSocket.ts` with comprehensive WebSocket management
+    - Connection state management (disconnected/connecting/connected/error)
+    - WebSocket instance stored in ref to avoid recreations
+    - Type-safe `sendMessage()` function accepting `ClientMessage` union type
+    - Type-safe message parsing with runtime validation
+    - `onMessage` callback for handling server messages
+    - Manual `connect()` and `disconnect()` methods
+    - `isConnected` convenience flag
+  - Implemented automatic reconnection with exponential backoff
+    - Initial delay: 1 second, doubles each attempt
+    - Maximum delay: 30 seconds (configurable)
+    - Reset delay on successful connection
+    - Track intentional vs unexpected disconnects
+    - Only auto-reconnect on unexpected closures
+  - Implemented message queue for offline reliability
+    - Queue messages when not connected
+    - Maximum queue size of 50 messages
+    - Drops oldest messages when queue full
+    - Automatically flush queue on connection
+    - Clear queue on manual disconnect
+  - Proper cleanup and resource management
+    - Clear reconnection timers on unmount
+    - Close WebSocket connections properly
+    - Reconnect when roomId changes
+    - Auto-connect on mount (configurable via `autoConnect` option)
+  - Comprehensive error handling
+    - JSON parse errors handled gracefully
+    - WebSocket errors logged without crashing
+    - Invalid messages logged as warnings
+    - Failed sends retry via queue
+  - Extensive logging for debugging
+    - Connection events with emoji indicators
+    - Message send/receive with type logging
+    - Queue operations with size tracking
+    - Reconnection attempts with delay info
+- **Notes**: 
+  - Hook provides solid foundation for real-time multiplayer
+  - Exponential backoff prevents server overload during outages
+  - Message queue ensures no data loss during brief disconnections
+  - Type safety prevents runtime message format errors
+  - Stable callback refs prevent unnecessary re-renders
+  - Ready to build game state hook on top of this in Task 4.3
+  - Environment variable `VITE_BACKEND_URL` allows custom backend configuration
+  - Zero linter errors
+
+---
+
+### Task 4.3: Game State Hook
+- **Date**: 2025-10-17
+- **Status**: Completed ✅
+- **Changes**:
+  - Created `frontend/src/hooks/useGameState.ts` (383 lines)
+  - Implemented complete game state management hook wrapping useWebSocket
+  - State management:
+    - gameState: Synced with server via WebSocket messages
+    - myRole: Local tracking of selected player role
+    - lastError: Error message storage
+    - selectedFloodPositions: Weather player flood selection (0-2)
+  - Message handling for all ServerMessage types:
+    - room_state: Initialize/update game state
+    - game_update: Update state, auto-clear selections on turn switch
+    - game_over: Update state with winner
+    - error: Store in state + call optional callback
+    - player_disconnected/reconnected: Logged for debugging
+  - Computed convenience values (memoized):
+    - isMyTurn: Check if current player's turn
+    - canSelectRole: Permission to select role (waiting phase)
+    - canConfigureGrid: Permission to configure (journeyman, configuring phase)
+    - canMove: Permission to move (journeyman's turn)
+    - canFlood: Permission to flood (weather's turn)
+    - availableRoles: List of roles not yet taken
+  - Action methods:
+    - selectRole(role): Store locally + send to server
+    - configureGrid(size): Validate 3-10 + send message
+    - move(position): Send move message
+    - addFloodPosition(pos): Add to selection (max 2, prevent duplicates)
+    - removeFloodPosition(pos): Remove from selection
+    - clearFloodSelection(): Clear all selections
+    - submitFlood(): Send flood message + auto-clear
+    - clearError(): Clear error state
+  - Flood selection features:
+    - Maximum 2 positions enforced
+    - Duplicate position detection and prevention
+    - Auto-clear on turn switch to journeyman
+    - Auto-clear after submitting flood action
+    - Complete CRUD API for selection management
+  - Error handling (dual approach):
+    - Store lastError in state for UI display
+    - Call optional onError callback for additional handling
+    - Local validation with error feedback (grid size 3-10)
+  - Full TypeScript type safety:
+    - UseGameStateOptions and UseGameStateReturn interfaces
+    - Leverages existing types (GameState, PlayerRole, Position, etc.)
+    - Discriminated union pattern for message handling
+    - No any types used
+  - Comprehensive logging:
+    - All message types logged with emoji indicators
+    - Action methods log operations
+    - Selection operations tracked
+    - Error logging
+  - Zero linter errors
+- **Notes**: 
+  - Hook provides complete game state management abstraction
+  - Components can use this hook for all game interactions
+  - Wraps useWebSocket to provide higher-level game-specific API
+  - Local role tracking enables permission-based UI rendering
+  - Computed values reduce component complexity
+  - Flood selection state prevents prop drilling
+  - Dual error handling (state + callback) provides flexibility
+  - Position comparison logic for duplicate detection
+  - Auto-clear logic prevents stale selections
+  - Ready for UI component implementation (Phase 4 tasks 4.4+)
+  - Clean separation of concerns: WebSocket layer vs game logic layer
+  - All planned features from implementation plan delivered
+
+---
+
+### Task 4.4: Role Selection Screen
+- **Date**: 2025-10-17
+- **Status**: Completed
+- **Changes**:
+  - Created `frontend/src/components/RoleSelection.tsx` (217 lines):
+    - RoleCard subcomponent for individual role display
+    - RoleSelection main component with complete layout
+    - TypeScript interfaces for props and role card configuration
+  - Modified `frontend/src/App.tsx` (151 lines):
+    - Integrated useGameState hook
+    - Added connection state handling (connecting, disconnected, connected)
+    - Conditional rendering based on gameStatus
+    - RoleSelection component integration for WAITING status
+    - Placeholder screens for CONFIGURING, ACTIVE, and ENDED statuses
+  - Component features:
+    - Two role cards (Journeyman and Weather) displayed side-by-side
+    - Role descriptions with icon, goal, and actions
+    - Three state indicators: Available, Taken, Selected
+    - Dynamic button states and styling
+    - Checkmark badge on selected role
+    - Ring animation highlighting selected card
+    - Status section with waiting animation (bouncing dots)
+  - Styling implementation:
+    - Indigo gradient background (`from-indigo-900 via-indigo-700 to-indigo-500`)
+    - Semi-transparent cards with backdrop blur
+    - Role-specific accent colors (yellow for Journeyman, blue for Weather)
+    - Responsive grid layout (1 column mobile, 2 columns desktop)
+    - Smooth transitions and hover effects (300ms duration)
+    - Scale animations on hover and selection
+  - State management:
+    - Props from useGameState hook (gameState, myRole, availableRoles, canSelectRole)
+    - Conditional rendering based on role availability
+    - Disabled states for taken roles
+    - Selected state with visual feedback
+    - Waiting animation when role selected but opponent hasn't joined
+  - App.tsx improvements:
+    - Connection state screens with loading animations
+    - Room ID hardcoded as "demo-room" for MVP
+    - Error callback placeholder for future error notifications
+    - Graceful loading and error states
+  - Testing:
+    - Servers started successfully (backend on :8000, frontend on :5173)
+    - WebSocket connections established to demo-room
+    - No linter errors
+    - No runtime errors in logs
+- **Notes**: 
+  - First UI component of the game fully implemented
+  - Component follows design system with indigo gradients and role-specific colors
+  - Clean separation: RoleCard as reusable subcomponent
+  - All three role states (available/taken/selected) handled correctly
+  - Waiting animation provides good UX feedback
+  - App.tsx now has complete game flow structure with placeholders
+  - Ready for Task 4.5: Game Configuration Screen
+  - Component is production-ready for role selection phase
+  - TypeScript type safety maintained throughout
+  - Responsive design works on mobile and desktop
+  - Accessibility: Clear visual states and disabled button states
+  - Performance: Minimal re-renders, efficient state updates
+
 ---
 
 ## Template for Future Entries
