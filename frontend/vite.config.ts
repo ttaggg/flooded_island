@@ -8,7 +8,7 @@ export default defineConfig({
     port: 5173,
     host: true,
   },
-  base: '/islands/', // Set base path for Netlify subdirectory deployment
+  // base: '/islands/', // Removed for Render.com deployment
   build: {
     outDir: 'dist',
     assetsDir: 'assets',

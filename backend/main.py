@@ -6,10 +6,13 @@ Provides health check endpoint and configures CORS for frontend communication.
 import asyncio
 import os
 from contextlib import asynccontextmanager, suppress
+from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from game.room_manager import start_cleanup_task
 from routers import websocket
@@ -64,8 +67,33 @@ app.add_middleware(
 # Include WebSocket router
 app.include_router(websocket.router, tags=["websocket"])
 
+# Mount static files (frontend build)
+frontend_dist_path = Path(__file__).parent.parent / "frontend" / "dist"
+if Path(frontend_dist_path).exists():
+    app.mount("/static", StaticFiles(directory=frontend_dist_path), name="static")
+
 
 @app.get("/")
+async def serve_frontend():
+    """
+    Serve the frontend application.
+    Falls back to API info if frontend is not built.
+    """
+    frontend_dist_path = Path(__file__).parent.parent / "frontend" / "dist"
+    index_file = Path(frontend_dist_path) / "index.html"
+
+    if Path(index_file).exists():
+        return FileResponse(index_file)
+    # Fallback to API info if frontend is not built
+    return {
+        "status": "ok",
+        "message": "Flooded Island API is running",
+        "version": "1.0.0",
+        "note": "Frontend not built. Run 'cd frontend && npm run build' to build the frontend.",
+    }
+
+
+@app.get("/api/health")
 async def health_check():
     """
     Health check endpoint.
