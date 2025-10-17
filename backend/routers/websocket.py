@@ -345,23 +345,23 @@ async def validate_current_turn(
 
 def serialize_room_state(room: GameRoom) -> dict:
     """
-    Serialize a GameRoom to a JSON-serializable dictionary.
+    Serialize a GameRoom to a JSON-serializable dictionary with camelCase keys.
 
     Args:
         room: The GameRoom instance to serialize
 
     Returns:
-        Dictionary representation of the room state
+        Dictionary representation of the room state (camelCase keys for frontend)
     """
     return {
-        "room_id": room.room_id,
-        "grid_size": room.grid_size,
+        "roomId": room.room_id,
+        "gridSize": room.grid_size,
         "grid": (
             [[field.value for field in row] if row else None for row in room.grid]
             if room.grid
             else None
         ),
-        "journeyman_position": (
+        "journeymanPosition": (
             {
                 "x": room.journeyman_position.x,
                 "y": room.journeyman_position.y,
@@ -369,13 +369,13 @@ def serialize_room_state(room: GameRoom) -> dict:
             if room.journeyman_position
             else None
         ),
-        "current_turn": room.current_turn,
-        "current_role": room.current_role.value,
+        "currentTurn": room.current_turn,
+        "currentRole": room.current_role.value,
         "players": room.players,
-        "game_status": room.game_status.value,
+        "gameStatus": room.game_status.value,
         "winner": room.winner.value if room.winner else None,
-        "created_at": room.created_at.isoformat(),
-        "ended_at": room.ended_at.isoformat() if room.ended_at else None,
+        "createdAt": room.created_at.isoformat(),
+        "endedAt": room.ended_at.isoformat() if room.ended_at else None,
     }
 
 

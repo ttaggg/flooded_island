@@ -1247,6 +1247,25 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Bug Fix: WebSocket Message Serialization
+- **Date**: 2025-10-17
+- **Status**: Completed ✅
+- **Issue**: Frontend could not parse backend WebSocket messages, resulting in "Unknown game state" error
+- **Root Cause**: Backend was sending field names in snake_case (e.g., `game_status`, `room_id`) while frontend TypeScript interfaces expected camelCase (e.g., `gameStatus`, `roomId`)
+- **Fix**: Updated `serialize_room_state()` function in `backend/routers/websocket.py` to use camelCase keys:
+  - `room_id` → `roomId`
+  - `grid_size` → `gridSize`
+  - `journeyman_position` → `journeymanPosition`
+  - `current_turn` → `currentTurn`
+  - `current_role` → `currentRole`
+  - `game_status` → `gameStatus`
+  - `created_at` → `createdAt`
+  - `ended_at` → `endedAt`
+- **Result**: WebSocket messages now parse correctly, role selection screen displays properly
+- **Impact**: Game is now functional and playable
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]
