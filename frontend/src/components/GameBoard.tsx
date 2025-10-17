@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { GameState, PlayerRole, FieldState, Position } from '../types';
 import { Field } from './Field';
 import { TurnControls } from './TurnControls';
+import { ConnectionStatus } from './ConnectionStatus';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -20,6 +21,11 @@ interface GameBoardProps {
   isMyTurn: boolean;
   submitFlood: () => void;
   clearFloodSelection: () => void;
+  // Connection status props
+  connectionState: 'disconnected' | 'connecting' | 'connected' | 'error';
+  lastError: string | null;
+  onClearError: () => void;
+  opponentDisconnected: boolean;
 }
 
 /**
@@ -37,6 +43,10 @@ export function GameBoard({
   isMyTurn,
   submitFlood,
   clearFloodSelection,
+  connectionState,
+  lastError,
+  onClearError,
+  opponentDisconnected,
 }: GameBoardProps) {
   const { grid, gridWidth, gridHeight, journeymanPosition, currentTurn, currentRole } = gameState;
 
@@ -173,6 +183,16 @@ export function GameBoard({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center px-4 py-8">
+      {/* Connection Status Component */}
+      <ConnectionStatus
+        connectionState={connectionState}
+        gameState={gameState}
+        myRole={myRole}
+        lastError={lastError}
+        onClearError={onClearError}
+        opponentDisconnected={opponentDisconnected}
+      />
+
       <div className="max-w-6xl w-full">
         {/* Header */}
         <div className="text-center mb-6">

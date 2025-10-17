@@ -49,5 +49,6 @@ export function isValidServerMessage(data: unknown): data is ServerMessage {
     'player_reconnected',
   ];
 
-  return typeof data.type === 'string' && validTypes.includes(data.type);
+  const obj = data as Record<string, unknown>;
+  return typeof obj.type === 'string' && validTypes.includes(obj.type);
 }

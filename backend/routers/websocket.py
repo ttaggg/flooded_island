@@ -403,8 +403,23 @@ async def handle_select_role(message: dict, ctx: MessageContext) -> None:
 
     # Check if role is already taken
     if room.players[selected_role.value]:
-        await ctx.send_error(f"Role {selected_role.value} is already taken")
-        return
+        # Check if this is a reconnection attempt
+        # For reconnection, we allow the player to reclaim their role
+        # even if it appears "taken" (because the previous connection was lost)
+        is_reconnection_attempt = room.game_status in [
+            GameStatus.CONFIGURING,
+            GameStatus.ACTIVE,
+        ]
+
+        if is_reconnection_attempt:
+            print(
+                f"  → Reconnection attempt: allowing {selected_role.value} to reclaim role"
+            )
+            # Clear the "taken" status to allow reconnection
+            room.players[selected_role.value] = False
+        else:
+            await ctx.send_error(f"Role {selected_role.value} is already taken")
+            return
 
     # Check if this player already has a different role and clear it
     current_role = await ctx.get_player_role()

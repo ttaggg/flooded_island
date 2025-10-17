@@ -57,6 +57,9 @@ function App() {
     submitFlood,
     clearFloodSelection,
     gameStats,
+    lastError,
+    clearError,
+    opponentDisconnected,
   } = useGameState({
     roomId,
     onError: (message) => {
@@ -136,6 +139,10 @@ function App() {
         availableRoles={availableRoles}
         canSelectRole={canSelectRole}
         onSelectRole={selectRole}
+        connectionState={connectionState}
+        lastError={lastError}
+        onClearError={clearError}
+        opponentDisconnected={opponentDisconnected}
       />
     );
   }
@@ -147,6 +154,11 @@ function App() {
         myRole={myRole}
         canConfigureGrid={canConfigureGrid}
         onConfigureGrid={configureGrid}
+        connectionState={connectionState}
+        gameState={gameState}
+        lastError={lastError}
+        onClearError={clearError}
+        opponentDisconnected={opponentDisconnected}
       />
     );
   }
@@ -166,6 +178,10 @@ function App() {
         isMyTurn={isMyTurn}
         submitFlood={submitFlood}
         clearFloodSelection={clearFloodSelection}
+        connectionState={connectionState}
+        lastError={lastError}
+        onClearError={clearError}
+        opponentDisconnected={opponentDisconnected}
       />
     );
   }

@@ -42,6 +42,9 @@ export interface UseGameStateReturn {
   // Weather flood selection tracking
   selectedFloodPositions: Position[];
 
+  // Opponent connection status
+  opponentDisconnected: boolean;
+
   // Action methods
   selectRole: (role: PlayerRole) => void;
   configureGrid: (width: number, height: number) => void;
@@ -76,6 +79,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
   const [lastError, setLastError] = useState<string | null>(null);
   const [selectedFloodPositions, setSelectedFloodPositions] = useState<Position[]>([]);
   const [gameStats, setGameStats] = useState<Record<string, unknown> | null>(null);
+  const [opponentDisconnected, setOpponentDisconnected] = useState<boolean>(false);
 
   // Refs - stable references that don't trigger re-renders
   const onErrorRef = useRef(onError);
@@ -135,13 +139,13 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
       case 'player_disconnected':
         // Another player disconnected
         console.log(`👋 Player disconnected: ${message.role}`);
-        // Could update UI state here if needed
+        setOpponentDisconnected(true);
         break;
 
       case 'player_reconnected':
         // Another player reconnected
         console.log(`🔌 Player reconnected: ${message.role}`);
-        // Could update UI state here if needed
+        setOpponentDisconnected(false);
         break;
 
       default: {
@@ -232,8 +236,9 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
     (role: PlayerRole) => {
       console.log(`🎭 Selecting role: ${role}`);
 
-      // Store role locally
+      // Store role locally and in localStorage for reconnection
       setMyRole(role);
+      localStorage.setItem(`flooding-islands-role-${roomId}`, role);
 
       // Send to server
       sendMessage({
@@ -241,8 +246,35 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
         role,
       });
     },
-    [sendMessage]
+    [sendMessage, roomId]
   );
+
+  // Auto-restore role on reconnection
+  useEffect(() => {
+    if (isConnected && !myRole && gameState?.gameStatus === GameStatus.WAITING) {
+      const storedRole = localStorage.getItem(`flooding-islands-role-${roomId}`) as PlayerRole;
+      if (storedRole && availableRoles.includes(storedRole)) {
+        console.log(`🔄 Auto-restoring role: ${storedRole}`);
+        selectRole(storedRole);
+      }
+    }
+  }, [isConnected, myRole, gameState?.gameStatus, availableRoles, selectRole, roomId]);
+
+  // Auto-restore role for active games (reconnection to ongoing game)
+  useEffect(() => {
+    if (isConnected && !myRole && gameState?.gameStatus === GameStatus.ACTIVE) {
+      const storedRole = localStorage.getItem(`flooding-islands-role-${roomId}`) as PlayerRole;
+      if (storedRole) {
+        console.log(`🔄 Reconnecting to active game with role: ${storedRole}`);
+        // For active games, we need to tell the server we're reconnecting with this role
+        setMyRole(storedRole);
+        sendMessage({
+          type: 'select_role',
+          role: storedRole,
+        });
+      }
+    }
+  }, [isConnected, myRole, gameState?.gameStatus, sendMessage, roomId]);
 
   /**
    * Configure the grid dimensions (journeyman only).
@@ -392,6 +424,9 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
 
     // Weather flood selection tracking
     selectedFloodPositions,
+
+    // Opponent connection status
+    opponentDisconnected,
 
     // Action methods
     selectRole,

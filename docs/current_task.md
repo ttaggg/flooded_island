@@ -1,23 +1,48 @@
 # Current Active Task
 
 ## Task
-Task 4.11: Game Over Screen
+Player Reconnection Fix
 
 ## Status
 Completed
 
 ## Description
-Created a polished Game Over screen component that displays the winner announcement, final game statistics (days survived, fields flooded/dry, total fields), and a "Play Again" button that generates a new random room ID to start a fresh game.
+Fixed the issue where players who closed and reopened a tab became spectators and couldn't reclaim their previous role. Implemented localStorage-based role persistence with automatic role restoration for seamless reconnection experience.
+
+## Problem Solved
+- **Issue**: When players closed a tab and reopened it, they became spectators and couldn't assume the available role
+- **Root Cause**: Each WebSocket connection generated a new player ID, so the backend didn't recognize returning players
+- **Impact**: Players lost their progress and had to restart games when reconnecting
+
+## Solution Implemented
+- **Frontend**: Added localStorage-based role persistence with automatic restoration
+- **Backend**: Modified role selection logic to allow role reclamation during reconnection
+- **User Experience**: Seamless reconnection with automatic role restoration
 
 ## Requirements Met
-- ✅ Winner announcement with role-specific styling (gold for Journeyman, blue for Weather)
-- ✅ Final statistics displayed: days survived, fields flooded, fields dry, total fields
-- ✅ "Play Again" button generates new random room ID and navigates to it
-- ✅ Indigo gradient styling consistent with rest of application
-- ✅ Glass morphism effects with backdrop blur
-- ✅ Role-specific emojis (🎉 for Journeyman, 🌧️ for Weather)
-- ✅ Graceful handling of missing/undefined stats
-- ✅ No TypeScript or linter errors
+- ✅ Automatic role restoration on page refresh/reconnection
+- ✅ Works for both initial role selection and active game reconnection  
+- ✅ Room-specific role storage (different rooms maintain separate roles)
+- ✅ Graceful handling of role conflicts and edge cases
+- ✅ Maintains existing game state and player notifications
+- ✅ No breaking changes to existing functionality
+- ✅ TypeScript type safety maintained
+- ✅ No linting errors, successful build
+
+## Implementation Details
+- **Frontend Hook** (`frontend/src/hooks/useGameState.ts`):
+  - Modified `selectRole` function to store role in localStorage with room-specific key
+  - Added auto-restoration logic for WAITING game status (initial role selection)
+  - Added auto-restoration logic for ACTIVE game status (reconnection to ongoing game)
+  - Uses localStorage key format: `flooding-islands-role-${roomId}`
+- **Backend Logic** (`backend/routers/websocket.py`):
+  - Modified role selection handler to allow role reclamation during reconnection
+  - Added logic to detect reconnection attempts (when game status is CONFIGURING or ACTIVE)
+  - Allows players to reclaim their role even if it appears "taken" (previous connection lost)
+  - Maintains proper role assignment and broadcast logic
+
+## Next Steps
+Ready for the next task in the implementation plan.
 
 ## Changes Implemented
 

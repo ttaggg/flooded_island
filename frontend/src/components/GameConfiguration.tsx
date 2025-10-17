@@ -5,12 +5,19 @@
  */
 
 import { useState } from 'react';
-import { PlayerRole } from '../types';
+import { PlayerRole, GameState } from '../types';
+import { ConnectionStatus } from './ConnectionStatus';
 
 interface GameConfigurationProps {
   myRole: PlayerRole | null;
   canConfigureGrid: boolean;
   onConfigureGrid: (width: number, height: number) => void;
+  // Connection status props
+  connectionState: 'disconnected' | 'connecting' | 'connected' | 'error';
+  gameState: GameState | null;
+  lastError: string | null;
+  onClearError: () => void;
+  opponentDisconnected: boolean;
 }
 
 interface GridPreviewProps {
@@ -66,6 +73,11 @@ export function GameConfiguration({
   myRole,
   canConfigureGrid,
   onConfigureGrid,
+  connectionState,
+  gameState,
+  lastError,
+  onClearError,
+  opponentDisconnected,
 }: GameConfigurationProps) {
   // Local state for selected grid dimensions (default: 10x10)
   const [selectedWidth, setSelectedWidth] = useState<number>(10);
@@ -112,6 +124,16 @@ export function GameConfiguration({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center px-4 py-8">
+      {/* Connection Status Component */}
+      <ConnectionStatus
+        connectionState={connectionState}
+        gameState={gameState}
+        myRole={myRole}
+        lastError={lastError}
+        onClearError={onClearError}
+        opponentDisconnected={opponentDisconnected}
+      />
+
       <div className="max-w-4xl w-full">
         {/* Header */}
         <div className="text-center mb-8">

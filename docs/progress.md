@@ -4,6 +4,66 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+## 2025-01-27
+
+### Player Reconnection Fix
+- **Status**: Completed ✅
+- **Task**: Fix player reconnection to automatically restore previous role when reconnecting to a game
+- **Problem**: When players closed a tab and reopened it, they became spectators and couldn't reclaim their previous role
+- **Root Cause**: Each WebSocket connection generated a new player ID, so the backend didn't recognize returning players
+- **Solution**: Implemented localStorage-based role persistence with automatic role restoration
+- **Changes**:
+  - **Frontend Hook** (`frontend/src/hooks/useGameState.ts`):
+    - Modified `selectRole` function to store role in localStorage with room-specific key
+    - Added auto-restoration logic for WAITING game status (initial role selection)
+    - Added auto-restoration logic for ACTIVE game status (reconnection to ongoing game)
+    - Uses localStorage key format: `flooding-islands-role-${roomId}`
+  - **Backend Logic** (`backend/routers/websocket.py`):
+    - Modified role selection handler to allow role reclamation during reconnection
+    - Added logic to detect reconnection attempts (when game status is CONFIGURING or ACTIVE)
+    - Allows players to reclaim their role even if it appears "taken" (previous connection lost)
+    - Maintains proper role assignment and broadcast logic
+- **Features**:
+  - Automatic role restoration on page refresh/reconnection
+  - Works for both initial role selection and active game reconnection
+  - Room-specific role storage (different rooms maintain separate roles)
+  - Graceful handling of role conflicts and edge cases
+  - Maintains existing game state and player notifications
+
+### Connection Status Component (Task 4.12)
+- **Status**: Completed ✅
+- **Task**: Create ConnectionStatus component to display connection state, opponent status, and notifications
+- **Changes**:
+  - **New Component** (`frontend/src/components/ConnectionStatus.tsx`):
+    - Displays real-time connection state with colored indicators (green/yellow/red)
+    - Shows opponent connection status and waiting messages
+    - Handles player disconnect/reconnect notifications with auto-dismiss
+    - Displays error messages with manual dismiss functionality
+    - Uses indigo-themed styling with glass-morphism effects
+    - Fixed position at top-right corner (non-blocking overlay)
+  - **Updated Hook** (`frontend/src/hooks/useGameState.ts`):
+    - Added `opponentDisconnected` state tracking
+    - Updated `player_disconnected` and `player_reconnected` message handlers
+    - Added `opponentDisconnected` to return interface
+  - **Updated Components**:
+    - **GameBoard** (`frontend/src/components/GameBoard.tsx`): Integrated ConnectionStatus component
+    - **RoleSelection** (`frontend/src/components/RoleSelection.tsx`): Added ConnectionStatus for consistency
+    - **GameConfiguration** (`frontend/src/components/GameConfiguration.tsx`): Added ConnectionStatus for consistency
+    - **App** (`frontend/src/App.tsx`): Updated to pass connection props to all screens
+  - **Updated Styles** (`frontend/src/index.css`):
+    - Added slide-in animation for notifications
+  - **Fixed Utils** (`frontend/src/utils/websocket.ts`):
+    - Fixed TypeScript type guard for message validation
+- **Features**:
+  - Connection state indicators (Connected/Connecting/Reconnecting)
+  - Opponent status messages ("Waiting for opponent...", "Opponent connected")
+  - Disconnect/reconnect notifications with 5-second auto-dismiss
+  - Error message display with manual dismiss
+  - Responsive design with proper z-index layering
+  - Consistent indigo theme integration
+
+---
+
 ## 2025-10-17
 
 ### Rectangular Island Support
