@@ -1,98 +1,119 @@
 # Current Active Task
 
 ## Task
-Task 4.8: Field Animations
+Task 4.9: Turn Controls Component
 
 ## Status
 Completed
 
 ## Description
-Enhanced the Field component with CSS animations including a 3D flip effect for state transitions (dry↔flooded), enhanced selection glow effect, and polished hover transitions. This adds visual polish to field state changes and makes the game more engaging.
+Created the TurnControls component to display turn information and provide action controls for players. The component shows the current day/turn counter, whose turn it is, and provides appropriate controls for each player role. For Weather players, it includes a selection counter showing how many fields are selected (0/2, 1/2, 2/2), an "End Turn" button to submit flood actions, and a "Clear Selection" button to reset their selections. For Journeyman players, it shows helpful instructions. When it's not the player's turn, it displays a waiting message.
 
 ## Requirements Met
-- ✅ Added 3D flip animation (Y-axis rotation) for field state changes
-- ✅ Implemented 400ms flip animation with ease-in-out timing
-- ✅ Enhanced selection glow with multi-layer shadow effect
-- ✅ Updated transitions to 300ms for smoother feel
-- ✅ Added state tracking to trigger animations on field state changes
-- ✅ Preserved 3D transform style for proper animation rendering
+- ✅ Created `TurnControls.tsx` component with proper TypeScript interface
+- ✅ Display current turn and day counter (e.g., "Day 15/365")
+- ✅ Show whose turn it is (Journeyman/Weather)
+- ✅ Show player's role with visual indicator (highlighted when it's their turn)
+- ✅ For Weather's turn: selection counter showing "Selected: X/2 fields"
+- ✅ "End Turn" button enabled for Weather player (can flood 0-2 fields)
+- ✅ "Clear Selection" button enabled when selections > 0
+- ✅ For Journeyman's turn: helpful instruction text
+- ✅ For non-active player: waiting message with context
+- ✅ Updated App.tsx to pass necessary props
+- ✅ Updated GameBoard.tsx to render TurnControls
+- ✅ Styled with indigo theme, backdrop blur, and shadow effects
 - ✅ No TypeScript or linter errors
 
 ## Changes Implemented
 
-### 1. Updated CSS Animations (`frontend/src/index.css`)
-**Added Custom Keyframes:**
-- `@keyframes flip-y`: Y-axis rotation animation (0° → 90° → 0°) for state changes
-- `.field-selected`: Enhanced selection glow with multi-layer box-shadow
-  - Inner glow: `0 0 20px 4px rgba(59, 130, 246, 0.8)`
-  - Outer glow: `0 0 40px 8px rgba(59, 130, 246, 0.4)`
-- `.field-hover`: Smooth transition for transform and filter properties
+### 1. Created TurnControls Component (`frontend/src/components/TurnControls.tsx`) - 148 lines
+**Component Structure:**
+- **Props Interface**: Accepts gameState, myRole, isMyTurn, canFlood, selectedFloodPositions, submitFlood, clearFloodSelection
+- **Turn Information Section**:
+  - Day counter: "Day X/365"
+  - Current turn indicator: shows which role is playing
+  - Role indicator: shows player's role with yellow highlight when it's their turn
+- **Action Controls Section**:
+  - **Weather Controls** (when canFlood && isMyTurn):
+    - Selection counter: "Selected: X/2 fields"
+    - Helper text: "Select up to 2 dry fields to flood"
+    - Clear Selection button: enabled when hasSelection
+    - End Turn button: always enabled (Weather can flood 0-2 fields)
+  - **Journeyman Controls** (when isMyTurn && myRole === JOURNEYMAN):
+    - Instruction: "Your Turn - Click an adjacent field to move"
+    - Helper text: "Move to a dry field. Adjacent fields (N/S/E/W) will be automatically dried."
+  - **Waiting State** (when !isMyTurn):
+    - Message: "Waiting for [Role] to play..."
+    - Context text: explains what the current player is doing
 
-### 2. Updated Field Component (`frontend/src/components/Field.tsx`) - 157 lines
-**Added Imports:**
-- `useState`, `useEffect`, `useRef` from React for animation state management
+**Styling:**
+- Indigo theme with `bg-white/10 backdrop-blur-sm`
+- White text with good contrast
+- End Turn button: Yellow/gold gradient (primary action)
+- Clear button: White/transparent (secondary action)
+- Yellow highlight ring when it's player's turn
+- Responsive flex layout
 
-**Added Animation State:**
-- `isFlipping`: Boolean state to track active flip animation
-- `prevFieldStateRef`: Ref to store previous field state for comparison
+### 2. Updated App.tsx
+**Changes:**
+- Added `isMyTurn`, `submitFlood`, and `clearFloodSelection` to destructured `useGameState` return (line 33-35)
+- Passed these new props to `GameBoard` component (lines 128-130)
 
-**Added useEffect Hook:**
-- Detects field state changes (dry↔flooded)
-- Triggers 400ms flip animation
-- Auto-clears animation state after completion
-- Cleanup on unmount to prevent memory leaks
-
-**Updated getSelectionClasses:**
-- Replaced Tailwind shadow classes with custom `field-selected` class
-- Maintains ring-4 and ring-blue-500 for border
-- Enhanced visual prominence with multi-layer shadow
-
-**Updated fieldClasses:**
-- Added conditional animation: `${isFlipping ? 'animate-[flip-y_400ms_ease-in-out]' : ''}`
-- Increased transition duration from 200ms to 300ms
-- Added `field-hover` class for smooth hover transitions
-
-**Updated JSX:**
-- Added `transformStyle: 'preserve-3d'` to inline styles
-- Enables proper 3D rendering for flip animation
+### 3. Updated GameBoard.tsx
+**Changes:**
+- Imported `TurnControls` component (line 9)
+- Added new props to `GameBoardProps` interface: `isMyTurn`, `submitFlood`, `clearFloodSelection` (lines 20-22)
+- Added new props to function destructuring (lines 37-39)
+- Removed local `isMyTurn` calculation (was line 146) since it's now a prop
+- Rendered `TurnControls` component below the game board card (lines 251-260)
+- Positioned between the legend and the footer
 
 ## Key Features Implemented
 
-### 3D Flip Animation
-- Triggers automatically when field state changes
-- Y-axis rotation (horizontal flip) with 400ms duration
-- Smooth ease-in-out timing function
-- Non-blocking (other interactions continue during animation)
+### Turn Information Display
+- Day counter shows progress toward 365-day goal
+- Current turn clearly indicates which role is active
+- Player's role highlighted with yellow ring when it's their turn
 
-### Enhanced Selection Glow
-- Brighter, more prominent shadow effect
-- Multi-layer glow (inner + outer) for depth
-- Static effect (no pulsing/breathing) for clarity
-- Blue color (#3b82f6) matches theme
+### Weather Player Controls
+- Selection counter provides clear feedback (0/2, 1/2, 2/2)
+- Clear Selection button removes all selections
+- End Turn button submits flood action (enabled for 0-2 selections)
+- Helper text guides the player
 
-### Smooth Transitions
-- Increased duration to 300ms for polished feel
-- Applies to all state changes (hover, selection, opacity)
-- field-hover class for transform and filter transitions
+### Journeyman Player Controls
+- Clear instruction: "Click an adjacent field to move"
+- Explanation of auto-drying mechanic
+
+### Waiting State
+- Clear message when it's not player's turn
+- Context about what the other player is doing
+
+### Visual Design
+- Consistent indigo theme with backdrop blur
+- White text with high contrast
+- Yellow/gold accent for primary actions
+- Smooth transitions and hover effects
 
 ## Testing Notes
-- Field flips smoothly when Weather floods a dry field
-- Field flips smoothly when Journeyman dries adjacent flooded fields
-- Selection glow is significantly more prominent and visually appealing
-- No animation flicker or stuttering
-- Hover effects remain smooth and responsive
-- Animation doesn't interfere with click interactions
-- 3D flip renders correctly with preserved transform style
+- Weather player sees selection counter updating (0/2 → 1/2 → 2/2)
+- Clear Selection button enabled only when selections > 0
+- End Turn button always enabled for Weather (can submit 0-2 fields)
+- Clicking End Turn calls `submitFlood()` and submits to backend
+- Clicking Clear removes all selected fields
+- Journeyman sees instruction text on their turn
+- Non-active player sees waiting message
+- Component styled consistently with rest of UI
 - No TypeScript or linter errors in any modified files
 
 ## Next Steps
-- **Task 4.9**: Create Turn Controls component with "End Turn" button and selection counter
 - **Task 4.10**: Add drying preview on journeyman movement hover
 - **Task 4.11**: Create Game Over screen
+- **Task 4.12**: Create Connection Status component
 
 ## Notes
-- Y-axis flip (horizontal) chosen for natural left-to-right flip motion
-- 400ms duration provides visible animation without feeling sluggish
-- Static glow preferred over animated/pulsing for clear selection indication
-- Animation state managed via React hooks for proper lifecycle handling
-- Transform style preserved-3d ensures proper 3D rendering
+- Weather can flood 0-2 fields, so End Turn is always enabled
+- Selection counter provides clear visual feedback
+- Component is positioned below the game board for easy access
+- Responsive design works on different screen sizes
+- Clear visual hierarchy with turn info at top, actions at bottom

@@ -1483,6 +1483,34 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 4.9: Turn Controls Component
+- **Date**: 2025-10-17
+- **Status**: Completed
+- **Changes**:
+  - ✅ Created `TurnControls.tsx` component with full TypeScript interface (148 lines)
+  - ✅ Display current day counter (Day X/365) and turn indicator
+  - ✅ Show player's role with yellow highlight when it's their turn
+  - ✅ Weather controls: selection counter (X/2 fields), "End Turn", and "Clear Selection" buttons
+  - ✅ Journeyman controls: helpful instruction text
+  - ✅ Waiting state: clear message when not player's turn
+  - ✅ Updated `App.tsx` to pass `isMyTurn`, `submitFlood`, and `clearFloodSelection` props
+  - ✅ Updated `GameBoard.tsx` to import and render TurnControls component
+  - ✅ Removed duplicate `isMyTurn` calculation from GameBoard
+  - ✅ Styled with indigo theme, backdrop blur, and shadow effects
+  - ✅ No TypeScript or linter errors
+- **Notes**: 
+  - Weather can flood 0-2 fields, so End Turn button is always enabled
+  - Clear Selection button enabled only when selections > 0
+  - Component positioned below game board for easy access
+  - Turn information prominently displayed at top of controls
+  - Yellow/gold gradient for primary "End Turn" action
+  - Responsive layout with flex design
+  - Clear visual hierarchy and helpful context messages
+  - Task 4.10 will add drying preview on hover
+  - Task 4.11 will create Game Over screen
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]

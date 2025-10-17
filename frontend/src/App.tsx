@@ -30,6 +30,9 @@ function App() {
     selectedFloodPositions,
     canMove,
     canFlood,
+    isMyTurn,
+    submitFlood,
+    clearFloodSelection,
   } = useGameState({
     roomId,
     onError: (message) => {
@@ -122,6 +125,9 @@ function App() {
         selectedFloodPositions={selectedFloodPositions}
         canMove={canMove}
         canFlood={canFlood}
+        isMyTurn={isMyTurn}
+        submitFlood={submitFlood}
+        clearFloodSelection={clearFloodSelection}
       />
     );
   }
