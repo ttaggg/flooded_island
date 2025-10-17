@@ -8,4 +8,9 @@ export default defineConfig({
     port: 5173,
     host: true,
   },
+  base: '/islands/', // Set base path for Netlify subdirectory deployment
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+  },
 });
