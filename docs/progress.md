@@ -1408,6 +1408,60 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 4.7: Field Component
+- **Date**: 2025-10-17
+- **Status**: Completed ✅ (Updated with blue selection visual)
+- **Description**: Created interactive Field component with click handlers, hover states, and selection highlighting
+- **Changes**:
+  - ✅ **Created** `frontend/src/components/Field.tsx` (131 lines):
+    - Props interface: position, state, interaction flags, event handlers
+    - Visual states: base colors, selectable, selected, hovered, non-selectable
+    - Dynamic styling based on field state and interaction mode
+    - Journeyman emoji indicator scaled to cell size
+    - Accessibility features: role="button", tabIndex, aria-label
+    - Smooth CSS transitions (200ms) for all state changes
+  - ✅ **Modified** `frontend/src/components/GameBoard.tsx`:
+    - Added imports: Field component, Position type, useState hook
+    - Updated props: move, addFloodPosition, removeFloodPosition, selectedFloodPositions, canMove, canFlood
+    - Added hover tracking state: hoveredCell
+    - Implemented `isFieldSelectable(row, col)` helper:
+      - Journeyman: Adjacent (8 directions) + dry + not current position
+      - Weather: Dry + not journeyman position + under 2 selections
+    - Implemented `isFieldSelected(row, col)` helper for Weather selections
+    - Added event handlers: handleFieldClick, handleMouseEnter, handleMouseLeave
+    - Replaced inline field divs with Field component (lines 195-222)
+  - ✅ **Modified** `frontend/src/App.tsx`:
+    - Extracted additional functions from useGameState
+    - Passed new props to GameBoard component
+- **Key Features**:
+  - **Journeyman Movement**: Select adjacent dry fields, immediate move on click
+  - **Weather Flooding**: Multi-select up to 2 dry fields, toggle on click
+  - **Visual Feedback**: 
+    - Selectable fields: Cursor pointer, brightness increase, scale on hover
+    - Selected fields: Blue background (bg-blue-300) with blue ring and shadow - clearly shows field will be flooded
+    - Hovered fields: White ring overlay
+    - Non-selectable: Reduced opacity (70%)
+  - **Smooth Transitions**: All state changes animated
+  - **Accessibility**: Full keyboard support and ARIA labels
+- **Testing**:
+  - ✅ Field renders correctly for dry/flooded states
+  - ✅ Journeyman emoji displays and scales properly
+  - ✅ Journeyman can only select adjacent dry fields
+  - ✅ Weather can select any dry field except journeyman's position
+  - ✅ Weather selection toggles correctly (max 2 enforced)
+  - ✅ Hover states provide clear visual feedback
+  - ✅ No TypeScript or linter errors
+- **Notes**: 
+  - Field component extracted from inline GameBoard rendering
+  - Interactive gameplay now functional for both roles
+  - **Visual Update**: Selected fields now show blue background instead of yellow to clearly indicate they will be flooded by Weather player
+  - Task 4.8 will add 3D flip animations for state changes
+  - Task 4.9 will add Turn Controls with "End Turn" button
+  - Task 4.10 will add drying preview on hover
+  - Backend integration ready (move/flood actions sent to server)
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]

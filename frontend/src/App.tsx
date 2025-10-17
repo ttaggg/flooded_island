@@ -24,6 +24,12 @@ function App() {
     canConfigureGrid,
     configureGrid,
     connectionState,
+    move,
+    addFloodPosition,
+    removeFloodPosition,
+    selectedFloodPositions,
+    canMove,
+    canFlood,
   } = useGameState({
     roomId,
     onError: (message) => {
@@ -106,7 +112,18 @@ function App() {
 
   // Active Game Screen (ACTIVE status)
   if (gameState.gameStatus === GameStatus.ACTIVE) {
-    return <GameBoard gameState={gameState} myRole={myRole} />;
+    return (
+      <GameBoard
+        gameState={gameState}
+        myRole={myRole}
+        move={move}
+        addFloodPosition={addFloodPosition}
+        removeFloodPosition={removeFloodPosition}
+        selectedFloodPositions={selectedFloodPositions}
+        canMove={canMove}
+        canFlood={canFlood}
+      />
+    );
   }
 
   // TODO: Game Over Screen (ENDED status)

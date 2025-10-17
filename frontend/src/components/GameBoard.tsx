@@ -3,18 +3,38 @@
  * Displays the N×N game grid with field states and journeyman position
  */
 
-import { GameState, PlayerRole, FieldState } from '../types';
+import { useState } from 'react';
+import { GameState, PlayerRole, FieldState, Position } from '../types';
+import { Field } from './Field';
 
 interface GameBoardProps {
   gameState: GameState;
   myRole: PlayerRole | null;
+  move: (position: Position) => void;
+  addFloodPosition: (position: Position) => void;
+  removeFloodPosition: (position: Position) => void;
+  selectedFloodPositions: Position[];
+  canMove: boolean;
+  canFlood: boolean;
 }
 
 /**
  * Main GameBoard component
  */
-export function GameBoard({ gameState, myRole }: GameBoardProps) {
+export function GameBoard({
+  gameState,
+  myRole,
+  move,
+  addFloodPosition,
+  removeFloodPosition,
+  selectedFloodPositions,
+  canMove,
+  canFlood,
+}: GameBoardProps) {
   const { grid, gridWidth, gridHeight, journeymanPosition, currentTurn, currentRole } = gameState;
+
+  // Hover tracking state
+  const [hoveredCell, setHoveredCell] = useState<Position | null>(null);
 
   // Early return if grid is not initialized
   if (!grid || !gridWidth || !gridHeight || !journeymanPosition) {
@@ -42,13 +62,77 @@ export function GameBoard({ gameState, myRole }: GameBoardProps) {
     return journeymanPosition.y === row && journeymanPosition.x === col;
   };
 
-  // Get field color classes based on state
-  const getFieldClasses = (fieldState: FieldState): string => {
-    if (fieldState === FieldState.DRY) {
-      return 'bg-yellow-200 border-yellow-400';
-    } else {
-      return 'bg-blue-400 border-blue-600';
+  // Helper function to check if a field is selectable
+  const isFieldSelectable = (row: number, col: number): boolean => {
+    const fieldState = grid[row][col];
+
+    // Can't select flooded fields
+    if (fieldState === FieldState.FLOODED) {
+      return false;
     }
+
+    // Journeyman's turn - can move to adjacent dry fields
+    if (canMove) {
+      // Can't move to current position
+      if (isJourneymanAt(row, col)) {
+        return false;
+      }
+
+      // Check if adjacent (8 directions)
+      const rowDiff = Math.abs(row - journeymanPosition.y);
+      const colDiff = Math.abs(col - journeymanPosition.x);
+      return rowDiff <= 1 && colDiff <= 1 && (rowDiff > 0 || colDiff > 0);
+    }
+
+    // Weather's turn - can flood any dry field except journeyman's position
+    if (canFlood) {
+      // Can't flood journeyman's position
+      if (isJourneymanAt(row, col)) {
+        return false;
+      }
+
+      // Can't select more than 2 positions
+      const isAlreadySelected = selectedFloodPositions.some((p) => p.x === col && p.y === row);
+      if (!isAlreadySelected && selectedFloodPositions.length >= 2) {
+        return false;
+      }
+
+      return true;
+    }
+
+    return false;
+  };
+
+  // Helper function to check if a field is selected (for Weather player)
+  const isFieldSelected = (row: number, col: number): boolean => {
+    return selectedFloodPositions.some((p) => p.x === col && p.y === row);
+  };
+
+  // Click handler for field selection
+  const handleFieldClick = (row: number, col: number) => {
+    const position: Position = { x: col, y: row };
+
+    if (canMove) {
+      // Journeyman: Move immediately
+      move(position);
+    } else if (canFlood) {
+      // Weather: Toggle selection
+      if (isFieldSelected(row, col)) {
+        removeFloodPosition(position);
+      } else {
+        addFloodPosition(position);
+      }
+    }
+  };
+
+  // Mouse enter handler
+  const handleMouseEnter = (row: number, col: number) => {
+    setHoveredCell({ x: col, y: row });
+  };
+
+  // Mouse leave handler
+  const handleMouseLeave = () => {
+    setHoveredCell(null);
   };
 
   // Determine if it's the player's turn
@@ -109,28 +193,28 @@ export function GameBoard({ gameState, myRole }: GameBoardProps) {
                 {grid.map((row, rowIndex) =>
                   row.map((fieldState, colIndex) => {
                     const hasJourneyman = isJourneymanAt(rowIndex, colIndex);
-                    const fieldClasses = getFieldClasses(fieldState);
+                    const isSelectable = isFieldSelectable(rowIndex, colIndex);
+                    const isSelected = isFieldSelected(rowIndex, colIndex);
+                    const isHovered =
+                      hoveredCell !== null &&
+                      hoveredCell.x === colIndex &&
+                      hoveredCell.y === rowIndex;
 
                     return (
-                      <div
+                      <Field
                         key={`${rowIndex}-${colIndex}`}
-                        className={`${fieldClasses} border-2 rounded transition-all duration-200 flex items-center justify-center relative`}
-                        style={{
-                          width: `${cellSize}px`,
-                          height: `${cellSize}px`,
-                        }}
-                      >
-                        {hasJourneyman && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span
-                              className="text-2xl drop-shadow-lg"
-                              style={{ fontSize: `${cellSize * 0.6}px` }}
-                            >
-                              🧙‍♂️
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                        row={rowIndex}
+                        col={colIndex}
+                        fieldState={fieldState}
+                        hasJourneyman={hasJourneyman}
+                        cellSize={cellSize}
+                        isSelectable={isSelectable}
+                        isSelected={isSelected}
+                        isHovered={isHovered}
+                        onClick={handleFieldClick}
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                      />
                     );
                   })
                 )}
