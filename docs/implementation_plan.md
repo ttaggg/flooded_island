@@ -252,33 +252,23 @@ Build a 2-player online turn-based strategy game where:
 
 ---
 
-### **Phase 6: Polish & Edge Cases**
+### **Phase 6: Documentation & Deployment Prep**
 
-#### **Task 6.1: Error Handling**
-- Backend error responses
-- Frontend error display
-- Invalid move feedback
-- Network error recovery
+#### **Task 6.1: Code Documentation**
+- Add docstrings to Python functions
+- TypeScript JSDoc comments
 
-#### **Task 6.2: Loading States**
-- Loading indicators while connecting
-- Transition states between screens
-- Skeleton loaders if needed
+#### **Task 6.2: README Updates**
+- Complete setup instructions
+- Development workflow
+- Environment variables guide
+- Game rules summary
 
-#### **Task 6.3: Visual Polish**
-- Refine color palette
-- Perfect gradient backgrounds
-- Smooth all animations
-- Responsive design testing (desktop, tablet)
+---
 
-#### **Task 6.4: Edge Case Testing**
-- Both players disconnect
-- Invalid room IDs
-- Browser refresh scenarios
-- Maximum grid size edge cases
-- Day 365 exact win condition
+### **Phase 7: Future**
 
-#### **Task 6.5: Performance Optimization**
+#### **Task 7.1: Performance Optimization**
 - Optimize WebSocket message size
 - Reduce re-renders in React
 - Efficient grid rendering for 10x10
@@ -286,37 +276,17 @@ Build a 2-player online turn-based strategy game where:
 
 ---
 
-### **Phase 7: Documentation & Deployment Prep**
-
-#### **Task 7.1: Code Documentation**
-- Add docstrings to Python functions
-- Comment complex game logic
-- TypeScript JSDoc comments
-
-#### **Task 7.2: README Updates**
-- Complete setup instructions
-- Development workflow
-- Environment variables guide
-- Game rules summary
-
-#### **Task 7.3: Testing Documentation**
-- Manual testing checklist
-- Known issues/limitations
-- Browser compatibility notes
-
----
-
 ## Summary
 
-**Total: ~40 discrete tasks** organized into 7 phases:
+**Total: ~32 discrete tasks** organized into 7 phases:
 
 1. **Phase 1 (3 tasks)**: Project scaffolding - Backend, Frontend, Root config
 2. **Phase 2 (5 tasks)**: Core backend game logic - Models, board, validation, win conditions, rooms
 3. **Phase 3 (5 tasks)**: WebSocket communication - Handlers for all game actions
 4. **Phase 4 (12 tasks)**: Frontend UI components - All screens and interactions
 5. **Phase 5 (4 tasks)**: Integration - Complete game flow end-to-end
-6. **Phase 6 (5 tasks)**: Polish - Error handling, loading states, edge cases
-7. **Phase 7 (3 tasks)**: Documentation - Code comments, README, testing guide
+6. **Phase 6 (2 tasks)**: Documentation - Code comments, README, testing guide
+7. **Phase 7 (1 task)**: Future changes
 
 ---
 
@@ -327,7 +297,7 @@ Build a 2-player online turn-based strategy game where:
 3. **Phase 3** - WebSocket communication layer
 4. **Phase 4** - Frontend UI components
 5. **Phase 5** - Integration and complete game flow
-6. **Phase 6** - Polish and edge case handling
-7. **Phase 7** - Documentation finalization
+6. **Phase 6** - Documentation finalization
+7. **Phase 7** - Future
 
 Each task is designed to be completed in one focused session with clear deliverables and dependencies.
