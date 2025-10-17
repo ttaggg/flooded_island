@@ -6,6 +6,57 @@ Running log of completed tasks and changes to the project.
 
 ## 2025-01-27
 
+### Task 5.1: Main App Routing
+- **Status**: Completed ✅
+- **Task**: Add a dedicated home/landing page with "Create New Game" and "Join Game" functionality
+- **Problem**: No clear entry point for users - app automatically created rooms on mount
+- **Solution**: Added Home component with explicit game creation and joining interface
+- **Changes**:
+  - **New Component** (`frontend/src/components/Home.tsx`):
+    - Landing page with indigo gradient background matching existing screens
+    - "Create New Game" button that generates room ID and navigates to `/?room=ABC123`
+    - "Join Game" section with room code input, validation, and error handling
+    - Glass morphism cards with backdrop blur consistent with app theme
+    - Responsive layout with grid (1 column mobile, 2 columns desktop)
+    - Input validation for 6-character room codes
+    - Error states for invalid room codes
+  - **New Utilities** (`frontend/src/utils/roomId.ts`):
+    - `generateRoomId()`: Generate 6-character room codes using safe character set
+    - `isValidRoomId()`: Validate room code format (6 chars, alphanumeric)
+    - `formatRoomId()`: Format user input (uppercase, trim)
+    - Character set excludes confusing characters (0/O, 1/I/L)
+  - **Updated App Component** (`frontend/src/App.tsx`):
+    - Added conditional routing logic based on URL room parameter
+    - `hasRoomParameter()`: Check if `?room=` exists in URL
+    - `getRoomIdFromUrl()`: Extract room ID when parameter exists
+    - Render Home component when no room parameter present
+    - Render game flow when room parameter exists
+    - Updated `handlePlayAgain()` to use new `generateRoomId()` utility
+    - Removed automatic room ID generation on mount
+- **Features**:
+  - Clear entry point for new users
+  - Explicit game creation vs joining
+  - Room code validation before connecting
+  - Shareable URLs (`/?room=ABC123`)
+  - Consistent indigo theme styling
+  - Responsive design for all screen sizes
+  - Input validation and error handling
+- **Technical Decisions**:
+  - Kept query parameter approach for simplicity and shareability
+  - No React Router dependency needed
+  - Room codes remain the only identifier (anonymous play)
+  - Centralized room ID utilities for consistency
+- **Testing**:
+  - Home page renders correctly with create/join options
+  - "Create New Game" generates valid room ID and navigates
+  - "Join Game" validates input and navigates to existing room
+  - Invalid room codes show appropriate error messages
+  - App renders Home when no `?room` parameter
+  - App renders game flow when `?room` parameter exists
+  - Existing game functionality unchanged
+  - Zero TypeScript/linter errors
+  - Both frontend and backend servers running successfully
+
 ### Player Reconnection Fix
 - **Status**: Completed ✅
 - **Task**: Fix player reconnection to automatically restore previous role when reconnecting to a game

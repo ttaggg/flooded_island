@@ -8,36 +8,39 @@ import { RoleSelection } from './components/RoleSelection';
 import { GameConfiguration } from './components/GameConfiguration';
 import { GameBoard } from './components/GameBoard';
 import { GameOver } from './components/GameOver';
+import Home from './components/Home';
 import { GameStatus } from './types';
+import { generateRoomId } from './utils/roomId';
 
 function App() {
   /**
-   * Get room ID from URL query parameter, or generate a new one if not present.
+   * Check if there's a room parameter in the URL
+   * @returns True if room parameter exists, false otherwise
+   */
+  const hasRoomParameter = (): boolean => {
+    const params = new URLSearchParams(window.location.search);
+    const roomFromUrl = params.get('room');
+    return roomFromUrl !== null && roomFromUrl.length > 0;
+  };
+
+  /**
+   * Get room ID from URL query parameter.
+   * Only call this when we know a room parameter exists.
    * URL format: /?room=ABC123
    */
   const getRoomIdFromUrl = (): string => {
     const params = new URLSearchParams(window.location.search);
     const roomFromUrl = params.get('room');
-
-    if (roomFromUrl && roomFromUrl.length > 0) {
-      return roomFromUrl;
-    }
-
-    // Generate new room ID if not in URL
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    const newRoomId = Array.from({ length: 6 }, () =>
-      chars.charAt(Math.floor(Math.random() * chars.length))
-    ).join('');
-
-    // Update URL without reloading
-    window.history.replaceState(null, '', `/?room=${newRoomId}`);
-
-    return newRoomId;
+    return roomFromUrl || '';
   };
 
-  const roomId = getRoomIdFromUrl();
+  // Check if we should show the home page or the game
+  const showHomePage = !hasRoomParameter();
 
-  // Connect to game state
+  // Get room ID for game flow (empty string if no room parameter)
+  const roomId = showHomePage ? '' : getRoomIdFromUrl();
+
+  // Connect to game state (always call hook, but with empty roomId when showing home)
   const {
     gameState,
     myRole,
@@ -68,16 +71,17 @@ function App() {
     },
   });
 
+  // If showing home page, render it immediately
+  if (showHomePage) {
+    return <Home />;
+  }
+
   /**
    * Handle Play Again button - generate new room ID and navigate to it.
    * This creates a fresh game room.
    */
   const handlePlayAgain = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    const newRoomId = Array.from({ length: 6 }, () =>
-      chars.charAt(Math.floor(Math.random() * chars.length))
-    ).join('');
-
+    const newRoomId = generateRoomId();
     console.log(`🎮 Starting new game with room: ${newRoomId}`);
     window.location.href = `/?room=${newRoomId}`;
   };

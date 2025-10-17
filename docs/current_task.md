@@ -1,13 +1,13 @@
 # Current Active Task
 
 ## Task
-Player Reconnection Fix
+Task 5.1: Main App Routing
 
 ## Status
 Completed
 
 ## Description
-Fixed the issue where players who closed and reopened a tab became spectators and couldn't reclaim their previous role. Implemented localStorage-based role persistence with automatic role restoration for seamless reconnection experience.
+Added a dedicated home/landing page with "Create New Game" and "Join Game" functionality, while maintaining the current query parameter approach (`?room=ABC123`) for game rooms. This provides a clear entry point for users and better UX than auto-creating rooms.
 
 ## Problem Solved
 - **Issue**: When players closed a tab and reopened it, they became spectators and couldn't assume the available role
