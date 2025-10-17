@@ -3,14 +3,14 @@
  * Handles connection management, auto-reconnection, and message queuing.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ClientMessage, ServerMessage } from "../types";
-import { getWebSocketUrl, isValidServerMessage } from "../utils/websocket";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ClientMessage, ServerMessage } from '../types';
+import { getWebSocketUrl, isValidServerMessage } from '../utils/websocket';
 
 /**
  * Connection state of the WebSocket.
  */
-export type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
+export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 /**
  * Options for the useWebSocket hook.
@@ -47,26 +47,21 @@ const MAX_MESSAGE_QUEUE_SIZE = 50;
 
 /**
  * Custom hook for managing WebSocket connections with auto-reconnection.
- * 
+ *
  * Features:
  * - Automatic reconnection with exponential backoff
  * - Message queuing when offline
  * - Type-safe message handling
  * - Connection state management
- * 
+ *
  * @param options - Configuration options for the WebSocket connection
  * @returns WebSocket connection interface
  */
 export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
-  const {
-    roomId,
-    onMessage,
-    autoConnect = true,
-    maxReconnectDelay = 30000,
-  } = options;
+  const { roomId, onMessage, autoConnect = true, maxReconnectDelay = 30000 } = options;
 
   // State
-  const [connectionState, setConnectionState] = useState<ConnectionState>("disconnected");
+  const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
 
   // Refs - values that don't trigger re-renders
   const websocketRef = useRef<WebSocket | null>(null);
@@ -105,9 +100,9 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
       if (message) {
         try {
           ws.send(JSON.stringify(message));
-          console.log("📤 Sent queued message:", message.type);
+          console.log('📤 Sent queued message:', message.type);
         } catch (error) {
-          console.error("Failed to send queued message:", error);
+          console.error('Failed to send queued message:', error);
           // Put it back at the front if send failed
           messageQueueRef.current.unshift(message);
           break;
@@ -131,15 +126,13 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     console.log(`🔄 Scheduling reconnection in ${delay}ms...`);
 
     reconnectTimeoutRef.current = window.setTimeout(() => {
-      console.log("🔄 Attempting to reconnect...");
+      console.log('🔄 Attempting to reconnect...');
       connect();
-      
+
       // Increase delay for next attempt (exponential backoff)
-      reconnectDelayRef.current = Math.min(
-        reconnectDelayRef.current * 2,
-        maxReconnectDelay
-      );
+      reconnectDelayRef.current = Math.min(reconnectDelayRef.current * 2, maxReconnectDelay);
     }, delay);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clearReconnectTimeout, maxReconnectDelay]);
 
   /**
@@ -157,8 +150,8 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
 
     const url = getWebSocketUrl(roomId);
     console.log(`🔌 Connecting to WebSocket: ${url}`);
-    
-    setConnectionState("connecting");
+
+    setConnectionState('connecting');
     intentionalDisconnectRef.current = false;
 
     try {
@@ -167,12 +160,12 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
 
       // Connection opened
       ws.onopen = () => {
-        console.log("✅ WebSocket connected");
-        setConnectionState("connected");
-        
+        console.log('✅ WebSocket connected');
+        setConnectionState('connected');
+
         // Reset reconnection delay on successful connection
         reconnectDelayRef.current = INITIAL_RECONNECT_DELAY;
-        
+
         // Flush any queued messages
         flushMessageQueue();
       };
@@ -181,15 +174,15 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          
+
           if (isValidServerMessage(data)) {
-            console.log("📥 Received message:", data.type);
+            console.log('📥 Received message:', data.type);
             onMessageRef.current(data);
           } else {
-            console.warn("⚠️ Received invalid message format:", data);
+            console.warn('⚠️ Received invalid message format:', data);
           }
         } catch (error) {
-          console.error("Failed to parse WebSocket message:", error);
+          console.error('Failed to parse WebSocket message:', error);
         }
       };
 
@@ -200,22 +193,22 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
 
         if (intentionalDisconnectRef.current) {
           // User disconnected manually
-          setConnectionState("disconnected");
+          setConnectionState('disconnected');
         } else {
           // Unexpected disconnect - try to reconnect
-          setConnectionState("error");
+          setConnectionState('error');
           scheduleReconnect();
         }
       };
 
       // Connection error
       ws.onerror = (error) => {
-        console.error("❌ WebSocket error:", error);
-        setConnectionState("error");
+        console.error('❌ WebSocket error:', error);
+        setConnectionState('error');
       };
     } catch (error) {
-      console.error("Failed to create WebSocket:", error);
-      setConnectionState("error");
+      console.error('Failed to create WebSocket:', error);
+      setConnectionState('error');
       scheduleReconnect();
     }
   }, [roomId, clearReconnectTimeout, flushMessageQueue, scheduleReconnect]);
@@ -224,20 +217,20 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
    * Manually disconnect from WebSocket.
    */
   const disconnect = useCallback(() => {
-    console.log("🔌 Disconnecting WebSocket...");
-    
+    console.log('🔌 Disconnecting WebSocket...');
+
     intentionalDisconnectRef.current = true;
     clearReconnectTimeout();
-    
+
     if (websocketRef.current) {
       websocketRef.current.close();
       websocketRef.current = null;
     }
-    
+
     // Clear message queue on manual disconnect
     messageQueueRef.current = [];
-    
-    setConnectionState("disconnected");
+
+    setConnectionState('disconnected');
   }, [clearReconnectTimeout]);
 
   /**
@@ -251,9 +244,9 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
       // Connected - send immediately
       try {
         ws.send(JSON.stringify(message));
-        console.log("📤 Sent message:", message.type);
+        console.log('📤 Sent message:', message.type);
       } catch (error) {
-        console.error("Failed to send message:", error);
+        console.error('Failed to send message:', error);
         // Queue the message if send failed
         queueMessage(message);
       }
@@ -265,13 +258,13 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     function queueMessage(msg: ClientMessage) {
       // Add to queue
       messageQueueRef.current.push(msg);
-      
+
       // Enforce queue size limit (drop oldest messages)
       if (messageQueueRef.current.length > MAX_MESSAGE_QUEUE_SIZE) {
         const dropped = messageQueueRef.current.shift();
-        console.warn("⚠️ Message queue full, dropped oldest message:", dropped?.type);
+        console.warn('⚠️ Message queue full, dropped oldest message:', dropped?.type);
       }
-      
+
       console.log(`📦 Message queued (${messageQueueRef.current.length} in queue):`, msg.type);
     }
   }, []);
@@ -286,7 +279,7 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     return () => {
       intentionalDisconnectRef.current = true;
       clearReconnectTimeout();
-      
+
       if (websocketRef.current) {
         websocketRef.current.close();
         websocketRef.current = null;
@@ -296,11 +289,12 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
 
   // Reconnect when roomId changes
   useEffect(() => {
-    if (connectionState === "connected" || connectionState === "connecting") {
-      console.log("🔄 Room ID changed, reconnecting...");
+    if (connectionState === 'connected' || connectionState === 'connecting') {
+      console.log('🔄 Room ID changed, reconnecting...');
       disconnect();
       connect();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]); // Only depend on roomId, not on the functions to avoid loops
 
   return {
@@ -308,7 +302,6 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     sendMessage,
     connect,
     disconnect,
-    isConnected: connectionState === "connected",
+    isConnected: connectionState === 'connected',
   };
 }
-

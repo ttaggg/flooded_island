@@ -3,9 +3,9 @@
  * Wraps useWebSocket to manage game state, player role, selections, and actions.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GameState, PlayerRole, Position, GameStatus, ServerMessage } from "../types";
-import { useWebSocket, ConnectionState } from "./useWebSocket";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { GameState, PlayerRole, Position, GameStatus, ServerMessage } from '../types';
+import { useWebSocket, ConnectionState } from './useWebSocket';
 
 /**
  * Options for the useGameState hook.
@@ -25,11 +25,11 @@ export interface UseGameStateReturn {
   gameState: GameState | null;
   myRole: PlayerRole | null;
   lastError: string | null;
-  
+
   // Connection
   connectionState: ConnectionState;
   isConnected: boolean;
-  
+
   // Computed convenience values
   isMyTurn: boolean;
   canSelectRole: boolean;
@@ -37,10 +37,10 @@ export interface UseGameStateReturn {
   canMove: boolean;
   canFlood: boolean;
   availableRoles: PlayerRole[];
-  
+
   // Weather flood selection tracking
   selectedFloodPositions: Position[];
-  
+
   // Action methods
   selectRole: (role: PlayerRole) => void;
   configureGrid: (size: number) => void;
@@ -54,7 +54,7 @@ export interface UseGameStateReturn {
 
 /**
  * Custom hook for managing complete game state with WebSocket synchronization.
- * 
+ *
  * Features:
  * - Manages local game state synced with server
  * - Tracks player role and permissions
@@ -62,7 +62,7 @@ export interface UseGameStateReturn {
  * - Provides computed convenience values
  * - Type-safe action methods
  * - Error handling with state and callback
- * 
+ *
  * @param options - Configuration options
  * @returns Complete game state interface
  */
@@ -88,24 +88,24 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
    */
   const handleMessage = useCallback((message: ServerMessage) => {
     switch (message.type) {
-      case "room_state":
+      case 'room_state':
         // Initial room state or reconnection
-        console.log("🎮 Received room state");
+        console.log('🎮 Received room state');
         setGameState(message.state);
         break;
 
-      case "game_update":
+      case 'game_update':
         // Game state update (after moves, floods, etc.)
-        console.log("🔄 Game state updated");
+        console.log('🔄 Game state updated');
         setGameState(message.state);
-        
+
         // Clear flood selection when turn changes to journeyman
         if (message.state.currentRole === PlayerRole.JOURNEYMAN) {
           setSelectedFloodPositions([]);
         }
         break;
 
-      case "game_over":
+      case 'game_over':
         // Game ended
         console.log(`🏁 Game over! Winner: ${message.winner}`);
         setGameState((prev) => {
@@ -118,33 +118,34 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
         });
         break;
 
-      case "error":
+      case 'error':
         // Server error
-        console.error("❌ Server error:", message.message);
+        console.error('❌ Server error:', message.message);
         setLastError(message.message);
-        
+
         // Call error callback if provided
         if (onErrorRef.current) {
           onErrorRef.current(message.message);
         }
         break;
 
-      case "player_disconnected":
+      case 'player_disconnected':
         // Another player disconnected
         console.log(`👋 Player disconnected: ${message.role}`);
         // Could update UI state here if needed
         break;
 
-      case "player_reconnected":
+      case 'player_reconnected':
         // Another player reconnected
         console.log(`🔌 Player reconnected: ${message.role}`);
         // Could update UI state here if needed
         break;
 
-      default:
+      default: {
         // TypeScript exhaustiveness check
         const _exhaustive: never = message;
-        console.warn("Unknown message type:", _exhaustive);
+        console.warn('Unknown message type:', _exhaustive);
+      }
     }
   }, []);
 
@@ -178,10 +179,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
    * Only journeyman can configure grid during configuring phase.
    */
   const canConfigureGrid = useMemo(() => {
-    return (
-      myRole === PlayerRole.JOURNEYMAN &&
-      gameState?.gameStatus === GameStatus.CONFIGURING
-    );
+    return myRole === PlayerRole.JOURNEYMAN && gameState?.gameStatus === GameStatus.CONFIGURING;
   }, [myRole, gameState?.gameStatus]);
 
   /**
@@ -189,9 +187,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
    */
   const canMove = useMemo(() => {
     return (
-      isMyTurn &&
-      myRole === PlayerRole.JOURNEYMAN &&
-      gameState?.gameStatus === GameStatus.ACTIVE
+      isMyTurn && myRole === PlayerRole.JOURNEYMAN && gameState?.gameStatus === GameStatus.ACTIVE
     );
   }, [isMyTurn, myRole, gameState?.gameStatus]);
 
@@ -199,11 +195,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
    * Check if player can flood fields (weather's turn).
    */
   const canFlood = useMemo(() => {
-    return (
-      isMyTurn &&
-      myRole === PlayerRole.WEATHER &&
-      gameState?.gameStatus === GameStatus.ACTIVE
-    );
+    return isMyTurn && myRole === PlayerRole.WEATHER && gameState?.gameStatus === GameStatus.ACTIVE;
   }, [isMyTurn, myRole, gameState?.gameStatus]);
 
   /**
@@ -211,18 +203,19 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
    */
   const availableRoles = useMemo(() => {
     if (!gameState) return [];
-    
+
     const roles: PlayerRole[] = [];
-    
+
     if (!gameState.players.journeyman) {
       roles.push(PlayerRole.JOURNEYMAN);
     }
-    
+
     if (!gameState.players.weather) {
       roles.push(PlayerRole.WEATHER);
     }
-    
+
     return roles;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState?.players]);
 
   // ============================================================================
@@ -232,53 +225,62 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
   /**
    * Select a role for this player.
    */
-  const selectRole = useCallback((role: PlayerRole) => {
-    console.log(`🎭 Selecting role: ${role}`);
-    
-    // Store role locally
-    setMyRole(role);
-    
-    // Send to server
-    sendMessage({
-      type: "select_role",
-      role,
-    });
-  }, [sendMessage]);
+  const selectRole = useCallback(
+    (role: PlayerRole) => {
+      console.log(`🎭 Selecting role: ${role}`);
+
+      // Store role locally
+      setMyRole(role);
+
+      // Send to server
+      sendMessage({
+        type: 'select_role',
+        role,
+      });
+    },
+    [sendMessage]
+  );
 
   /**
    * Configure the grid size (journeyman only).
    */
-  const configureGrid = useCallback((size: number) => {
-    // Validate size locally
-    if (size < 3 || size > 10) {
-      const errorMsg = `Invalid grid size: ${size}. Must be between 3 and 10.`;
-      console.error(errorMsg);
-      setLastError(errorMsg);
-      if (onErrorRef.current) {
-        onErrorRef.current(errorMsg);
+  const configureGrid = useCallback(
+    (size: number) => {
+      // Validate size locally
+      if (size < 3 || size > 10) {
+        const errorMsg = `Invalid grid size: ${size}. Must be between 3 and 10.`;
+        console.error(errorMsg);
+        setLastError(errorMsg);
+        if (onErrorRef.current) {
+          onErrorRef.current(errorMsg);
+        }
+        return;
       }
-      return;
-    }
-    
-    console.log(`📐 Configuring grid: ${size}x${size}`);
-    
-    sendMessage({
-      type: "configure_grid",
-      size,
-    });
-  }, [sendMessage]);
+
+      console.log(`📐 Configuring grid: ${size}x${size}`);
+
+      sendMessage({
+        type: 'configure_grid',
+        size,
+      });
+    },
+    [sendMessage]
+  );
 
   /**
    * Move journeyman to a position.
    */
-  const move = useCallback((position: Position) => {
-    console.log(`🚶 Moving to (${position.x}, ${position.y})`);
-    
-    sendMessage({
-      type: "move",
-      position,
-    });
-  }, [sendMessage]);
+  const move = useCallback(
+    (position: Position) => {
+      console.log(`🚶 Moving to (${position.x}, ${position.y})`);
+
+      sendMessage({
+        type: 'move',
+        position,
+      });
+    },
+    [sendMessage]
+  );
 
   /**
    * Add a position to flood selection (max 2).
@@ -286,21 +288,19 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
   const addFloodPosition = useCallback((position: Position) => {
     setSelectedFloodPositions((prev) => {
       // Check if already selected
-      const alreadySelected = prev.some(
-        (p) => p.x === position.x && p.y === position.y
-      );
-      
+      const alreadySelected = prev.some((p) => p.x === position.x && p.y === position.y);
+
       if (alreadySelected) {
         console.log(`⚠️ Position (${position.x}, ${position.y}) already selected`);
         return prev;
       }
-      
+
       // Enforce max 2 selections
       if (prev.length >= 2) {
-        console.log("⚠️ Maximum 2 flood positions allowed");
+        console.log('⚠️ Maximum 2 flood positions allowed');
         return prev;
       }
-      
+
       console.log(`➕ Added flood position (${position.x}, ${position.y})`);
       return [...prev, position];
     });
@@ -311,16 +311,14 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
    */
   const removeFloodPosition = useCallback((position: Position) => {
     setSelectedFloodPositions((prev) => {
-      const filtered = prev.filter(
-        (p) => !(p.x === position.x && p.y === position.y)
-      );
-      
+      const filtered = prev.filter((p) => !(p.x === position.x && p.y === position.y));
+
       if (filtered.length === prev.length) {
         console.log(`⚠️ Position (${position.x}, ${position.y}) not in selection`);
       } else {
         console.log(`➖ Removed flood position (${position.x}, ${position.y})`);
       }
-      
+
       return filtered;
     });
   }, []);
@@ -329,7 +327,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
    * Clear all flood selections.
    */
   const clearFloodSelection = useCallback(() => {
-    console.log("🧹 Cleared flood selection");
+    console.log('🧹 Cleared flood selection');
     setSelectedFloodPositions([]);
   }, []);
 
@@ -338,12 +336,12 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
    */
   const submitFlood = useCallback(() => {
     console.log(`💧 Flooding ${selectedFloodPositions.length} position(s)`);
-    
+
     sendMessage({
-      type: "flood",
+      type: 'flood',
       positions: selectedFloodPositions,
     });
-    
+
     // Clear selection after submitting
     setSelectedFloodPositions([]);
   }, [selectedFloodPositions, sendMessage]);
@@ -352,7 +350,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
    * Clear the last error message.
    */
   const clearError = useCallback(() => {
-    console.log("✅ Cleared error");
+    console.log('✅ Cleared error');
     setLastError(null);
   }, []);
 
@@ -365,11 +363,11 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
     gameState,
     myRole,
     lastError,
-    
+
     // Connection
     connectionState,
     isConnected,
-    
+
     // Computed convenience values
     isMyTurn,
     canSelectRole,
@@ -377,10 +375,10 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
     canMove,
     canFlood,
     availableRoles,
-    
+
     // Weather flood selection tracking
     selectedFloodPositions,
-    
+
     // Action methods
     selectRole,
     configureGrid,
@@ -392,4 +390,3 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
     clearError,
   };
 }
-

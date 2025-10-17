@@ -162,4 +162,3 @@ VITE_WS_URL=ws://localhost:8000
 ---
 
 **Ready to play?** Run `./start.sh` and open http://localhost:5173 in your browser!
-

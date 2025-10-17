@@ -38,4 +38,3 @@ Casual gamers who enjoy:
 - No desynchronization between players
 - Game state persists during active sessions
 - Works reliably in modern web browsers
-

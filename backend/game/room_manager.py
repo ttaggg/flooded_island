@@ -8,7 +8,6 @@ and automatic cleanup of ended games after 5 minutes.
 import asyncio
 import random
 from datetime import datetime, timedelta
-from typing import Optional
 
 from models.game import GameRoom, GameStatus, PlayerRole
 
@@ -53,10 +52,9 @@ class RoomManager:
                 return room_id
 
         # Fallback: append timestamp if still colliding after 100 attempts
-        room_id = "".join(
+        return "".join(
             random.choice(self.ROOM_ID_CHARS) for _ in range(self.ROOM_ID_LENGTH)
         )
-        return room_id
 
     async def create_room(self) -> GameRoom:
         """
@@ -86,7 +84,7 @@ class RoomManager:
             self.rooms[room_id] = room
             return room
 
-    async def get_room(self, room_id: str) -> Optional[GameRoom]:
+    async def get_room(self, room_id: str) -> GameRoom | None:
         """
         Retrieve a room by its ID.
 

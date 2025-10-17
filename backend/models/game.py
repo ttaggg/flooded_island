@@ -7,7 +7,6 @@ game status, and the complete game room state.
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -56,13 +55,13 @@ class GameRoom(BaseModel):
     """Complete game room state."""
 
     room_id: str = Field(..., description="Unique room identifier")
-    grid_size: Optional[int] = Field(
+    grid_size: int | None = Field(
         None, ge=3, le=10, description="Grid size (3-10), None until configured"
     )
-    grid: Optional[list[list[FieldState]]] = Field(
+    grid: list[list[FieldState]] | None = Field(
         None, description="2D grid of field states, None until game starts"
     )
-    journeyman_position: Optional[Position] = Field(
+    journeyman_position: Position | None = Field(
         None, description="Current position of journeyman, None until game starts"
     )
     current_turn: int = Field(
@@ -78,13 +77,13 @@ class GameRoom(BaseModel):
     game_status: GameStatus = Field(
         GameStatus.WAITING, description="Current game status"
     )
-    winner: Optional[PlayerRole] = Field(
+    winner: PlayerRole | None = Field(
         None, description="Winner of the game, None if not ended"
     )
     created_at: datetime = Field(
         default_factory=datetime.now, description="Room creation timestamp"
     )
-    ended_at: Optional[datetime] = Field(
+    ended_at: datetime | None = Field(
         None, description="Game end timestamp, None if not ended"
     )
 

@@ -20,6 +20,7 @@ from game.win_checker import (
     check_win_condition,
 )
 
+
 __all__ = [
     "Board",
     "validate_journeyman_move",

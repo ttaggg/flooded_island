@@ -3,7 +3,7 @@
  * Mirrors the backend models from backend/models/messages.py
  */
 
-import { GameState, PlayerRole, Position } from "./game";
+import { GameState, PlayerRole, Position } from './game';
 
 // ============================================================================
 // Client → Server Messages
@@ -13,7 +13,7 @@ import { GameState, PlayerRole, Position } from "./game";
  * Message sent when a player selects their role.
  */
 export interface SelectRoleMessage {
-  type: "select_role";
+  type: 'select_role';
   role: PlayerRole;
 }
 
@@ -21,7 +21,7 @@ export interface SelectRoleMessage {
  * Message sent to configure the grid size.
  */
 export interface ConfigureGridMessage {
-  type: "configure_grid";
+  type: 'configure_grid';
   size: number; // 3-10
 }
 
@@ -29,7 +29,7 @@ export interface ConfigureGridMessage {
  * Message sent when journeyman moves.
  */
 export interface MoveMessage {
-  type: "move";
+  type: 'move';
   position: Position;
 }
 
@@ -37,7 +37,7 @@ export interface MoveMessage {
  * Message sent when weather floods fields.
  */
 export interface FloodMessage {
-  type: "flood";
+  type: 'flood';
   positions: Position[]; // 0-2 fields
 }
 
@@ -45,7 +45,7 @@ export interface FloodMessage {
  * Message sent to end the current turn.
  */
 export interface EndTurnMessage {
-  type: "end_turn";
+  type: 'end_turn';
 }
 
 /**
@@ -67,7 +67,7 @@ export type ClientMessage =
  * Message containing the current room state.
  */
 export interface RoomStateMessage {
-  type: "room_state";
+  type: 'room_state';
   state: GameState;
 }
 
@@ -75,7 +75,7 @@ export interface RoomStateMessage {
  * Message containing game state updates.
  */
 export interface GameUpdateMessage {
-  type: "game_update";
+  type: 'game_update';
   state: GameState;
 }
 
@@ -83,12 +83,12 @@ export interface GameUpdateMessage {
  * Message sent when the game ends.
  */
 export interface GameOverMessage {
-  type: "game_over";
+  type: 'game_over';
   winner: PlayerRole;
   stats: {
     daysSurvived?: number;
     fieldsFlooded?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -96,7 +96,7 @@ export interface GameOverMessage {
  * Message sent when an error occurs.
  */
 export interface ErrorMessage {
-  type: "error";
+  type: 'error';
   message: string;
 }
 
@@ -104,7 +104,7 @@ export interface ErrorMessage {
  * Message sent when a player disconnects.
  */
 export interface PlayerDisconnectedMessage {
-  type: "player_disconnected";
+  type: 'player_disconnected';
   role: PlayerRole;
 }
 
@@ -112,7 +112,7 @@ export interface PlayerDisconnectedMessage {
  * Message sent when a player reconnects.
  */
 export interface PlayerReconnectedMessage {
-  type: "player_reconnected";
+  type: 'player_reconnected';
   role: PlayerRole;
 }
 
@@ -127,4 +127,3 @@ export type ServerMessage =
   | ErrorMessage
   | PlayerDisconnectedMessage
   | PlayerReconnectedMessage;
-

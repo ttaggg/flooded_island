@@ -121,4 +121,3 @@ echo "   Frontend: tail -f .pids/frontend.log"
 echo ""
 echo "🛑 To stop servers: ./stop.sh"
 echo ""
-

@@ -5,8 +5,6 @@ Provides functions to check victory conditions for both players
 and calculate game statistics.
 """
 
-from typing import Optional
-
 from game.board import Board
 from game.validator import is_journeyman_trapped
 from models.game import FieldState, PlayerRole, Position
@@ -80,7 +78,7 @@ def check_win_condition(
     journeyman_pos: Position,
     current_turn: int,
     current_role: PlayerRole,
-) -> tuple[Optional[PlayerRole], dict]:
+) -> tuple[PlayerRole | None, dict]:
     """
     Check for win conditions after a turn is completed.
 
@@ -103,14 +101,14 @@ def check_win_condition(
 
     # Check journeyman victory (365 turns completed)
     # This should be checked after journeyman completes their turn
-    if current_role == PlayerRole.JOURNEYMAN:
-        if check_journeyman_victory(current_turn):
-            winner = PlayerRole.JOURNEYMAN
+    if current_role == PlayerRole.JOURNEYMAN and check_journeyman_victory(current_turn):
+        winner = PlayerRole.JOURNEYMAN
 
     # Check weather victory (journeyman trapped)
     # This should be checked after weather completes their turn
-    if current_role == PlayerRole.WEATHER:
-        if check_weather_victory(board, journeyman_pos):
-            winner = PlayerRole.WEATHER
+    if current_role == PlayerRole.WEATHER and check_weather_victory(
+        board, journeyman_pos
+    ):
+        winner = PlayerRole.WEATHER
 
     return (winner, statistics)

@@ -85,4 +85,3 @@ flooding_islands/
 - `typescript` - Type safety
 - `vite` - Build tool
 - TBD: Animation library (framer-motion, react-spring, or CSS animations)
-

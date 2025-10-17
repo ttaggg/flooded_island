@@ -100,4 +100,3 @@ backend/
 - **Uvicorn** (>=0.24.0): ASGI server
 - **python-dotenv** (>=1.0.0): Environment variable management
 - **websockets** (>=12.0): WebSocket support
-

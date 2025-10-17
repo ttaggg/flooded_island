@@ -5,13 +5,15 @@ Provides health check endpoint and configures CORS for frontend communication.
 
 import asyncio
 import os
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
+
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from game.room_manager import start_cleanup_task
 from routers import websocket
+
 
 # Load environment variables
 load_dotenv()
@@ -38,10 +40,8 @@ async def lifespan(app: FastAPI):
     # Shutdown
     print("🌊 Flooding Islands API shutting down...")
     cleanup_task.cancel()
-    try:
+    with suppress(asyncio.CancelledError):
         await cleanup_task
-    except asyncio.CancelledError:
-        pass
 
 
 # Initialize FastAPI application

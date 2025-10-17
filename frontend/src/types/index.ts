@@ -4,13 +4,7 @@
  */
 
 // Re-export all game types
-export {
-  FieldState,
-  PlayerRole,
-  GameStatus,
-  type Position,
-  type GameState,
-} from "./game";
+export { FieldState, PlayerRole, GameStatus, type Position, type GameState } from './game';
 
 // Re-export all message types
 export {
@@ -27,5 +21,4 @@ export {
   type PlayerDisconnectedMessage,
   type PlayerReconnectedMessage,
   type ServerMessage,
-} from "./messages";
-
+} from './messages';

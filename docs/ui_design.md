@@ -121,4 +121,3 @@
 - CSS Grid or Flexbox for game board
 - CSS variables for theming (indigo shades, sizes)
 - Mobile-first responsive design
-

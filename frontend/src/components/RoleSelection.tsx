@@ -3,7 +3,7 @@
  * Allows players to choose between Journeyman and Weather roles.
  */
 
-import { GameState, PlayerRole } from "../types";
+import { GameState, PlayerRole } from '../types';
 
 interface RoleSelectionProps {
   gameState: GameState | null;
@@ -41,23 +41,24 @@ function RoleCard({
   canSelect,
   onSelect,
 }: RoleCardProps) {
-  const baseCardClasses = "relative bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl transition-all duration-300";
-  
+  const baseCardClasses =
+    'relative bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl transition-all duration-300';
+
   // Determine card state classes
   let cardClasses = baseCardClasses;
-  let buttonClasses = "w-full py-3 px-6 rounded-lg font-semibold transition-all duration-200 ";
-  
+  let buttonClasses = 'w-full py-3 px-6 rounded-lg font-semibold transition-all duration-200 ';
+
   if (isSelected) {
-    cardClasses += ` ring-4 ${accentColor === "yellow" ? "ring-yellow-400" : "ring-blue-400"} scale-105`;
-    buttonClasses += `${accentColor === "yellow" ? "bg-yellow-400" : "bg-blue-500"} text-white`;
+    cardClasses += ` ring-4 ${accentColor === 'yellow' ? 'ring-yellow-400' : 'ring-blue-400'} scale-105`;
+    buttonClasses += `${accentColor === 'yellow' ? 'bg-yellow-400' : 'bg-blue-500'} text-white`;
   } else if (isTaken) {
-    cardClasses += " opacity-60";
-    buttonClasses += "bg-gray-500 text-gray-300 cursor-not-allowed";
+    cardClasses += ' opacity-60';
+    buttonClasses += 'bg-gray-500 text-gray-300 cursor-not-allowed';
   } else if (isAvailable && canSelect) {
-    cardClasses += " hover:scale-105 hover:bg-white/15";
-    buttonClasses += `${accentColor === "yellow" ? "bg-yellow-500 hover:bg-yellow-600" : "bg-blue-600 hover:bg-blue-700"} text-white`;
+    cardClasses += ' hover:scale-105 hover:bg-white/15';
+    buttonClasses += `${accentColor === 'yellow' ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-blue-600 hover:bg-blue-700'} text-white`;
   } else {
-    buttonClasses += "bg-gray-600 text-gray-400 cursor-not-allowed";
+    buttonClasses += 'bg-gray-600 text-gray-400 cursor-not-allowed';
   }
 
   return (
@@ -112,7 +113,7 @@ function RoleCard({
         disabled={!isAvailable || !canSelect || isSelected}
         className={buttonClasses}
       >
-        {isSelected ? "Selected" : isTaken ? "Unavailable" : `Select ${title}`}
+        {isSelected ? 'Selected' : isTaken ? 'Unavailable' : `Select ${title}`}
       </button>
     </div>
   );
@@ -131,10 +132,10 @@ export function RoleSelection({
   // Determine role states
   const journeymanTaken = gameState?.players.journeyman || false;
   const weatherTaken = gameState?.players.weather || false;
-  
+
   const journeymanSelected = myRole === PlayerRole.JOURNEYMAN;
   const weatherSelected = myRole === PlayerRole.WEATHER;
-  
+
   const journeymanAvailable = availableRoles.includes(PlayerRole.JOURNEYMAN);
   const weatherAvailable = availableRoles.includes(PlayerRole.WEATHER);
 
@@ -143,22 +144,25 @@ export function RoleSelection({
     if (myRole) {
       return (
         <div className="text-center animate-pulse">
-          <p className="text-white text-xl">
-            Waiting for opponent to join...
-          </p>
+          <p className="text-white text-xl">Waiting for opponent to join...</p>
           <div className="mt-3 flex justify-center gap-2">
-            <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
-            <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
-            <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+            <div
+              className="w-3 h-3 bg-white rounded-full animate-bounce"
+              style={{ animationDelay: '0ms' }}
+            ></div>
+            <div
+              className="w-3 h-3 bg-white rounded-full animate-bounce"
+              style={{ animationDelay: '150ms' }}
+            ></div>
+            <div
+              className="w-3 h-3 bg-white rounded-full animate-bounce"
+              style={{ animationDelay: '300ms' }}
+            ></div>
           </div>
         </div>
       );
     }
-    return (
-      <p className="text-white/80 text-lg text-center">
-        Select a role to begin the game
-      </p>
-    );
+    return <p className="text-white/80 text-lg text-center">Select a role to begin the game</p>;
   };
 
   return (
@@ -166,14 +170,11 @@ export function RoleSelection({
       <div className="max-w-6xl w-full">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-6xl font-bold text-white mb-4 drop-shadow-lg">
-            Flooding Islands
-          </h1>
-          <h2 className="text-3xl font-semibold text-white/90 mb-3">
-            Choose Your Role
-          </h2>
+          <h1 className="text-6xl font-bold text-white mb-4 drop-shadow-lg">Flooding Islands</h1>
+          <h2 className="text-3xl font-semibold text-white/90 mb-3">Choose Your Role</h2>
           <p className="text-white/70 text-lg max-w-2xl mx-auto">
-            Two players, two roles. The Journeyman must survive 365 days while the Weather tries to trap them.
+            Two players, two roles. The Journeyman must survive 365 days while the Weather tries to
+            trap them.
           </p>
         </div>
 
@@ -216,4 +217,3 @@ export function RoleSelection({
     </div>
   );
 }
-

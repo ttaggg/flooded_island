@@ -4,7 +4,7 @@ Running log of completed tasks and changes to the project.
 
 ---
 
-## 2025-10-17
+## 2025-10-16
 
 ### WebSocket Handler Refactoring
 - **Status**: Completed ✅
@@ -1190,6 +1190,63 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Linter Setup Across Codebase
+- **Date**: 2025-10-17
+- **Status**: Completed ✅
+- **Task**: Configure and apply linters across the entire codebase with pre-commit hooks
+- **Changes**:
+  - **Backend Python (Ruff)**:
+    - Added `ruff>=0.7.0` and `pre-commit>=3.8.0` to `backend/requirements.txt`
+    - Created `backend/pyproject.toml` with comprehensive Ruff configuration:
+      - Enabled rule groups: pycodestyle, pyflakes, isort, pep8-naming, pyupgrade, flake8-bugbear, flake8-comprehensions, flake8-simplify, flake8-return, flake8-unused-arguments, flake8-use-pathlib
+      - Configured line length (88 chars, Black-compatible)
+      - Set Python target version (3.13)
+      - Configured import sorting with custom first-party packages
+    - Applied Ruff linter and formatter to all backend Python files
+    - Fixed 34 linting issues automatically and 5 manually:
+      - Simplified nested if statements using `and` operators
+      - Removed unnecessary variable assignments before return
+      - Replaced try-except-pass with `contextlib.suppress()`
+    - All Python code now passes Ruff checks with zero errors
+  - **Frontend TypeScript/React (Prettier + ESLint)**:
+    - Added Prettier packages to `frontend/package.json`: `prettier`, `eslint-config-prettier`, `eslint-plugin-prettier`
+    - Created `.prettierrc` configuration with project standards:
+      - Single quotes, 2-space indentation, 100-character line width
+      - Trailing commas (ES5), semicolons required
+    - Created `.prettierignore` to exclude build artifacts
+    - Updated `.eslintrc.cjs` to integrate Prettier via `plugin:prettier/recommended`
+    - Added npm scripts: `format`, `format:check`, `lint:fix`
+    - Applied Prettier formatting to all TypeScript/React files
+    - Fixed linting errors:
+      - Changed `any` types to `unknown` for type safety
+      - Fixed no-case-declarations error with block scoping
+      - Added semicolons to vite.config.ts
+      - Added eslint-disable comments for intentional React hook dependency exclusions
+    - All frontend code now passes ESLint checks with zero errors/warnings
+  - **Pre-commit Hooks**:
+    - Created `.pre-commit-config.yaml` at project root with hooks for:
+      - General: trailing-whitespace, end-of-file-fixer, check-yaml, check-added-large-files, check-merge-conflict, mixed-line-ending
+      - Backend: Ruff linter and formatter for Python files
+      - Frontend: Prettier and ESLint for TypeScript/React files (using local hooks to ensure config consistency)
+    - Installed pre-commit hooks: `pre-commit install`
+    - Tested hooks on all files successfully
+    - Fixed 20+ end-of-file issues across documentation and config files
+    - All hooks now pass successfully on the entire codebase
+- **Results**:
+  - Zero linting errors in backend Python code
+  - Zero linting errors/warnings in frontend TypeScript/React code
+  - Consistent code formatting across the entire project
+  - Pre-commit hooks automatically enforce code quality standards
+  - All code follows best practices and style guidelines
+- **Benefits**:
+  - Improved code quality and readability
+  - Automatic formatting prevents style debates
+  - Early error detection before commits
+  - Easier code reviews with consistent formatting
+  - Better maintainability with enforced code standards
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]
@@ -1200,4 +1257,3 @@ Running log of completed tasks and changes to the project.
 - **Notes**: [Any important notes or decisions]
 
 ---
-

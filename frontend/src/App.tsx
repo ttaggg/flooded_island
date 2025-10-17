@@ -3,41 +3,44 @@
  * Manages routing and game state
  */
 
-import { useGameState } from "./hooks/useGameState";
-import { RoleSelection } from "./components/RoleSelection";
-import { GameStatus } from "./types";
+import { useGameState } from './hooks/useGameState';
+import { RoleSelection } from './components/RoleSelection';
+import { GameStatus } from './types';
 
 function App() {
   // For MVP, we'll use a hardcoded room ID
   // In future, this would come from routing or room creation
-  const roomId = "demo-room";
+  const roomId = 'demo-room';
 
   // Connect to game state
-  const {
-    gameState,
-    myRole,
-    availableRoles,
-    canSelectRole,
-    selectRole,
-    connectionState,
-  } = useGameState({
-    roomId,
-    onError: (message) => {
-      console.error("Game error:", message);
-      // TODO: Show error toast/notification in UI
-    },
-  });
+  const { gameState, myRole, availableRoles, canSelectRole, selectRole, connectionState } =
+    useGameState({
+      roomId,
+      onError: (message) => {
+        console.error('Game error:', message);
+        // TODO: Show error toast/notification in UI
+      },
+    });
 
   // Show connection status while connecting
-  if (connectionState === "connecting") {
+  if (connectionState === 'connecting') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center">
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center">
           <div className="text-white text-2xl mb-4">Connecting to game...</div>
           <div className="flex justify-center gap-2">
-            <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
-            <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
-            <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+            <div
+              className="w-3 h-3 bg-white rounded-full animate-bounce"
+              style={{ animationDelay: '0ms' }}
+            ></div>
+            <div
+              className="w-3 h-3 bg-white rounded-full animate-bounce"
+              style={{ animationDelay: '150ms' }}
+            ></div>
+            <div
+              className="w-3 h-3 bg-white rounded-full animate-bounce"
+              style={{ animationDelay: '300ms' }}
+            ></div>
           </div>
         </div>
       </div>
@@ -45,7 +48,7 @@ function App() {
   }
 
   // Show disconnected state
-  if (connectionState === "disconnected") {
+  if (connectionState === 'disconnected') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center">
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center">
@@ -88,7 +91,7 @@ function App() {
           <h1 className="text-4xl font-bold text-white mb-4">Game Configuration</h1>
           <p className="text-white/80 mb-4">Configure grid size (coming soon...)</p>
           <p className="text-white/60 text-sm">Current Status: {gameState.gameStatus}</p>
-          <p className="text-white/60 text-sm">Your Role: {myRole || "None"}</p>
+          <p className="text-white/60 text-sm">Your Role: {myRole || 'None'}</p>
         </div>
       </div>
     );
@@ -103,7 +106,7 @@ function App() {
           <p className="text-white/80 mb-4">Game board (coming soon...)</p>
           <p className="text-white/60 text-sm">Turn: {gameState.currentTurn}</p>
           <p className="text-white/60 text-sm">Current Role: {gameState.currentRole}</p>
-          <p className="text-white/60 text-sm">Your Role: {myRole || "None"}</p>
+          <p className="text-white/60 text-sm">Your Role: {myRole || 'None'}</p>
         </div>
       </div>
     );
@@ -115,7 +118,7 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center px-4">
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center max-w-2xl">
           <h1 className="text-4xl font-bold text-white mb-4">Game Over</h1>
-          <p className="text-white/80 mb-4">Winner: {gameState.winner || "Unknown"}</p>
+          <p className="text-white/80 mb-4">Winner: {gameState.winner || 'Unknown'}</p>
           <p className="text-white/60 text-sm">Game over screen (coming soon...)</p>
         </div>
       </div>

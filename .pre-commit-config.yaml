@@ -1,0 +1,47 @@
+# Pre-commit hooks configuration for Flooding Islands
+# See https://pre-commit.com for more information
+
+repos:
+  # General file cleanup hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+
+  # Python linting and formatting with Ruff
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.1
+    hooks:
+      # Run the linter
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^backend/
+      # Run the formatter
+      - id: ruff-format
+        files: ^backend/
+
+  # Frontend formatting and linting (local hooks use project config)
+  - repo: local
+    hooks:
+      - id: frontend-prettier
+        name: Prettier (frontend)
+        entry: bash -c 'cd frontend && for file in "$@"; do npx prettier --write "${file#frontend/}"; done' --
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js|jsx|json|css|md)$
+        pass_filenames: true
+        require_serial: true
+
+      - id: frontend-eslint
+        name: ESLint (frontend)
+        entry: bash -c 'cd frontend && for file in "$@"; do npx eslint --fix "${file#frontend/}"; done' --
+        language: system
+        files: ^frontend/src/.*\.(ts|tsx)$
+        pass_filenames: true
+        require_serial: true

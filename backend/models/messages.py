@@ -4,7 +4,7 @@ WebSocket message models for Flooding Islands.
 Defines all message types for client-to-server and server-to-client communication.
 """
 
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 

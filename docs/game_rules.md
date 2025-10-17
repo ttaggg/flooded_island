@@ -89,4 +89,3 @@ Two-player turn-based strategy game where journeyman tries to survive on an isla
 - Second player fills remaining role
 - Game starts when both roles are filled
 - No matchmaking system - players share link/room code
-

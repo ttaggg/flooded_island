@@ -5,8 +5,8 @@ Provides validation functions for journeyman movement, weather flooding,
 trap detection, and grid configuration.
 """
 
-from models.game import FieldState, Position
 from game.board import Board
+from models.game import FieldState, Position
 
 
 def validate_journeyman_move(

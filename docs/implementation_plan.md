@@ -331,4 +331,3 @@ Build a 2-player online turn-based strategy game where:
 7. **Phase 7** - Documentation finalization
 
 Each task is designed to be completed in one focused session with clear deliverables and dependencies.
-

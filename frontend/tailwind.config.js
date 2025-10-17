@@ -1,9 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
@@ -34,7 +31,7 @@ export default {
         },
       },
       animation: {
-        'flip': 'flip 0.4s ease-in-out',
+        flip: 'flip 0.4s ease-in-out',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
       keyframes: {
@@ -47,5 +44,4 @@ export default {
     },
   },
   plugins: [],
-}
-
+};

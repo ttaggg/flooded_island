@@ -10,7 +10,6 @@ import json
 import logging
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
@@ -36,6 +35,7 @@ from models.messages import (
     SelectRoleMessage,
 )
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -52,7 +52,7 @@ class ConnectionManager:
         # Structure: {room_id: {player_id: WebSocket}}
         self.active_connections: dict[str, dict[str, WebSocket]] = {}
         # Track player ID to role mapping: {room_id: {player_id: role}}
-        self.player_roles: dict[str, dict[str, Optional[PlayerRole]]] = {}
+        self.player_roles: dict[str, dict[str, PlayerRole | None]] = {}
         self.lock = asyncio.Lock()
 
     async def connect(self, room_id: str, player_id: str, websocket: WebSocket) -> None:
@@ -74,7 +74,7 @@ class ConnectionManager:
 
             print(f"✅ Player {player_id[:8]} connected to room {room_id}")
 
-    async def disconnect(self, room_id: str, player_id: str) -> Optional[PlayerRole]:
+    async def disconnect(self, room_id: str, player_id: str) -> PlayerRole | None:
         """
         Remove a WebSocket connection from a room.
 
@@ -137,9 +137,7 @@ class ConnectionManager:
                     f"🎭 Player {player_id[:8]} assigned role {role.value} in room {room_id}"
                 )
 
-    async def get_player_role(
-        self, room_id: str, player_id: str
-    ) -> Optional[PlayerRole]:
+    async def get_player_role(self, room_id: str, player_id: str) -> PlayerRole | None:
         """
         Get the role for a player in a room.
 
@@ -238,16 +236,16 @@ class MessageContext:
         self.room_id = room_id
         self.player_id = player_id
         self.websocket = websocket
-        self._room: Optional[GameRoom] = None
-        self._player_role: Optional[PlayerRole] = None
+        self._room: GameRoom | None = None
+        self._player_role: PlayerRole | None = None
 
-    async def get_room(self) -> Optional[GameRoom]:
+    async def get_room(self) -> GameRoom | None:
         """Get room state (cached after first call)."""
         if self._room is None:
             self._room = await room_manager.get_room(self.room_id)
         return self._room
 
-    async def get_player_role(self) -> Optional[PlayerRole]:
+    async def get_player_role(self) -> PlayerRole | None:
         """Get player role (cached after first call)."""
         if self._player_role is None:
             self._player_role = await connection_manager.get_player_role(
@@ -271,8 +269,8 @@ class MessageContext:
 
 
 async def validate_player_has_role(
-    ctx: MessageContext, required_role: Optional[PlayerRole] = None
-) -> tuple[bool, Optional[str]]:
+    ctx: MessageContext, required_role: PlayerRole | None = None
+) -> tuple[bool, str | None]:
     """
     Validate that player has selected a role.
 
@@ -296,7 +294,7 @@ async def validate_player_has_role(
 
 async def validate_game_status(
     ctx: MessageContext, required_status: GameStatus
-) -> tuple[bool, Optional[str]]:
+) -> tuple[bool, str | None]:
     """
     Validate that game is in required status.
 
@@ -323,7 +321,7 @@ async def validate_game_status(
 
 async def validate_current_turn(
     ctx: MessageContext, expected_role: PlayerRole
-) -> tuple[bool, Optional[str]]:
+) -> tuple[bool, str | None]:
     """
     Validate that it's the expected player's turn.
 
@@ -423,14 +421,15 @@ async def handle_select_role(message: dict, ctx: MessageContext) -> None:
     is_reconnection = room.game_status == GameStatus.ACTIVE
 
     # Check if both roles are filled
-    if room.players["journeyman"] and room.players["weather"]:
+    if (
+        room.players["journeyman"]
+        and room.players["weather"]
+        and room.game_status == GameStatus.WAITING
+    ):
         # Only transition to CONFIGURING if currently WAITING
         # Keep ACTIVE status if already active (reconnection case)
-        if room.game_status == GameStatus.WAITING:
-            room.game_status = GameStatus.CONFIGURING
-            print(
-                f"  → Both roles filled! Room {ctx.room_id} transitioning to CONFIGURING"
-            )
+        room.game_status = GameStatus.CONFIGURING
+        print(f"  → Both roles filled! Room {ctx.room_id} transitioning to CONFIGURING")
 
     # Save updated room state
     await ctx.update_room(room)
@@ -506,7 +505,7 @@ async def handle_configure_grid(message: dict, ctx: MessageContext) -> None:
     room.current_role = PlayerRole.JOURNEYMAN
     room.current_turn = 1
 
-    print(f"  → Journeyman placed at (0, 0), game status: ACTIVE, turn: 1")
+    print("  → Journeyman placed at (0, 0), game status: ACTIVE, turn: 1")
 
     # Save updated room state
     await ctx.update_room(room)
