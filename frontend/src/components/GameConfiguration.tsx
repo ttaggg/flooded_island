@@ -37,7 +37,7 @@ function GridPreview({ width, height }: GridPreviewProps) {
   const cells = Array.from({ length: width * height }, (_, index) => index);
 
   return (
-    <div className="flex items-center justify-center p-6">
+    <div className="flex items-center justify-center p-6 min-h-[400px]">
       <div
         className="inline-grid gap-1 bg-indigo-900/30 p-4 rounded-lg border-2 border-white/20"
         style={{
