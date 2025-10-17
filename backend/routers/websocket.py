@@ -225,6 +225,126 @@ connection_manager = ConnectionManager()
 router = APIRouter()
 
 
+class MessageContext:
+    """
+    Context object for message handling.
+
+    Encapsulates common data and operations needed by message handlers,
+    reducing parameter passing and providing caching for room and role lookups.
+    """
+
+    def __init__(self, room_id: str, player_id: str, websocket: WebSocket):
+        """Initialize message context."""
+        self.room_id = room_id
+        self.player_id = player_id
+        self.websocket = websocket
+        self._room: Optional[GameRoom] = None
+        self._player_role: Optional[PlayerRole] = None
+
+    async def get_room(self) -> Optional[GameRoom]:
+        """Get room state (cached after first call)."""
+        if self._room is None:
+            self._room = await room_manager.get_room(self.room_id)
+        return self._room
+
+    async def get_player_role(self) -> Optional[PlayerRole]:
+        """Get player role (cached after first call)."""
+        if self._player_role is None:
+            self._player_role = await connection_manager.get_player_role(
+                self.room_id, self.player_id
+            )
+        return self._player_role
+
+    async def send_error(self, message: str) -> None:
+        """Send error message to player."""
+        error_msg = ErrorMessage(type="error", message=message)
+        await self.websocket.send_json(error_msg.model_dump())
+
+    async def broadcast(self, message: dict) -> int:
+        """Broadcast message to all players in room."""
+        return await connection_manager.broadcast(self.room_id, message)
+
+    async def update_room(self, room: GameRoom) -> None:
+        """Update room state in manager and clear cache."""
+        await room_manager.update_room(self.room_id, room)
+        self._room = room  # Update cache
+
+
+async def validate_player_has_role(
+    ctx: MessageContext, required_role: Optional[PlayerRole] = None
+) -> tuple[bool, Optional[str]]:
+    """
+    Validate that player has selected a role.
+
+    Args:
+        ctx: Message context
+        required_role: If specified, validates player has this specific role
+
+    Returns:
+        (is_valid, error_message)
+    """
+    player_role = await ctx.get_player_role()
+
+    if not player_role:
+        return False, "You must select a role before performing this action"
+
+    if required_role and player_role != required_role:
+        return False, f"Only the {required_role.value} player can perform this action"
+
+    return True, None
+
+
+async def validate_game_status(
+    ctx: MessageContext, required_status: GameStatus
+) -> tuple[bool, Optional[str]]:
+    """
+    Validate that game is in required status.
+
+    Args:
+        ctx: Message context
+        required_status: Required game status
+
+    Returns:
+        (is_valid, error_message)
+    """
+    room = await ctx.get_room()
+
+    if not room:
+        return False, "Room not found"
+
+    if room.game_status != required_status:
+        return (
+            False,
+            f"Game must be in {required_status.value} state (current: {room.game_status.value})",
+        )
+
+    return True, None
+
+
+async def validate_current_turn(
+    ctx: MessageContext, expected_role: PlayerRole
+) -> tuple[bool, Optional[str]]:
+    """
+    Validate that it's the expected player's turn.
+
+    Args:
+        ctx: Message context
+        expected_role: Role that should have current turn
+
+    Returns:
+        (is_valid, error_message)
+    """
+    room = await ctx.get_room()
+
+    if not room:
+        return False, "Room not found"
+
+    if room.current_role != expected_role:
+        return False, f"It's not your turn (current: {room.current_role.value})"
+
+    return True, None
+
+
 def serialize_room_state(room: GameRoom) -> dict:
     """
     Serialize a GameRoom to a JSON-serializable dictionary.
@@ -261,25 +381,412 @@ def serialize_room_state(room: GameRoom) -> dict:
     }
 
 
-@router.websocket("/ws/{room_id}")
-async def websocket_endpoint(websocket: WebSocket, room_id: str):
+async def handle_select_role(message: dict, ctx: MessageContext) -> None:
     """
-    WebSocket endpoint for game room connections.
-
-    Handles connection, message routing, and disconnection for players
-    joining a specific game room.
+    Handle role selection message.
 
     Args:
-        websocket: The WebSocket connection
-        room_id: The room identifier to join
+        message: The role selection message
+        ctx: Message context
     """
-    # Accept connection first (required by FastAPI/Starlette)
-    await websocket.accept()
+    logger.info(f"Handling select_role for player {ctx.player_id[:8]}")
 
-    # Generate unique player ID
-    player_id = str(uuid.uuid4())
+    # Parse and validate message
+    role_msg = SelectRoleMessage(**message)
+    selected_role = role_msg.role
+    print(f"  → Role selection: {selected_role.value}")
 
-    # Get or create room
+    # Get current room state
+    room = await ctx.get_room()
+    if not room:
+        await ctx.send_error("Room not found")
+        return
+
+    # Check if role is already taken
+    if room.players[selected_role.value]:
+        await ctx.send_error(f"Role {selected_role.value} is already taken")
+        return
+
+    # Check if this player already has a different role and clear it
+    current_role = await ctx.get_player_role()
+    if current_role and current_role != selected_role:
+        room.players[current_role.value] = False
+        print(
+            f"  → Player {ctx.player_id[:8]} switching from {current_role.value} to {selected_role.value}"
+        )
+
+    # Assign role to player
+    await connection_manager.set_player_role(ctx.room_id, ctx.player_id, selected_role)
+    room.players[selected_role.value] = True
+
+    # Detect if this is a reconnection (joining an active game)
+    is_reconnection = room.game_status == GameStatus.ACTIVE
+
+    # Check if both roles are filled
+    if room.players["journeyman"] and room.players["weather"]:
+        # Only transition to CONFIGURING if currently WAITING
+        # Keep ACTIVE status if already active (reconnection case)
+        if room.game_status == GameStatus.WAITING:
+            room.game_status = GameStatus.CONFIGURING
+            print(
+                f"  → Both roles filled! Room {ctx.room_id} transitioning to CONFIGURING"
+            )
+
+    # Save updated room state
+    await ctx.update_room(room)
+
+    # Broadcast appropriate message based on reconnection status
+    if is_reconnection:
+        # Reconnection: notify other player that opponent is back
+        logger.info(f"Player reconnected to active game in room {ctx.room_id}")
+        print(f"  → Reconnection! {selected_role.value} rejoined active game")
+        reconnect_msg = PlayerReconnectedMessage(
+            type="player_reconnected", role=selected_role
+        )
+        broadcast_count = await ctx.broadcast(reconnect_msg.model_dump())
+        logger.info(f"Reconnection broadcast sent to {broadcast_count} player(s)")
+    else:
+        # Initial connection: broadcast room state
+        logger.info(f"Broadcasting role update to room {ctx.room_id}")
+        room_state_msg = RoomStateMessage(
+            type="room_state", state=serialize_room_state(room)
+        )
+        broadcast_count = await ctx.broadcast(room_state_msg.model_dump())
+        logger.info(f"Broadcast sent to {broadcast_count} player(s)")
+
+
+async def handle_configure_grid(message: dict, ctx: MessageContext) -> None:
+    """
+    Handle grid configuration message.
+
+    Args:
+        message: The grid configuration message
+        ctx: Message context
+    """
+    logger.info(f"Handling configure_grid for player {ctx.player_id[:8]}")
+
+    # Parse and validate message
+    config_msg = ConfigureGridMessage(**message)
+    grid_size = config_msg.size
+    print(f"  → Grid configuration: size={grid_size}")
+
+    # Get current room state
+    room = await ctx.get_room()
+    if not room:
+        await ctx.send_error("Room not found")
+        return
+
+    # Validate player has journeyman role
+    is_valid, error_msg = await validate_player_has_role(ctx, PlayerRole.JOURNEYMAN)
+    if not is_valid:
+        await ctx.send_error(error_msg)
+        return
+
+    # Check room status (must be CONFIGURING)
+    is_valid, error_msg = await validate_game_status(ctx, GameStatus.CONFIGURING)
+    if not is_valid:
+        await ctx.send_error(error_msg)
+        return
+
+    # Validate grid size (3-10)
+    is_valid, error_msg = validate_grid_size(grid_size)
+    if not is_valid:
+        await ctx.send_error(error_msg)
+        return
+
+    # Initialize game board
+    board = Board(grid_size)
+    print(f"  → Board initialized: {grid_size}x{grid_size} grid with all DRY fields")
+
+    # Update room state
+    room.grid_size = grid_size
+    room.grid = board.grid
+    room.journeyman_position = Position(x=0, y=0)
+    room.game_status = GameStatus.ACTIVE
+    room.current_role = PlayerRole.JOURNEYMAN
+    room.current_turn = 1
+
+    print(f"  → Journeyman placed at (0, 0), game status: ACTIVE, turn: 1")
+
+    # Save updated room state
+    await ctx.update_room(room)
+
+    # Broadcast updated room state to all players
+    logger.info(f"Broadcasting game start to room {ctx.room_id}")
+    room_state_msg = RoomStateMessage(
+        type="room_state", state=serialize_room_state(room)
+    )
+    broadcast_count = await ctx.broadcast(room_state_msg.model_dump())
+    logger.info(f"Game started! Broadcast sent to {broadcast_count} player(s)")
+    print(f"  → Game started! Broadcast sent to {broadcast_count} player(s)")
+
+
+async def handle_move(message: dict, ctx: MessageContext) -> None:
+    """
+    Handle journeyman move message.
+
+    Args:
+        message: The move message
+        ctx: Message context
+    """
+    logger.info(f"Handling move for player {ctx.player_id[:8]}")
+
+    # Parse and validate message
+    move_msg = MoveMessage(**message)
+    target_pos = move_msg.position
+    print(f"  → Journeyman move to: ({target_pos.x}, {target_pos.y})")
+
+    # Get current room state
+    room = await ctx.get_room()
+    if not room:
+        await ctx.send_error("Room not found")
+        return
+
+    # Validate player has journeyman role
+    is_valid, error_msg = await validate_player_has_role(ctx, PlayerRole.JOURNEYMAN)
+    if not is_valid:
+        await ctx.send_error(error_msg)
+        return
+
+    # Check room status (must be ACTIVE)
+    is_valid, error_msg = await validate_game_status(ctx, GameStatus.ACTIVE)
+    if not is_valid:
+        await ctx.send_error(error_msg)
+        return
+
+    # Check if it's journeyman's turn
+    is_valid, error_msg = await validate_current_turn(ctx, PlayerRole.JOURNEYMAN)
+    if not is_valid:
+        await ctx.send_error(error_msg)
+        return
+
+    # Create board instance from room state
+    board = Board(room.grid_size)
+    board.grid = room.grid
+
+    # Validate move
+    is_valid, error_msg = validate_journeyman_move(
+        board, room.journeyman_position, target_pos
+    )
+    if not is_valid:
+        await ctx.send_error(error_msg)
+        return
+
+    # Execute move: Update journeyman position
+    room.journeyman_position = target_pos
+    print(f"  → Journeyman moved to ({target_pos.x}, {target_pos.y})")
+
+    # Dry adjacent fields (4 directions: N, E, S, W)
+    adjacent_positions = board.get_adjacent_positions(
+        target_pos, include_diagonals=False
+    )
+    dried_count = 0
+    for adj_pos in adjacent_positions:
+        if board.get_field_state(adj_pos) == FieldState.FLOODED:
+            board.set_field_state(adj_pos, FieldState.DRY)
+            dried_count += 1
+    print(f"  → Dried {dried_count} adjacent field(s)")
+
+    # Update room grid with modified board state
+    room.grid = board.grid
+
+    # Switch turn to weather
+    room.current_role = PlayerRole.WEATHER
+
+    # Check win condition
+    winner, statistics = check_win_condition(
+        board, room.journeyman_position, room.current_turn, PlayerRole.JOURNEYMAN
+    )
+
+    if winner:
+        # Game over - journeyman won
+        room.game_status = GameStatus.ENDED
+        room.winner = winner
+        room.ended_at = datetime.now()
+        print(
+            f"  → 🎉 GAME OVER! Winner: {winner.value} after {room.current_turn} turns"
+        )
+
+        # Save room state
+        await ctx.update_room(room)
+
+        # Broadcast game over message
+        game_over_msg = GameOverMessage(
+            type="game_over", winner=winner, stats=statistics
+        )
+        broadcast_count = await ctx.broadcast(game_over_msg.model_dump())
+        logger.info(f"Game over broadcast sent to {broadcast_count} player(s)")
+    else:
+        # Game continues
+        # Save room state
+        await ctx.update_room(room)
+
+        # Broadcast updated room state
+        logger.info(f"Broadcasting move update to room {ctx.room_id}")
+        room_state_msg = RoomStateMessage(
+            type="room_state", state=serialize_room_state(room)
+        )
+        broadcast_count = await ctx.broadcast(room_state_msg.model_dump())
+        logger.info(f"Move broadcast sent to {broadcast_count} player(s)")
+        print(
+            f"  → Move complete! Turn switched to weather. Broadcast to {broadcast_count} player(s)"
+        )
+
+
+async def handle_flood(message: dict, ctx: MessageContext) -> None:
+    """
+    Handle weather flood message.
+
+    Args:
+        message: The flood message
+        ctx: Message context
+    """
+    logger.info(f"Handling flood for player {ctx.player_id[:8]}")
+
+    # Parse and validate message
+    flood_msg = FloodMessage(**message)
+    flood_positions = flood_msg.positions
+    print(f"  → Weather flood: {len(flood_positions)} position(s)")
+
+    # Get current room state
+    room = await ctx.get_room()
+    if not room:
+        await ctx.send_error("Room not found")
+        return
+
+    # Validate player has weather role
+    is_valid, error_msg = await validate_player_has_role(ctx, PlayerRole.WEATHER)
+    if not is_valid:
+        await ctx.send_error(error_msg)
+        return
+
+    # Check room status (must be ACTIVE)
+    is_valid, error_msg = await validate_game_status(ctx, GameStatus.ACTIVE)
+    if not is_valid:
+        await ctx.send_error(error_msg)
+        return
+
+    # Check if it's weather's turn
+    is_valid, error_msg = await validate_current_turn(ctx, PlayerRole.WEATHER)
+    if not is_valid:
+        await ctx.send_error(error_msg)
+        return
+
+    # Create board instance from room state
+    board = Board(room.grid_size)
+    board.grid = room.grid
+
+    # Validate flood
+    is_valid, error_msg = validate_weather_flood(
+        board, flood_positions, room.journeyman_position
+    )
+    if not is_valid:
+        await ctx.send_error(error_msg)
+        return
+
+    # Execute flood: Set positions to FLOODED
+    for pos in flood_positions:
+        board.set_field_state(pos, FieldState.FLOODED)
+        print(f"  → Flooded field at ({pos.x}, {pos.y})")
+
+    # Update room grid with modified board state
+    room.grid = board.grid
+
+    # Increment turn counter
+    room.current_turn += 1
+    print(f"  → Turn incremented to {room.current_turn}")
+
+    # Switch turn to journeyman
+    room.current_role = PlayerRole.JOURNEYMAN
+
+    # Check win condition
+    winner, statistics = check_win_condition(
+        board, room.journeyman_position, room.current_turn, PlayerRole.WEATHER
+    )
+
+    if winner:
+        # Game over - weather won (journeyman trapped)
+        room.game_status = GameStatus.ENDED
+        room.winner = winner
+        room.ended_at = datetime.now()
+        print(
+            f"  → 🎉 GAME OVER! Winner: {winner.value} after {room.current_turn} turns"
+        )
+
+        # Save room state
+        await ctx.update_room(room)
+
+        # Broadcast game over message
+        game_over_msg = GameOverMessage(
+            type="game_over", winner=winner, stats=statistics
+        )
+        broadcast_count = await ctx.broadcast(game_over_msg.model_dump())
+        logger.info(f"Game over broadcast sent to {broadcast_count} player(s)")
+    else:
+        # Game continues
+        # Save room state
+        await ctx.update_room(room)
+
+        # Broadcast updated room state
+        logger.info(f"Broadcasting flood update to room {ctx.room_id}")
+        room_state_msg = RoomStateMessage(
+            type="room_state", state=serialize_room_state(room)
+        )
+        broadcast_count = await ctx.broadcast(room_state_msg.model_dump())
+        logger.info(f"Flood broadcast sent to {broadcast_count} player(s)")
+        print(
+            f"  → Flood complete! Turn {room.current_turn} switched to journeyman. Broadcast to {broadcast_count} player(s)"
+        )
+
+
+# Message handler registry
+MESSAGE_HANDLERS = {
+    "select_role": handle_select_role,
+    "configure_grid": handle_configure_grid,
+    "move": handle_move,
+    "flood": handle_flood,
+}
+
+
+async def dispatch_message(message: dict, ctx: MessageContext) -> None:
+    """
+    Dispatch message to appropriate handler.
+
+    Args:
+        message: The message dictionary
+        ctx: Message context
+    """
+    message_type = message.get("type")
+
+    if not message_type:
+        await ctx.send_error("Message must include 'type' field")
+        return
+
+    handler = MESSAGE_HANDLERS.get(message_type)
+
+    if handler:
+        try:
+            await handler(message, ctx)
+        except ValidationError as e:
+            await ctx.send_error(f"Invalid message format: {str(e)}")
+        except Exception as e:
+            logger.exception(f"Error in {message_type} handler")
+            print(f"⚠️ Error handling message: {e}")
+            await ctx.send_error("Internal server error")
+    else:
+        await ctx.send_error(f"Unknown message type: {message_type}")
+
+
+async def get_or_create_room(room_id: str) -> GameRoom:
+    """
+    Get existing room or create a new one.
+
+    Args:
+        room_id: The room identifier
+
+    Returns:
+        The GameRoom instance
+    """
     room = await room_manager.get_room(room_id)
 
     if not room:
@@ -302,571 +809,125 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
             room_manager.rooms[room_id] = room
         print(f"🎮 Room {room_id} created by first player")
 
+    return room
+
+
+async def send_initial_state(websocket: WebSocket, room: GameRoom) -> None:
+    """
+    Send initial room state to a connecting player.
+
+    Args:
+        websocket: The WebSocket connection
+        room: The GameRoom instance
+    """
+    room_state_msg = RoomStateMessage(
+        type="room_state", state=serialize_room_state(room)
+    )
+    await websocket.send_json(room_state_msg.model_dump())
+
+
+async def handle_message_loop(
+    room_id: str, player_id: str, websocket: WebSocket
+) -> None:
+    """
+    Handle incoming messages in a loop until disconnect.
+
+    Args:
+        room_id: The room identifier
+        player_id: The player identifier
+        websocket: The WebSocket connection
+    """
+    while True:
+        # Receive message from client
+        data = await websocket.receive_text()
+
+        try:
+            # Parse JSON message
+            message = json.loads(data)
+            message_type = message.get("type", "unknown")
+
+            logger.info(
+                f"📨 Received {message_type} from player {player_id[:8]} in room {room_id}"
+            )
+            print(
+                f"📨 Received {message_type} from player {player_id[:8]} in room {room_id}"
+            )
+
+            # Create context and dispatch message
+            ctx = MessageContext(room_id, player_id, websocket)
+            await dispatch_message(message, ctx)
+
+        except json.JSONDecodeError:
+            error_msg = ErrorMessage(type="error", message="Invalid JSON format")
+            await websocket.send_json(error_msg.model_dump())
+        except Exception as e:
+            print(f"⚠️ Error handling message: {e}")
+            error_msg = ErrorMessage(type="error", message="Internal server error")
+            await websocket.send_json(error_msg.model_dump())
+
+
+async def handle_disconnection(room_id: str, player_id: str) -> None:
+    """
+    Handle player disconnection cleanup.
+
+    Args:
+        room_id: The room identifier
+        player_id: The player identifier
+    """
+    # Handle disconnection
+    player_role = await connection_manager.disconnect(room_id, player_id)
+
+    # Notify other players if this player had a role
+    if player_role:
+        disconnect_msg = PlayerDisconnectedMessage(
+            type="player_disconnected", role=player_role
+        )
+        await connection_manager.broadcast(room_id, disconnect_msg.model_dump())
+
+        # Update room state to mark player as disconnected
+        room = await room_manager.get_room(room_id)
+        if room:
+            room.players[player_role.value] = False
+            await room_manager.update_room(room_id, room)
+            print(f"🔄 Updated room {room_id}: {player_role.value} disconnected")
+
+
+@router.websocket("/ws/{room_id}")
+async def websocket_endpoint(websocket: WebSocket, room_id: str):
+    """
+    WebSocket endpoint for game room connections.
+
+    Handles connection, message routing, and disconnection for players
+    joining a specific game room.
+
+    Args:
+        websocket: The WebSocket connection
+        room_id: The room identifier to join
+    """
+    # Accept connection first (required by FastAPI/Starlette)
+    await websocket.accept()
+
+    # Generate unique player ID
+    player_id = str(uuid.uuid4())
+
+    # Get or create room
+    room = await get_or_create_room(room_id)
+
+    # Connect player to room
     await connection_manager.connect(room_id, player_id, websocket)
 
     try:
         # Send initial room state to the connecting player
-        room_state_msg = RoomStateMessage(
-            type="room_state", state=serialize_room_state(room)
-        )
-        await websocket.send_json(room_state_msg.model_dump())
+        await send_initial_state(websocket, room)
         print(f"📤 Sent initial room state to player {player_id[:8]}")
 
-        # Message loop - keep connection alive and handle incoming messages
-        while True:
-            # Receive message from client
-            data = await websocket.receive_text()
-
-            try:
-                # Parse JSON message
-                message = json.loads(data)
-                message_type = message.get("type")
-
-                if not message_type:
-                    error_msg = ErrorMessage(
-                        type="error", message="Message must include 'type' field"
-                    )
-                    await websocket.send_json(error_msg.model_dump())
-                    continue
-
-                logger.info(
-                    f"📨 Received {message_type} from player {player_id[:8]} in room {room_id}"
-                )
-                print(
-                    f"📨 Received {message_type} from player {player_id[:8]} in room {room_id}"
-                )
-
-                # Message handling - implemented in tasks 3.2-3.4
-                if message_type == "select_role":
-                    logger.info(f"Handling select_role for player {player_id[:8]}")
-                    # Task 3.2: Role Selection
-                    try:
-                        # Parse and validate message
-                        role_msg = SelectRoleMessage(**message)
-                        selected_role = role_msg.role
-                        print(f"  → Role selection: {selected_role.value}")
-
-                        # Get current room state
-                        room = await room_manager.get_room(room_id)
-                        if not room:
-                            error_msg = ErrorMessage(
-                                type="error", message="Room not found"
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Check if role is already taken
-                        if room.players[selected_role.value]:
-                            error_msg = ErrorMessage(
-                                type="error",
-                                message=f"Role {selected_role.value} is already taken",
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Check if this player already has a different role and clear it
-                        current_role = await connection_manager.get_player_role(
-                            room_id, player_id
-                        )
-                        if current_role and current_role != selected_role:
-                            room.players[current_role.value] = False
-                            print(
-                                f"  → Player {player_id[:8]} switching from {current_role.value} to {selected_role.value}"
-                            )
-
-                        # Assign role to player
-                        await connection_manager.set_player_role(
-                            room_id, player_id, selected_role
-                        )
-                        room.players[selected_role.value] = True
-
-                        # Detect if this is a reconnection (joining an active game)
-                        is_reconnection = room.game_status == GameStatus.ACTIVE
-
-                        # Check if both roles are filled
-                        if room.players["journeyman"] and room.players["weather"]:
-                            # Only transition to CONFIGURING if currently WAITING
-                            # Keep ACTIVE status if already active (reconnection case)
-                            if room.game_status == GameStatus.WAITING:
-                                room.game_status = GameStatus.CONFIGURING
-                                print(
-                                    f"  → Both roles filled! Room {room_id} transitioning to CONFIGURING"
-                                )
-
-                        # Save updated room state
-                        await room_manager.update_room(room_id, room)
-
-                        # Broadcast appropriate message based on reconnection status
-                        if is_reconnection:
-                            # Reconnection: notify other player that opponent is back
-                            logger.info(
-                                f"Player reconnected to active game in room {room_id}"
-                            )
-                            print(
-                                f"  → Reconnection! {selected_role.value} rejoined active game"
-                            )
-                            reconnect_msg = PlayerReconnectedMessage(
-                                type="player_reconnected", role=selected_role
-                            )
-                            broadcast_count = await connection_manager.broadcast(
-                                room_id, reconnect_msg.model_dump()
-                            )
-                            logger.info(
-                                f"Reconnection broadcast sent to {broadcast_count} player(s)"
-                            )
-                        else:
-                            # Initial connection: broadcast room state
-                            logger.info(f"Broadcasting role update to room {room_id}")
-                            room_state_msg = RoomStateMessage(
-                                type="room_state", state=serialize_room_state(room)
-                            )
-                            broadcast_count = await connection_manager.broadcast(
-                                room_id, room_state_msg.model_dump()
-                            )
-                            logger.info(
-                                f"Broadcast sent to {broadcast_count} player(s)"
-                            )
-
-                    except ValidationError as e:
-                        error_msg = ErrorMessage(
-                            type="error",
-                            message=f"Invalid role selection: {str(e)}",
-                        )
-                        await websocket.send_json(error_msg.model_dump())
-
-                elif message_type == "configure_grid":
-                    logger.info(f"Handling configure_grid for player {player_id[:8]}")
-                    # Task 3.3: Grid Configuration
-                    try:
-                        # Parse and validate message
-                        config_msg = ConfigureGridMessage(**message)
-                        grid_size = config_msg.size
-                        print(f"  → Grid configuration: size={grid_size}")
-
-                        # Get current room state
-                        room = await room_manager.get_room(room_id)
-                        if not room:
-                            error_msg = ErrorMessage(
-                                type="error", message="Room not found"
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Verify player role first (more specific error)
-                        player_role = await connection_manager.get_player_role(
-                            room_id, player_id
-                        )
-                        if not player_role:
-                            error_msg = ErrorMessage(
-                                type="error",
-                                message="You must select a role before configuring the grid",
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        if player_role != PlayerRole.JOURNEYMAN:
-                            error_msg = ErrorMessage(
-                                type="error",
-                                message="Only the journeyman player can configure the grid",
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Check room status (must be CONFIGURING)
-                        if room.game_status != GameStatus.CONFIGURING:
-                            error_msg = ErrorMessage(
-                                type="error",
-                                message=f"Room must be in configuring state to set grid size (current: {room.game_status.value})",
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Validate grid size (3-10)
-                        is_valid, error_message = validate_grid_size(grid_size)
-                        if not is_valid:
-                            error_msg = ErrorMessage(
-                                type="error", message=error_message
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Initialize game board
-                        board = Board(grid_size)
-                        print(
-                            f"  → Board initialized: {grid_size}x{grid_size} grid with all DRY fields"
-                        )
-
-                        # Update room state
-                        room.grid_size = grid_size
-                        room.grid = board.grid
-                        room.journeyman_position = Position(x=0, y=0)
-                        room.game_status = GameStatus.ACTIVE
-                        room.current_role = PlayerRole.JOURNEYMAN
-                        room.current_turn = 1
-
-                        print(
-                            f"  → Journeyman placed at (0, 0), game status: ACTIVE, turn: 1"
-                        )
-
-                        # Save updated room state
-                        await room_manager.update_room(room_id, room)
-
-                        # Broadcast updated room state to all players
-                        logger.info(f"Broadcasting game start to room {room_id}")
-                        room_state_msg = RoomStateMessage(
-                            type="room_state", state=serialize_room_state(room)
-                        )
-                        broadcast_count = await connection_manager.broadcast(
-                            room_id, room_state_msg.model_dump()
-                        )
-                        logger.info(
-                            f"Game started! Broadcast sent to {broadcast_count} player(s)"
-                        )
-                        print(
-                            f"  → Game started! Broadcast sent to {broadcast_count} player(s)"
-                        )
-
-                    except ValidationError as e:
-                        error_msg = ErrorMessage(
-                            type="error",
-                            message=f"Invalid grid configuration: {str(e)}",
-                        )
-                        await websocket.send_json(error_msg.model_dump())
-
-                elif message_type == "move":
-                    logger.info(f"Handling move for player {player_id[:8]}")
-                    # Task 3.4: Journeyman Move
-                    try:
-                        # Parse and validate message
-                        move_msg = MoveMessage(**message)
-                        target_pos = move_msg.position
-                        print(
-                            f"  → Journeyman move to: ({target_pos.x}, {target_pos.y})"
-                        )
-
-                        # Get current room state
-                        room = await room_manager.get_room(room_id)
-                        if not room:
-                            error_msg = ErrorMessage(
-                                type="error", message="Room not found"
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Verify player role
-                        player_role = await connection_manager.get_player_role(
-                            room_id, player_id
-                        )
-                        if not player_role:
-                            error_msg = ErrorMessage(
-                                type="error",
-                                message="You must select a role before making a move",
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        if player_role != PlayerRole.JOURNEYMAN:
-                            error_msg = ErrorMessage(
-                                type="error",
-                                message="Only the journeyman player can make moves",
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Check room status (must be ACTIVE)
-                        if room.game_status != GameStatus.ACTIVE:
-                            error_msg = ErrorMessage(
-                                type="error",
-                                message=f"Game must be active to make moves (current: {room.game_status.value})",
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Check if it's journeyman's turn
-                        if room.current_role != PlayerRole.JOURNEYMAN:
-                            error_msg = ErrorMessage(
-                                type="error",
-                                message=f"It's not your turn (current: {room.current_role.value})",
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Create board instance from room state
-                        board = Board(room.grid_size)
-                        board.grid = room.grid
-
-                        # Validate move
-                        is_valid, error_message = validate_journeyman_move(
-                            board, room.journeyman_position, target_pos
-                        )
-                        if not is_valid:
-                            error_msg = ErrorMessage(
-                                type="error", message=error_message
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Execute move: Update journeyman position
-                        room.journeyman_position = target_pos
-                        print(
-                            f"  → Journeyman moved to ({target_pos.x}, {target_pos.y})"
-                        )
-
-                        # Dry adjacent fields (4 directions: N, E, S, W)
-                        adjacent_positions = board.get_adjacent_positions(
-                            target_pos, include_diagonals=False
-                        )
-                        dried_count = 0
-                        for adj_pos in adjacent_positions:
-                            if board.get_field_state(adj_pos) == FieldState.FLOODED:
-                                board.set_field_state(adj_pos, FieldState.DRY)
-                                dried_count += 1
-                        print(f"  → Dried {dried_count} adjacent field(s)")
-
-                        # Update room grid with modified board state
-                        room.grid = board.grid
-
-                        # Switch turn to weather
-                        room.current_role = PlayerRole.WEATHER
-
-                        # Check win condition
-                        winner, statistics = check_win_condition(
-                            board,
-                            room.journeyman_position,
-                            room.current_turn,
-                            PlayerRole.JOURNEYMAN,
-                        )
-
-                        if winner:
-                            # Game over - journeyman won
-                            room.game_status = GameStatus.ENDED
-                            room.winner = winner
-                            room.ended_at = datetime.now()
-                            print(
-                                f"  → 🎉 GAME OVER! Winner: {winner.value} after {room.current_turn} turns"
-                            )
-
-                            # Save room state
-                            await room_manager.update_room(room_id, room)
-
-                            # Broadcast game over message
-                            game_over_msg = GameOverMessage(
-                                type="game_over", winner=winner, stats=statistics
-                            )
-                            broadcast_count = await connection_manager.broadcast(
-                                room_id, game_over_msg.model_dump()
-                            )
-                            logger.info(
-                                f"Game over broadcast sent to {broadcast_count} player(s)"
-                            )
-                        else:
-                            # Game continues
-                            # Save room state
-                            await room_manager.update_room(room_id, room)
-
-                            # Broadcast updated room state
-                            logger.info(f"Broadcasting move update to room {room_id}")
-                            room_state_msg = RoomStateMessage(
-                                type="room_state", state=serialize_room_state(room)
-                            )
-                            broadcast_count = await connection_manager.broadcast(
-                                room_id, room_state_msg.model_dump()
-                            )
-                            logger.info(
-                                f"Move broadcast sent to {broadcast_count} player(s)"
-                            )
-                            print(
-                                f"  → Move complete! Turn switched to weather. Broadcast to {broadcast_count} player(s)"
-                            )
-
-                    except ValidationError as e:
-                        error_msg = ErrorMessage(
-                            type="error",
-                            message=f"Invalid move message: {str(e)}",
-                        )
-                        await websocket.send_json(error_msg.model_dump())
-
-                elif message_type == "flood":
-                    logger.info(f"Handling flood for player {player_id[:8]}")
-                    # Task 3.4: Weather Flood
-                    try:
-                        # Parse and validate message
-                        flood_msg = FloodMessage(**message)
-                        flood_positions = flood_msg.positions
-                        print(f"  → Weather flood: {len(flood_positions)} position(s)")
-
-                        # Get current room state
-                        room = await room_manager.get_room(room_id)
-                        if not room:
-                            error_msg = ErrorMessage(
-                                type="error", message="Room not found"
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Verify player role
-                        player_role = await connection_manager.get_player_role(
-                            room_id, player_id
-                        )
-                        if not player_role:
-                            error_msg = ErrorMessage(
-                                type="error",
-                                message="You must select a role before flooding fields",
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        if player_role != PlayerRole.WEATHER:
-                            error_msg = ErrorMessage(
-                                type="error",
-                                message="Only the weather player can flood fields",
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Check room status (must be ACTIVE)
-                        if room.game_status != GameStatus.ACTIVE:
-                            error_msg = ErrorMessage(
-                                type="error",
-                                message=f"Game must be active to flood fields (current: {room.game_status.value})",
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Check if it's weather's turn
-                        if room.current_role != PlayerRole.WEATHER:
-                            error_msg = ErrorMessage(
-                                type="error",
-                                message=f"It's not your turn (current: {room.current_role.value})",
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Create board instance from room state
-                        board = Board(room.grid_size)
-                        board.grid = room.grid
-
-                        # Validate flood
-                        is_valid, error_message = validate_weather_flood(
-                            board, flood_positions, room.journeyman_position
-                        )
-                        if not is_valid:
-                            error_msg = ErrorMessage(
-                                type="error", message=error_message
-                            )
-                            await websocket.send_json(error_msg.model_dump())
-                            continue
-
-                        # Execute flood: Set positions to FLOODED
-                        for pos in flood_positions:
-                            board.set_field_state(pos, FieldState.FLOODED)
-                            print(f"  → Flooded field at ({pos.x}, {pos.y})")
-
-                        # Update room grid with modified board state
-                        room.grid = board.grid
-
-                        # Increment turn counter
-                        room.current_turn += 1
-                        print(f"  → Turn incremented to {room.current_turn}")
-
-                        # Switch turn to journeyman
-                        room.current_role = PlayerRole.JOURNEYMAN
-
-                        # Check win condition
-                        winner, statistics = check_win_condition(
-                            board,
-                            room.journeyman_position,
-                            room.current_turn,
-                            PlayerRole.WEATHER,
-                        )
-
-                        if winner:
-                            # Game over - weather won (journeyman trapped)
-                            room.game_status = GameStatus.ENDED
-                            room.winner = winner
-                            room.ended_at = datetime.now()
-                            print(
-                                f"  → 🎉 GAME OVER! Winner: {winner.value} after {room.current_turn} turns"
-                            )
-
-                            # Save room state
-                            await room_manager.update_room(room_id, room)
-
-                            # Broadcast game over message
-                            game_over_msg = GameOverMessage(
-                                type="game_over", winner=winner, stats=statistics
-                            )
-                            broadcast_count = await connection_manager.broadcast(
-                                room_id, game_over_msg.model_dump()
-                            )
-                            logger.info(
-                                f"Game over broadcast sent to {broadcast_count} player(s)"
-                            )
-                        else:
-                            # Game continues
-                            # Save room state
-                            await room_manager.update_room(room_id, room)
-
-                            # Broadcast updated room state
-                            logger.info(f"Broadcasting flood update to room {room_id}")
-                            room_state_msg = RoomStateMessage(
-                                type="room_state", state=serialize_room_state(room)
-                            )
-                            broadcast_count = await connection_manager.broadcast(
-                                room_id, room_state_msg.model_dump()
-                            )
-                            logger.info(
-                                f"Flood broadcast sent to {broadcast_count} player(s)"
-                            )
-                            print(
-                                f"  → Flood complete! Turn {room.current_turn} switched to journeyman. Broadcast to {broadcast_count} player(s)"
-                            )
-
-                    except ValidationError as e:
-                        error_msg = ErrorMessage(
-                            type="error",
-                            message=f"Invalid flood message: {str(e)}",
-                        )
-                        await websocket.send_json(error_msg.model_dump())
-
-                else:
-                    # Unknown message type
-                    error_msg = ErrorMessage(
-                        type="error", message=f"Unknown message type: {message_type}"
-                    )
-                    await websocket.send_json(error_msg.model_dump())
-
-            except json.JSONDecodeError:
-                error_msg = ErrorMessage(type="error", message="Invalid JSON format")
-                await websocket.send_json(error_msg.model_dump())
-            except ValidationError as e:
-                error_msg = ErrorMessage(
-                    type="error", message=f"Message validation failed: {str(e)}"
-                )
-                await websocket.send_json(error_msg.model_dump())
-            except Exception as e:
-                print(f"⚠️ Error handling message: {e}")
-                error_msg = ErrorMessage(type="error", message="Internal server error")
-                await websocket.send_json(error_msg.model_dump())
+        # Handle incoming messages in a loop
+        await handle_message_loop(room_id, player_id, websocket)
 
     except WebSocketDisconnect:
         print(f"🔌 Player {player_id[:8]} disconnected from room {room_id}")
     except Exception as e:
         print(f"⚠️ Unexpected error in WebSocket connection: {e}")
     finally:
-        # Handle disconnection
-        player_role = await connection_manager.disconnect(room_id, player_id)
-
-        # Notify other players if this player had a role
-        if player_role:
-            disconnect_msg = PlayerDisconnectedMessage(
-                type="player_disconnected", role=player_role
-            )
-            await connection_manager.broadcast(room_id, disconnect_msg.model_dump())
-
-            # Update room state to mark player as disconnected
-            room = await room_manager.get_room(room_id)
-            if room:
-                room.players[player_role.value] = False
-                await room_manager.update_room(room_id, room)
-                print(f"🔄 Updated room {room_id}: {player_role.value} disconnected")
+        # Clean up on disconnection
+        await handle_disconnection(room_id, player_id)

@@ -4,6 +4,55 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+## 2025-10-17
+
+### WebSocket Handler Refactoring
+- **Status**: Completed ✅
+- **Task**: Refactor websocket.py for improved readability and maintainability
+- **Changes**:
+  - Created `MessageContext` class to encapsulate message handling context
+    - Provides room/role caching to reduce redundant lookups
+    - Centralized error handling through `send_error()` method
+    - Simplified function signatures across handlers
+  - Extracted reusable validation helper functions:
+    - `validate_player_has_role()` - Check player role with optional required role
+    - `validate_game_status()` - Verify game is in required state
+    - `validate_current_turn()` - Ensure it's the correct player's turn
+  - Extracted message handler functions with early returns:
+    - `handle_select_role()` - Role selection logic (~72 lines)
+    - `handle_configure_grid()` - Grid configuration logic (~64 lines)
+    - `handle_move()` - Journeyman move logic (~108 lines)
+    - `handle_flood()` - Weather flood logic (~104 lines)
+  - Implemented message dispatcher pattern:
+    - `MESSAGE_HANDLERS` registry for extensibility
+    - `dispatch_message()` function for routing with centralized error handling
+  - Created connection lifecycle helper functions:
+    - `get_or_create_room()` - Room creation/retrieval
+    - `send_initial_state()` - Initial state transmission
+    - `handle_message_loop()` - Message processing loop
+    - `handle_disconnection()` - Cleanup on disconnect
+  - Simplified `websocket_endpoint()` function:
+    - Reduced from 600+ lines to ~38 lines
+    - Clear separation of concerns (connection → state → messages → cleanup)
+    - Improved error handling with clean try/except/finally structure
+- **Results**:
+  - File size reduced from 1,492 lines to 922 lines (38% reduction)
+  - Reduced nesting from 5+ levels to 1-2 levels in most functions
+  - Eliminated ~600 lines of duplicated validation code
+  - Improved code navigability with clear function boundaries
+  - No functionality changes - all game logic preserved
+  - Zero linter errors
+  - All imports and modules load successfully
+- **Benefits**:
+  - Much easier to understand and maintain
+  - Each handler function can now be tested independently
+  - Adding new message types requires minimal changes (just add to registry)
+  - Consistent error handling across all message types
+  - Reduced cognitive load when reading/modifying code
+  - Better separation between connection management and business logic
+
+---
+
 ## 2025-10-16
 
 ### Initial Setup
