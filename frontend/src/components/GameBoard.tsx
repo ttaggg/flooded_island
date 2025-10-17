@@ -109,16 +109,21 @@ export function GameBoard({
    *
    * Uses the maximum dimension to determine cell size for optimal visibility.
    * Smaller grids get larger cells for better interaction.
+   * Board size is increased by 1.5x for better visibility.
    *
    * @param width - Grid width
    * @param height - Grid height
-   * @returns Cell size in pixels (40-60px range)
+   * @returns Cell size in pixels (60-90px range)
    */
   const getCellSize = (width: number, height: number): number => {
     const maxDim = Math.max(width, height);
-    if (maxDim <= 5) return 60;
-    if (maxDim <= 7) return 50;
-    return 40;
+    let baseSize;
+    if (maxDim <= 5) baseSize = 60;
+    else if (maxDim <= 7) baseSize = 50;
+    else baseSize = 40;
+
+    // Increase board size by 1.5x
+    return Math.round(baseSize * 1.5);
   };
 
   const cellSize = getCellSize(gridWidth, gridHeight);

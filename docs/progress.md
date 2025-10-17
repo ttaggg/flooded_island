@@ -6,6 +6,24 @@ Running log of completed tasks and changes to the project.
 
 ## 2025-01-27
 
+### Task 6.2: Board Size Enhancement
+- **Status**: Completed ✅
+- **Task**: Increase playing board size by 1.5x without changing the number of fields in the grid
+- **Changes**:
+  - **GameBoard.tsx**: Updated `getCellSize` function to multiply cell size by 1.5
+    - Modified cell size calculation to increase from 40-60px range to 60-90px range
+    - Added documentation about the 1.5x size increase
+    - Used `Math.round()` to ensure integer pixel values
+  - **GameConfiguration.tsx**: Updated `getSquareSize` function to multiply preview size by 1.5
+    - Modified preview square size calculation to increase from 24-40px range to 36-60px range
+    - Added documentation about matching the actual game board size
+    - Used `Math.round()` to ensure integer pixel values
+- **Impact**: 
+  - Game board fields are now 1.5 times larger, providing better visibility and easier interaction
+  - Grid preview in configuration screen matches the actual game board size
+  - No changes to grid dimensions or game logic - only visual scaling
+  - Maintains responsive design and accessibility features
+
 ### Task 6.1: Code Documentation
 - **Status**: Completed ✅
 - **Task**: Add comprehensive docstrings to Python functions and TypeScript JSDoc comments

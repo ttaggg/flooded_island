@@ -65,16 +65,21 @@ function GridPreview({ width, height }: GridPreviewProps) {
    *
    * Uses the maximum dimension to determine square size for optimal visibility.
    * Larger grids get smaller squares to fit within the preview area.
+   * Preview size is increased by 1.5x to match the actual game board.
    *
    * @param w - Grid width
    * @param h - Grid height
-   * @returns Square size in pixels (24-40px range)
+   * @returns Square size in pixels (36-60px range)
    */
   const getSquareSize = (w: number, h: number): number => {
     const maxDim = Math.max(w, h);
-    if (maxDim <= 5) return 40;
-    if (maxDim <= 7) return 30;
-    return 24;
+    let baseSize;
+    if (maxDim <= 5) baseSize = 40;
+    else if (maxDim <= 7) baseSize = 30;
+    else baseSize = 24;
+
+    // Increase preview size by 1.5x to match game board
+    return Math.round(baseSize * 1.5);
   };
 
   const squareSize = getSquareSize(width, height);
