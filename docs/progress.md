@@ -1511,6 +1511,41 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 4.10: Drying Preview
+- **Date**: 2025-10-17
+- **Status**: Completed
+- **Changes**:
+  - ✅ Added visual preview showing which 4 cardinal fields (N/S/E/W) will be dried on journeyman movement hover
+  - ✅ Updated `GameBoard.tsx`:
+    - Added `dryingPreviewPositions` state to track fields to highlight
+    - Created `getCardinalAdjacent()` helper function to calculate N/S/E/W positions
+    - Updated `handleMouseEnter` to calculate drying preview positions when `canMove` is true
+    - Updated `handleMouseLeave` to clear preview positions
+    - Added `isDryingPreview` calculation in grid rendering
+    - Passed `isDryingPreview` prop to Field component
+  - ✅ Updated `Field.tsx`:
+    - Added `isDryingPreview: boolean` to FieldProps interface
+    - Updated `getSelectionClasses()` to handle drying preview with highest priority
+    - Applied lime ring (`ring-4 ring-lime-400`) and brightness effect (`brightness-110`)
+  - ✅ Preview only appears for journeyman on their turn when hovering over valid destinations
+  - ✅ Preview only highlights flooded fields (dry fields don't need preview)
+  - ✅ Preview clears immediately when mouse leaves destination field
+  - ✅ Works correctly at board edges (shows 2-3 positions at edges/corners)
+  - ✅ Lime ring clearly distinguishes from movement hover (white ring) and selection (blue ring)
+  - ✅ No TypeScript or linter errors
+- **Notes**: 
+  - Lime color chosen to indicate positive "healing/restoration" effect
+  - Preview provides essential feedback for strategic decision-making
+  - Implementation matches backend behavior (cardinal directions only for drying)
+  - Efficient calculation with no performance impact on any grid size
+  - Clear separation of concerns between preview calculation and rendering
+  - Styling priority: drying preview > selection > hover > default
+  - Only calculates cardinal directions (N/S/E/W), not diagonals
+  - Task 4.11 will create Game Over screen
+  - Task 4.12 will create Connection Status component
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]

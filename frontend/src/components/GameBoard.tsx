@@ -42,6 +42,7 @@ export function GameBoard({
 
   // Hover tracking state
   const [hoveredCell, setHoveredCell] = useState<Position | null>(null);
+  const [dryingPreviewPositions, setDryingPreviewPositions] = useState<Position[]>([]);
 
   // Early return if grid is not initialized
   if (!grid || !gridWidth || !gridHeight || !journeymanPosition) {
@@ -63,6 +64,26 @@ export function GameBoard({
   };
 
   const cellSize = getCellSize(gridWidth, gridHeight);
+
+  // Helper function to get cardinal adjacent positions (N/S/E/W only)
+  const getCardinalAdjacent = (position: Position): Position[] => {
+    const positions: Position[] = [];
+    const directions = [
+      { x: 0, y: -1 }, // N
+      { x: 1, y: 0 }, // E
+      { x: 0, y: 1 }, // S
+      { x: -1, y: 0 }, // W
+    ];
+
+    for (const dir of directions) {
+      const newX = position.x + dir.x;
+      const newY = position.y + dir.y;
+      if (newX >= 0 && newX < gridWidth && newY >= 0 && newY < gridHeight) {
+        positions.push({ x: newX, y: newY });
+      }
+    }
+    return positions;
+  };
 
   // Helper function to check if journeyman is at a position
   const isJourneymanAt = (row: number, col: number): boolean => {
@@ -134,12 +155,20 @@ export function GameBoard({
 
   // Mouse enter handler
   const handleMouseEnter = (row: number, col: number) => {
-    setHoveredCell({ x: col, y: row });
+    const position = { x: col, y: row };
+    setHoveredCell(position);
+
+    // Calculate drying preview for journeyman movement
+    if (canMove && isFieldSelectable(row, col)) {
+      const adjacentPositions = getCardinalAdjacent(position);
+      setDryingPreviewPositions(adjacentPositions);
+    }
   };
 
   // Mouse leave handler
   const handleMouseLeave = () => {
     setHoveredCell(null);
+    setDryingPreviewPositions([]);
   };
 
   return (
@@ -203,6 +232,9 @@ export function GameBoard({
                       hoveredCell !== null &&
                       hoveredCell.x === colIndex &&
                       hoveredCell.y === rowIndex;
+                    const isDryingPreview = dryingPreviewPositions.some(
+                      (p) => p.x === colIndex && p.y === rowIndex
+                    );
 
                     return (
                       <Field
@@ -215,6 +247,7 @@ export function GameBoard({
                         isSelectable={isSelectable}
                         isSelected={isSelected}
                         isHovered={isHovered}
+                        isDryingPreview={isDryingPreview}
                         onClick={handleFieldClick}
                         onMouseEnter={handleMouseEnter}
                         onMouseLeave={handleMouseLeave}

@@ -1,119 +1,138 @@
 # Current Active Task
 
 ## Task
-Task 4.9: Turn Controls Component
+Task 4.10: Drying Preview
 
 ## Status
 Completed
 
 ## Description
-Created the TurnControls component to display turn information and provide action controls for players. The component shows the current day/turn counter, whose turn it is, and provides appropriate controls for each player role. For Weather players, it includes a selection counter showing how many fields are selected (0/2, 1/2, 2/2), an "End Turn" button to submit flood actions, and a "Clear Selection" button to reset their selections. For Journeyman players, it shows helpful instructions. When it's not the player's turn, it displays a waiting message.
+Added visual preview showing which 4 cardinal fields (N/S/E/W) will be automatically dried when the journeyman player hovers over a valid movement destination. The preview uses a lime ring with brightness effect to clearly distinguish it from movement hover highlighting, providing clear visual feedback about the consequences of a move before committing to it.
 
 ## Requirements Met
-- ✅ Created `TurnControls.tsx` component with proper TypeScript interface
-- ✅ Display current turn and day counter (e.g., "Day 15/365")
-- ✅ Show whose turn it is (Journeyman/Weather)
-- ✅ Show player's role with visual indicator (highlighted when it's their turn)
-- ✅ For Weather's turn: selection counter showing "Selected: X/2 fields"
-- ✅ "End Turn" button enabled for Weather player (can flood 0-2 fields)
-- ✅ "Clear Selection" button enabled when selections > 0
-- ✅ For Journeyman's turn: helpful instruction text
-- ✅ For non-active player: waiting message with context
-- ✅ Updated App.tsx to pass necessary props
-- ✅ Updated GameBoard.tsx to render TurnControls
-- ✅ Styled with indigo theme, backdrop blur, and shadow effects
+- ✅ Preview appears when journeyman hovers over valid adjacent movement destination
+- ✅ Shows exactly 4 cardinal fields (N/S/E/W) that will be dried (or fewer at board edges)
+- ✅ Lime ring with brightness effect clearly distinguishes from movement hover (white ring)
+- ✅ Preview only highlights flooded fields (dry fields don't show preview)
+- ✅ Preview clears immediately when mouse leaves destination field
+- ✅ Doesn't show on diagonal neighbors (only cardinal directions)
+- ✅ Only appears for journeyman player on their turn
+- ✅ Works correctly at board edges (shows fewer than 4 if at edge)
 - ✅ No TypeScript or linter errors
 
 ## Changes Implemented
 
-### 1. Created TurnControls Component (`frontend/src/components/TurnControls.tsx`) - 148 lines
-**Component Structure:**
-- **Props Interface**: Accepts gameState, myRole, isMyTurn, canFlood, selectedFloodPositions, submitFlood, clearFloodSelection
-- **Turn Information Section**:
-  - Day counter: "Day X/365"
-  - Current turn indicator: shows which role is playing
-  - Role indicator: shows player's role with yellow highlight when it's their turn
-- **Action Controls Section**:
-  - **Weather Controls** (when canFlood && isMyTurn):
-    - Selection counter: "Selected: X/2 fields"
-    - Helper text: "Select up to 2 dry fields to flood"
-    - Clear Selection button: enabled when hasSelection
-    - End Turn button: always enabled (Weather can flood 0-2 fields)
-  - **Journeyman Controls** (when isMyTurn && myRole === JOURNEYMAN):
-    - Instruction: "Your Turn - Click an adjacent field to move"
-    - Helper text: "Move to a dry field. Adjacent fields (N/S/E/W) will be automatically dried."
-  - **Waiting State** (when !isMyTurn):
-    - Message: "Waiting for [Role] to play..."
-    - Context text: explains what the current player is doing
+### 1. Updated GameBoard Component (`frontend/src/components/GameBoard.tsx`)
 
-**Styling:**
-- Indigo theme with `bg-white/10 backdrop-blur-sm`
-- White text with good contrast
-- End Turn button: Yellow/gold gradient (primary action)
-- Clear button: White/transparent (secondary action)
-- Yellow highlight ring when it's player's turn
-- Responsive flex layout
+**Added State:**
+- `dryingPreviewPositions: Position[]` - Tracks which fields should show drying preview (line 45)
 
-### 2. Updated App.tsx
-**Changes:**
-- Added `isMyTurn`, `submitFlood`, and `clearFloodSelection` to destructured `useGameState` return (line 33-35)
-- Passed these new props to `GameBoard` component (lines 128-130)
+**Added Helper Function:**
+- `getCardinalAdjacent(position: Position): Position[]` (lines 68-86)
+  - Calculates 4 cardinal adjacent positions (N/S/E/W) from given position
+  - Filters to only include positions within grid bounds
+  - Returns array of valid adjacent positions
 
-### 3. Updated GameBoard.tsx
-**Changes:**
-- Imported `TurnControls` component (line 9)
-- Added new props to `GameBoardProps` interface: `isMyTurn`, `submitFlood`, `clearFloodSelection` (lines 20-22)
-- Added new props to function destructuring (lines 37-39)
-- Removed local `isMyTurn` calculation (was line 146) since it's now a prop
-- Rendered `TurnControls` component below the game board card (lines 251-260)
-- Positioned between the legend and the footer
+**Updated Mouse Handlers:**
+- `handleMouseEnter` (lines 157-166):
+  - When `canMove` is true and hovering over selectable field
+  - Calculates cardinal adjacent positions from hovered destination
+  - Stores positions in `dryingPreviewPositions` state
+- `handleMouseLeave` (lines 169-172):
+  - Clears both `hoveredCell` and `dryingPreviewPositions`
+
+**Updated Grid Rendering:**
+- Added `isDryingPreview` calculation (lines 235-237)
+  - Checks if current cell position is in `dryingPreviewPositions` array
+- Passed `isDryingPreview` prop to Field component (line 250)
+
+### 2. Updated Field Component (`frontend/src/components/Field.tsx`)
+
+**Added Prop:**
+- `isDryingPreview: boolean` to `FieldProps` interface (line 20)
+- Added to function parameters (line 40)
+
+**Updated Styling:**
+- Modified `getSelectionClasses` function (lines 89-101)
+  - Added drying preview check with highest priority
+  - If `isDryingPreview && fieldState === FieldState.FLOODED`:
+    - Returns `'ring-4 ring-lime-400 brightness-110'`
+  - Lime ring provides clear visual indicator
+  - Brightness effect adds subtle glow to flooded fields
+  - Only applies to FLOODED fields (dry fields won't show preview)
 
 ## Key Features Implemented
 
-### Turn Information Display
-- Day counter shows progress toward 365-day goal
-- Current turn clearly indicates which role is active
-- Player's role highlighted with yellow ring when it's their turn
+### Visual Preview System
+- Lime ring (`ring-4 ring-lime-400`) clearly indicates fields that will be dried
+- Brightness effect (`brightness-110`) adds subtle glow for better visibility
+- Distinct from movement hover (white ring) and selection (blue ring)
+- Preview has highest priority in styling hierarchy
 
-### Weather Player Controls
-- Selection counter provides clear feedback (0/2, 1/2, 2/2)
-- Clear Selection button removes all selections
-- End Turn button submits flood action (enabled for 0-2 selections)
-- Helper text guides the player
+### Smart Positioning
+- Only calculates cardinal directions (N/S/E/W), not diagonals
+- Automatically handles board edges (shows fewer than 4 positions at edges)
+- Position validation ensures all previews are within grid bounds
 
-### Journeyman Player Controls
-- Clear instruction: "Click an adjacent field to move"
-- Explanation of auto-drying mechanic
+### Conditional Display
+- Only appears when `canMove` is true (journeyman's turn)
+- Only shows on valid, selectable movement destinations
+- Only highlights flooded fields (dry fields ignored)
+- Clears instantly when mouse leaves destination field
 
-### Waiting State
-- Clear message when it's not player's turn
-- Context about what the other player is doing
-
-### Visual Design
-- Consistent indigo theme with backdrop blur
-- White text with high contrast
-- Yellow/gold accent for primary actions
-- Smooth transitions and hover effects
+### Integration
+- Seamlessly integrated with existing hover and selection systems
+- Doesn't interfere with Weather player's flood selection
+- Works across all grid sizes (3x3 to 10x10)
 
 ## Testing Notes
-- Weather player sees selection counter updating (0/2 → 1/2 → 2/2)
-- Clear Selection button enabled only when selections > 0
-- End Turn button always enabled for Weather (can submit 0-2 fields)
-- Clicking End Turn calls `submitFlood()` and submits to backend
-- Clicking Clear removes all selected fields
-- Journeyman sees instruction text on their turn
-- Non-active player sees waiting message
-- Component styled consistently with rest of UI
-- No TypeScript or linter errors in any modified files
+- Hover over adjacent field as journeyman → 4 cardinal neighbors show lime preview
+- Preview only shows on flooded fields (dry fields already dry, no preview needed)
+- Preview clears when mouse leaves
+- Preview doesn't show on diagonal neighbors (only N/S/E/W)
+- Preview doesn't appear for Weather player
+- Preview doesn't appear when not journeyman's turn
+- Works correctly at board edges (shows 2-3 positions at edges/corners)
+- Distinct visual difference between movement hover and drying preview
+- No performance issues with preview calculation
+
+## Technical Implementation
+
+### Position Calculation Algorithm
+```typescript
+const getCardinalAdjacent = (position: Position): Position[] => {
+  const positions: Position[] = [];
+  const directions = [
+    { x: 0, y: -1 },  // N
+    { x: 1, y: 0 },   // E
+    { x: 0, y: 1 },   // S
+    { x: -1, y: 0 },  // W
+  ];
+  
+  for (const dir of directions) {
+    const newX = position.x + dir.x;
+    const newY = position.y + dir.y;
+    if (newX >= 0 && newX < gridWidth && newY >= 0 && newY < gridHeight) {
+      positions.push({ x: newX, y: newY });
+    }
+  }
+  return positions;
+};
+```
+
+### Styling Priority
+1. **Highest**: Drying preview (lime ring + brightness)
+2. **High**: Selection (blue ring)
+3. **Medium**: Hover (white ring)
+4. **Low**: Default state
 
 ## Next Steps
-- **Task 4.10**: Add drying preview on journeyman movement hover
 - **Task 4.11**: Create Game Over screen
 - **Task 4.12**: Create Connection Status component
 
 ## Notes
-- Weather can flood 0-2 fields, so End Turn is always enabled
-- Selection counter provides clear visual feedback
-- Component is positioned below the game board for easy access
-- Responsive design works on different screen sizes
-- Clear visual hierarchy with turn info at top, actions at bottom
+- Lime color chosen to indicate positive "healing/restoration" effect
+- Preview provides essential feedback for strategic decision-making
+- Implementation matches backend behavior (cardinal directions only for drying)
+- Efficient calculation with no performance impact
+- Clean separation of concerns between preview calculation and rendering

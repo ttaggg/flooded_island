@@ -17,6 +17,7 @@ interface FieldProps {
   isSelectable: boolean;
   isSelected: boolean;
   isHovered: boolean;
+  isDryingPreview: boolean;
 
   // Handlers
   onClick: (row: number, col: number) => void;
@@ -36,6 +37,7 @@ export function Field({
   isSelectable,
   isSelected,
   isHovered,
+  isDryingPreview,
   onClick,
   onMouseEnter,
   onMouseLeave,
@@ -85,6 +87,10 @@ export function Field({
 
   // Selection highlight classes
   const getSelectionClasses = (): string => {
+    // Drying preview has highest priority (only for flooded fields)
+    if (isDryingPreview && fieldState === FieldState.FLOODED) {
+      return 'ring-4 ring-lime-400 brightness-110';
+    }
     if (isSelected) {
       return 'ring-4 ring-blue-500 field-selected';
     }
