@@ -4,7 +4,7 @@
 Two-player turn-based strategy game where journeyman tries to survive on an island while weather attempts to flood them.
 
 ## Setup
-- **Grid**: Configurable NxN grid (default: 10x10)
+- **Grid**: Configurable rectangular grid (default: 10x10)
 - **Initial State**: All fields are dry
 - **Starting Position**: Journeyman starts on top-left corner
 - **Roles**: Two players fill "journeyman" and "weather" roles

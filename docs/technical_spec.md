@@ -42,10 +42,11 @@
   - Can flood 0, 1, or 2 fields per turn
 
 ### Grid Configuration
-- **Size Range**: Minimum 3x3, Maximum 10x10
-- **Who Configures**: Journeyman sets the grid size
+- **Size Range**: Width and height independently configurable, each between 3 and 10
+- **Who Configures**: Journeyman sets the grid dimensions
 - **When**: Before game starts, after both roles are filled
-- **Validation**: Enforce min/max limits
+- **Validation**: Enforce min/max limits for both width and height
+- **Default**: 10x10 (square grid)
 
 ### Win Conditions
 - **Journeyman Victory**: Completes their move on day 365 → immediate win (weather doesn't get turn 365)
@@ -94,7 +95,8 @@ ROOM_CLEANUP_MINUTES=5
 - **Structure**: In-memory dictionary with `room_id` as key
 - **Room Object Contains**:
   - `room_id`: string
-  - `grid_size`: int (3-10)
+  - `grid_width`: int (3-10) or null
+  - `grid_height`: int (3-10) or null
   - `grid`: 2D array of field states
   - `journeyman_position`: {x, y}
   - `current_turn`: int (1-365)
@@ -127,9 +129,9 @@ ROOM_CLEANUP_MINUTES=5
 
 ### Configuration Phase
 1. Both players see configuration screen
-2. Journeyman sees grid size selector (3-10)
+2. Journeyman sees grid dimensions selectors (width and height, each 3-10)
 3. Weather sees "Waiting for journeyman to configure..."
-4. Journeyman selects grid size and clicks "Start Game"
+4. Journeyman selects grid dimensions and clicks "Start Game"
 5. Game initializes with journeyman on top-left corner
 
 ### Game Phase
@@ -164,7 +166,8 @@ ROOM_CLEANUP_MINUTES=5
 
 {
   type: "configure_grid",
-  size: number  // 3-10
+  width: number,  // 3-10
+  height: number  // 3-10
 }
 
 {
@@ -189,7 +192,8 @@ ROOM_CLEANUP_MINUTES=5
   state: {
     players: { journeyman: boolean, weather: boolean },
     game_status: string,
-    grid_size: number | null,
+    grid_width: number | null,
+    grid_height: number | null,
     grid: any[][] | null,
     current_turn: number,
     current_role: string,

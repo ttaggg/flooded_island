@@ -44,8 +44,11 @@ export interface GameState {
   /** Unique room identifier */
   roomId: string;
 
-  /** Grid size (3-10), null until configured */
-  gridSize: number | null;
+  /** Grid width (3-10), null until configured */
+  gridWidth: number | null;
+
+  /** Grid height (3-10), null until configured */
+  gridHeight: number | null;
 
   /** 2D grid of field states, null until game starts */
   grid: FieldState[][] | null;

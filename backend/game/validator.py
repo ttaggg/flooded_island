@@ -124,20 +124,26 @@ def is_journeyman_trapped(board: Board, journeyman_pos: Position) -> bool:
     return True
 
 
-def validate_grid_size(size: int) -> tuple[bool, str]:
+def validate_grid_dimensions(width: int, height: int) -> tuple[bool, str]:
     """
-    Validate if the grid size is within acceptable range.
+    Validate if the grid dimensions are within acceptable range.
 
     Args:
-        size: Proposed grid size
+        width: Proposed grid width
+        height: Proposed grid height
 
     Returns:
         Tuple of (is_valid, error_message). If valid, error_message is empty string.
     """
-    if not 3 <= size <= 10:
+    if not 3 <= width <= 10:
         return (
             False,
-            f"Grid size must be between 3 and 10 (inclusive), got {size}",
+            f"Grid width must be between 3 and 10 (inclusive), got {width}",
+        )
+    if not 3 <= height <= 10:
+        return (
+            False,
+            f"Grid height must be between 3 and 10 (inclusive), got {height}",
         )
 
     return (True, "")

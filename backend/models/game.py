@@ -55,8 +55,11 @@ class GameRoom(BaseModel):
     """Complete game room state."""
 
     room_id: str = Field(..., description="Unique room identifier")
-    grid_size: int | None = Field(
-        None, ge=3, le=10, description="Grid size (3-10), None until configured"
+    grid_width: int | None = Field(
+        None, ge=3, le=10, description="Grid width (3-10), None until configured"
+    )
+    grid_height: int | None = Field(
+        None, ge=3, le=10, description="Grid height (3-10), None until configured"
     )
     grid: list[list[FieldState]] | None = Field(
         None, description="2D grid of field states, None until game starts"
@@ -90,16 +93,17 @@ class GameRoom(BaseModel):
     @field_validator("grid")
     @classmethod
     def validate_grid(cls, v, info):
-        """Validate that grid matches grid_size if both are set."""
+        """Validate that grid matches grid_width and grid_height if both are set."""
         if v is not None:
-            grid_size = info.data.get("grid_size")
-            if grid_size is not None:
-                if len(v) != grid_size:
-                    raise ValueError(f"Grid height must equal grid_size ({grid_size})")
+            grid_width = info.data.get("grid_width")
+            grid_height = info.data.get("grid_height")
+            if grid_height is not None and len(v) != grid_height:
+                raise ValueError(f"Grid height must equal grid_height ({grid_height})")
+            if grid_width is not None:
                 for row in v:
-                    if len(row) != grid_size:
+                    if len(row) != grid_width:
                         raise ValueError(
-                            f"Grid width must equal grid_size ({grid_size})"
+                            f"Grid width must equal grid_width ({grid_width})"
                         )
         return v
 

@@ -63,7 +63,7 @@ def calculate_statistics(board: Board, current_turn: int) -> dict:
             else:
                 fields_dry += 1
 
-    total_fields = board.grid_size * board.grid_size
+    total_fields = board.grid_width * board.grid_height
 
     return {
         "days_survived": current_turn,

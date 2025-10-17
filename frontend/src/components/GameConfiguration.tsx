@@ -10,36 +10,38 @@ import { PlayerRole } from '../types';
 interface GameConfigurationProps {
   myRole: PlayerRole | null;
   canConfigureGrid: boolean;
-  onConfigureGrid: (size: number) => void;
+  onConfigureGrid: (width: number, height: number) => void;
 }
 
 interface GridPreviewProps {
-  size: number;
+  width: number;
+  height: number;
 }
 
 /**
  * Visual grid preview component
- * Shows N×N grid of placeholder squares
+ * Shows width×height grid of placeholder squares
  */
-function GridPreview({ size }: GridPreviewProps) {
-  // Calculate square size based on grid size (smaller squares for larger grids)
-  const getSquareSize = (gridSize: number): number => {
-    if (gridSize <= 5) return 40;
-    if (gridSize <= 7) return 30;
+function GridPreview({ width, height }: GridPreviewProps) {
+  // Calculate square size based on grid dimensions (smaller squares for larger grids)
+  const getSquareSize = (w: number, h: number): number => {
+    const maxDim = Math.max(w, h);
+    if (maxDim <= 5) return 40;
+    if (maxDim <= 7) return 30;
     return 24;
   };
 
-  const squareSize = getSquareSize(size);
+  const squareSize = getSquareSize(width, height);
 
   // Generate grid cells
-  const cells = Array.from({ length: size * size }, (_, index) => index);
+  const cells = Array.from({ length: width * height }, (_, index) => index);
 
   return (
     <div className="flex items-center justify-center p-6">
       <div
         className="inline-grid gap-1 bg-indigo-900/30 p-4 rounded-lg border-2 border-white/20"
         style={{
-          gridTemplateColumns: `repeat(${size}, ${squareSize}px)`,
+          gridTemplateColumns: `repeat(${width}, ${squareSize}px)`,
         }}
       >
         {cells.map((index) => (
@@ -65,26 +67,46 @@ export function GameConfiguration({
   canConfigureGrid,
   onConfigureGrid,
 }: GameConfigurationProps) {
-  // Local state for selected grid size (default: 10)
-  const [selectedSize, setSelectedSize] = useState<number>(10);
+  // Local state for selected grid dimensions (default: 10x10)
+  const [selectedWidth, setSelectedWidth] = useState<number>(10);
+  const [selectedHeight, setSelectedHeight] = useState<number>(10);
 
   // Determine if current player is Journeyman
   const isJourneyman = myRole === PlayerRole.JOURNEYMAN;
 
-  // Quick selection sizes
+  // Quick selection sizes (square grids)
   const quickSizes = [5, 7, 10];
 
-  // Handle size change from input
-  const handleSizeChange = (newSize: number) => {
+  // Handle size change for quick selection (square grids)
+  const handleQuickSizeChange = (size: number) => {
+    setSelectedWidth(size);
+    setSelectedHeight(size);
+  };
+
+  // Handle width change from input
+  const handleWidthChange = (newWidth: number) => {
     // Clamp between 3 and 10
-    const clampedSize = Math.max(3, Math.min(10, newSize));
-    setSelectedSize(clampedSize);
+    const clampedWidth = Math.max(3, Math.min(10, newWidth));
+    setSelectedWidth(clampedWidth);
+  };
+
+  // Handle height change from input
+  const handleHeightChange = (newHeight: number) => {
+    // Clamp between 3 and 10
+    const clampedHeight = Math.max(3, Math.min(10, newHeight));
+    setSelectedHeight(clampedHeight);
   };
 
   // Handle start game button click
   const handleStartGame = () => {
-    if (canConfigureGrid && selectedSize >= 3 && selectedSize <= 10) {
-      onConfigureGrid(selectedSize);
+    if (
+      canConfigureGrid &&
+      selectedWidth >= 3 &&
+      selectedWidth <= 10 &&
+      selectedHeight >= 3 &&
+      selectedHeight <= 10
+    ) {
+      onConfigureGrid(selectedWidth, selectedHeight);
     }
   };
 
@@ -113,7 +135,7 @@ export function GameConfiguration({
               <div className="inline-block bg-white/20 backdrop-blur-sm rounded-xl px-8 py-4">
                 <p className="text-white/70 text-sm mb-1">Selected Size</p>
                 <p className="text-5xl font-bold text-white">
-                  {selectedSize} × {selectedSize}
+                  {selectedWidth} × {selectedHeight}
                 </p>
               </div>
             </div>
@@ -123,10 +145,10 @@ export function GameConfiguration({
               {quickSizes.map((size) => (
                 <button
                   key={size}
-                  onClick={() => handleSizeChange(size)}
+                  onClick={() => handleQuickSizeChange(size)}
                   disabled={!canConfigureGrid}
                   className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
-                    selectedSize === size
+                    selectedWidth === size && selectedHeight === size
                       ? 'bg-yellow-400 text-indigo-900 scale-105 ring-2 ring-yellow-300'
                       : canConfigureGrid
                         ? 'bg-white/20 text-white hover:bg-white/30 hover:scale-105'
@@ -138,32 +160,53 @@ export function GameConfiguration({
               ))}
             </div>
 
-            {/* Number Input */}
-            <div className="flex items-center justify-center gap-4">
-              <label htmlFor="grid-size" className="text-white font-semibold">
-                Custom Size (3-10):
-              </label>
-              <input
-                id="grid-size"
-                type="number"
-                min="3"
-                max="10"
-                value={selectedSize}
-                onChange={(e) => handleSizeChange(parseInt(e.target.value) || 3)}
-                disabled={!canConfigureGrid}
-                className={`w-20 px-4 py-2 rounded-lg text-center font-bold text-lg ${
-                  canConfigureGrid
-                    ? 'bg-white/90 text-indigo-900 focus:outline-none focus:ring-2 focus:ring-yellow-400'
-                    : 'bg-white/20 text-white/50 cursor-not-allowed'
-                }`}
-              />
+            {/* Number Inputs */}
+            <div className="flex items-center justify-center gap-6">
+              <div className="flex items-center gap-2">
+                <label htmlFor="grid-width" className="text-white font-semibold">
+                  Width (3-10):
+                </label>
+                <input
+                  id="grid-width"
+                  type="number"
+                  min="3"
+                  max="10"
+                  value={selectedWidth}
+                  onChange={(e) => handleWidthChange(parseInt(e.target.value) || 3)}
+                  disabled={!canConfigureGrid}
+                  className={`w-20 px-4 py-2 rounded-lg text-center font-bold text-lg ${
+                    canConfigureGrid
+                      ? 'bg-white/90 text-indigo-900 focus:outline-none focus:ring-2 focus:ring-yellow-400'
+                      : 'bg-white/20 text-white/50 cursor-not-allowed'
+                  }`}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label htmlFor="grid-height" className="text-white font-semibold">
+                  Height (3-10):
+                </label>
+                <input
+                  id="grid-height"
+                  type="number"
+                  min="3"
+                  max="10"
+                  value={selectedHeight}
+                  onChange={(e) => handleHeightChange(parseInt(e.target.value) || 3)}
+                  disabled={!canConfigureGrid}
+                  className={`w-20 px-4 py-2 rounded-lg text-center font-bold text-lg ${
+                    canConfigureGrid
+                      ? 'bg-white/90 text-indigo-900 focus:outline-none focus:ring-2 focus:ring-yellow-400'
+                      : 'bg-white/20 text-white/50 cursor-not-allowed'
+                  }`}
+                />
+              </div>
             </div>
           </div>
 
           {/* Visual Grid Preview */}
           <div className="mb-8">
             <h3 className="text-xl font-bold text-white mb-4 text-center">Preview</h3>
-            <GridPreview size={selectedSize} />
+            <GridPreview width={selectedWidth} height={selectedHeight} />
             <p className="text-white/60 text-sm text-center mt-4">
               All fields start as dry. Journeyman starts at the top-left corner.
             </p>
@@ -186,7 +229,7 @@ export function GameConfiguration({
                   Start Game
                 </button>
                 <p className="text-white/60 text-sm mt-4">
-                  Click "Start Game" to begin with a {selectedSize}×{selectedSize} grid
+                  Click "Start Game" to begin with a {selectedWidth}×{selectedHeight} grid
                 </p>
               </div>
             ) : (
@@ -212,7 +255,7 @@ export function GameConfiguration({
                   </div>
                 </div>
                 <p className="text-white/60 text-sm mt-4">
-                  Current selection: {selectedSize}×{selectedSize}
+                  Current selection: {selectedWidth}×{selectedHeight}
                 </p>
               </div>
             )}

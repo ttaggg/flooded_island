@@ -4,6 +4,74 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+## 2025-10-17
+
+### Rectangular Island Support
+- **Status**: Completed ✅
+- **Task**: Add support for rectangular grids instead of square-only grids
+- **Changes**:
+  - **Backend Models** (`backend/models/game.py`):
+    - Replaced single `grid_size` field with `grid_width` and `grid_height` fields
+    - Updated validator to check both dimensions independently
+  - **Backend Messages** (`backend/models/messages.py`):
+    - Updated `ConfigureGridMessage` to accept `width` and `height` instead of `size`
+  - **Backend Board** (`backend/game/board.py`):
+    - Updated `Board.__init__()` to accept separate `grid_width` and `grid_height` parameters
+    - Updated all position validation logic to use width and height bounds separately
+    - Updated grid initialization to create `height` rows of `width` cells each
+  - **Backend Validator** (`backend/game/validator.py`):
+    - Renamed `validate_grid_size()` to `validate_grid_dimensions()`
+    - Updated to validate both width and height independently
+  - **Backend Win Checker** (`backend/game/win_checker.py`):
+    - Fixed `calculate_statistics()` to use `grid_width * grid_height` for total fields
+  - **Backend WebSocket Router** (`backend/routers/websocket.py`):
+    - Updated `serialize_room_state()` to return `gridWidth` and `gridHeight`
+    - Updated `handle_configure_grid()` to accept and validate both dimensions
+    - Updated all `Board()` instantiations to use `grid_width` and `grid_height`
+    - Updated room creation to initialize with `grid_width=None` and `grid_height=None`
+  - **Frontend Types** (`frontend/src/types/game.ts`):
+    - Updated `GameState` interface to use `gridWidth` and `gridHeight` instead of `gridSize`
+  - **Frontend Messages** (`frontend/src/types/messages.ts`):
+    - Updated `ConfigureGridMessage` interface to use `width` and `height` fields
+  - **Frontend GameConfiguration** (`frontend/src/components/GameConfiguration.tsx`):
+    - Added separate state for `selectedWidth` and `selectedHeight` (default: 10 each)
+    - Updated `GridPreview` component to accept and render rectangular grids
+    - Added separate input fields for width and height configuration
+    - Updated quick selection buttons to set both dimensions to the same value
+    - Updated all display text to show "width × height" format
+  - **Frontend GameBoard** (`frontend/src/components/GameBoard.tsx`):
+    - Updated to destructure `gridWidth` and `gridHeight` from game state
+    - Updated cell size calculation to use maximum of width and height
+    - Updated grid CSS to use `gridWidth` for column template
+    - Updated footer to display "width×height" format
+  - **Frontend Hooks** (`frontend/src/hooks/useGameState.ts`):
+    - Updated `configureGrid()` function signature to accept `width` and `height`
+    - Updated validation to check both dimensions independently
+    - Updated message sent to backend with both `width` and `height` fields
+  - **Documentation**:
+    - Updated `docs/game_rules.md` to mention "rectangular grid"
+    - Updated `docs/technical_spec.md`:
+      - Grid configuration section to describe independent width/height configuration
+      - Room storage section to list `grid_width` and `grid_height` fields
+      - Configuration phase description to mention dimension selectors
+      - WebSocket message protocol examples to show width/height fields
+- **Results**:
+  - Grid can now be rectangular (e.g., 3×10, 10×3, 5×7, etc.)
+  - Default size remains 10×10 (square)
+  - Both dimensions independently validated (3-10 range)
+  - UI updated with separate width and height inputs
+  - Quick selection buttons still available for common square sizes (5×5, 7×7, 10×10)
+  - All linter checks pass (backend and frontend)
+  - Full backward compatibility maintained with type safety
+- **Testing**:
+  - Backend models validate dimensions correctly
+  - Board class handles rectangular grids properly
+  - Frontend UI displays rectangular grids correctly
+  - Grid preview adjusts to rectangular dimensions
+  - Cell sizing adapts based on maximum dimension
+
+---
+
 ## 2025-10-16
 
 ### WebSocket Handler Refactoring

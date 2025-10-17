@@ -43,7 +43,7 @@ export interface UseGameStateReturn {
 
   // Action methods
   selectRole: (role: PlayerRole) => void;
-  configureGrid: (size: number) => void;
+  configureGrid: (width: number, height: number) => void;
   move: (position: Position) => void;
   addFloodPosition: (position: Position) => void;
   removeFloodPosition: (position: Position) => void;
@@ -242,13 +242,22 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
   );
 
   /**
-   * Configure the grid size (journeyman only).
+   * Configure the grid dimensions (journeyman only).
    */
   const configureGrid = useCallback(
-    (size: number) => {
-      // Validate size locally
-      if (size < 3 || size > 10) {
-        const errorMsg = `Invalid grid size: ${size}. Must be between 3 and 10.`;
+    (width: number, height: number) => {
+      // Validate dimensions locally
+      if (width < 3 || width > 10) {
+        const errorMsg = `Invalid grid width: ${width}. Must be between 3 and 10.`;
+        console.error(errorMsg);
+        setLastError(errorMsg);
+        if (onErrorRef.current) {
+          onErrorRef.current(errorMsg);
+        }
+        return;
+      }
+      if (height < 3 || height > 10) {
+        const errorMsg = `Invalid grid height: ${height}. Must be between 3 and 10.`;
         console.error(errorMsg);
         setLastError(errorMsg);
         if (onErrorRef.current) {
@@ -257,11 +266,12 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
         return;
       }
 
-      console.log(`📐 Configuring grid: ${size}x${size}`);
+      console.log(`📐 Configuring grid: ${width}x${height}`);
 
       sendMessage({
         type: 'configure_grid',
-        size,
+        width,
+        height,
       });
     },
     [sendMessage]

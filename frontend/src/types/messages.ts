@@ -18,11 +18,12 @@ export interface SelectRoleMessage {
 }
 
 /**
- * Message sent to configure the grid size.
+ * Message sent to configure the grid dimensions.
  */
 export interface ConfigureGridMessage {
   type: 'configure_grid';
-  size: number; // 3-10
+  width: number; // 3-10
+  height: number; // 3-10
 }
 
 /**

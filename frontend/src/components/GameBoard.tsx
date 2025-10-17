@@ -14,10 +14,10 @@ interface GameBoardProps {
  * Main GameBoard component
  */
 export function GameBoard({ gameState, myRole }: GameBoardProps) {
-  const { grid, gridSize, journeymanPosition, currentTurn, currentRole } = gameState;
+  const { grid, gridWidth, gridHeight, journeymanPosition, currentTurn, currentRole } = gameState;
 
   // Early return if grid is not initialized
-  if (!grid || !gridSize || !journeymanPosition) {
+  if (!grid || !gridWidth || !gridHeight || !journeymanPosition) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center px-4">
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center">
@@ -27,14 +27,15 @@ export function GameBoard({ gameState, myRole }: GameBoardProps) {
     );
   }
 
-  // Calculate cell size based on grid size
-  const getCellSize = (size: number): number => {
-    if (size <= 5) return 60;
-    if (size <= 7) return 50;
+  // Calculate cell size based on grid dimensions (using the max dimension)
+  const getCellSize = (width: number, height: number): number => {
+    const maxDim = Math.max(width, height);
+    if (maxDim <= 5) return 60;
+    if (maxDim <= 7) return 50;
     return 40;
   };
 
-  const cellSize = getCellSize(gridSize);
+  const cellSize = getCellSize(gridWidth, gridHeight);
 
   // Helper function to check if journeyman is at a position
   const isJourneymanAt = (row: number, col: number): boolean => {
@@ -102,7 +103,7 @@ export function GameBoard({ gameState, myRole }: GameBoardProps) {
               <div
                 className="inline-grid gap-1"
                 style={{
-                  gridTemplateColumns: `repeat(${gridSize}, ${cellSize}px)`,
+                  gridTemplateColumns: `repeat(${gridWidth}, ${cellSize}px)`,
                 }}
               >
                 {grid.map((row, rowIndex) =>
@@ -159,7 +160,7 @@ export function GameBoard({ gameState, myRole }: GameBoardProps) {
         {/* Game Info Footer */}
         <div className="mt-4 text-center">
           <p className="text-white/50 text-sm">
-            Grid Size: {gridSize}×{gridSize} • Room ID: {gameState.roomId}
+            Grid Size: {gridWidth}×{gridHeight} • Room ID: {gameState.roomId}
           </p>
         </div>
       </div>

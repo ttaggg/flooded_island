@@ -12,27 +12,31 @@ class Board:
     """
     Manages the game board grid and field operations.
 
-    The board is an NxN grid where (0,0) is the top-left corner
-    and (n-1, n-1) is the bottom-right corner.
+    The board is a width x height grid where (0,0) is the top-left corner
+    and (width-1, height-1) is the bottom-right corner.
     """
 
-    def __init__(self, grid_size: int):
+    def __init__(self, grid_width: int, grid_height: int):
         """
         Initialize a new game board.
 
         Args:
-            grid_size: Size of the grid (must be between 3 and 10 inclusive)
+            grid_width: Width of the grid (must be between 3 and 10 inclusive)
+            grid_height: Height of the grid (must be between 3 and 10 inclusive)
 
         Raises:
-            ValueError: If grid_size is not between 3 and 10
+            ValueError: If grid_width or grid_height is not between 3 and 10
         """
-        if not 3 <= grid_size <= 10:
-            raise ValueError(f"Grid size must be between 3 and 10, got {grid_size}")
+        if not 3 <= grid_width <= 10:
+            raise ValueError(f"Grid width must be between 3 and 10, got {grid_width}")
+        if not 3 <= grid_height <= 10:
+            raise ValueError(f"Grid height must be between 3 and 10, got {grid_height}")
 
-        self.grid_size = grid_size
+        self.grid_width = grid_width
+        self.grid_height = grid_height
         # Initialize all fields as DRY
         self.grid: list[list[FieldState]] = [
-            [FieldState.DRY for _ in range(grid_size)] for _ in range(grid_size)
+            [FieldState.DRY for _ in range(grid_width)] for _ in range(grid_height)
         ]
 
     def get_field_state(self, position: Position) -> FieldState:
@@ -50,7 +54,7 @@ class Board:
         """
         if not self.is_valid_position(position):
             raise ValueError(
-                f"Position ({position.x}, {position.y}) is outside grid bounds (0-{self.grid_size - 1})"
+                f"Position ({position.x}, {position.y}) is outside grid bounds (0-{self.grid_width - 1}, 0-{self.grid_height - 1})"
             )
 
         return self.grid[position.y][position.x]
@@ -68,7 +72,7 @@ class Board:
         """
         if not self.is_valid_position(position):
             raise ValueError(
-                f"Position ({position.x}, {position.y}) is outside grid bounds (0-{self.grid_size - 1})"
+                f"Position ({position.x}, {position.y}) is outside grid bounds (0-{self.grid_width - 1}, 0-{self.grid_height - 1})"
             )
 
         self.grid[position.y][position.x] = state
@@ -83,7 +87,7 @@ class Board:
         Returns:
             True if position is within bounds, False otherwise
         """
-        return 0 <= position.x < self.grid_size and 0 <= position.y < self.grid_size
+        return 0 <= position.x < self.grid_width and 0 <= position.y < self.grid_height
 
     def get_adjacent_positions(
         self, position: Position, include_diagonals: bool = True
@@ -126,7 +130,7 @@ class Board:
             new_x = position.x + dx
             new_y = position.y + dy
             # Check bounds before creating Position (Position validates x,y >= 0)
-            if 0 <= new_x < self.grid_size and 0 <= new_y < self.grid_size:
+            if 0 <= new_x < self.grid_width and 0 <= new_y < self.grid_height:
                 adjacent.append(Position(x=new_x, y=new_y))
 
         return adjacent

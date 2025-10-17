@@ -24,10 +24,11 @@ class SelectRoleMessage(BaseModel):
 
 
 class ConfigureGridMessage(BaseModel):
-    """Message sent to configure the grid size."""
+    """Message sent to configure the grid dimensions."""
 
     type: Literal["configure_grid"] = "configure_grid"
-    size: int = Field(..., ge=3, le=10, description="Grid size (3-10)")
+    width: int = Field(..., ge=3, le=10, description="Grid width (3-10)")
+    height: int = Field(..., ge=3, le=10, description="Grid height (3-10)")
 
 
 class MoveMessage(BaseModel):

@@ -9,7 +9,7 @@ from game.board import Board
 from game.room_manager import RoomManager, room_manager
 from game.validator import (
     is_journeyman_trapped,
-    validate_grid_size,
+    validate_grid_dimensions,
     validate_journeyman_move,
     validate_weather_flood,
 )
@@ -26,7 +26,7 @@ __all__ = [
     "validate_journeyman_move",
     "validate_weather_flood",
     "is_journeyman_trapped",
-    "validate_grid_size",
+    "validate_grid_dimensions",
     "check_journeyman_victory",
     "check_weather_victory",
     "calculate_statistics",

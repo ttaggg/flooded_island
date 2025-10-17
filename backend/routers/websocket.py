@@ -17,7 +17,7 @@ from pydantic import ValidationError
 from game.board import Board
 from game.room_manager import room_manager
 from game.validator import (
-    validate_grid_size,
+    validate_grid_dimensions,
     validate_journeyman_move,
     validate_weather_flood,
 )
@@ -355,7 +355,8 @@ def serialize_room_state(room: GameRoom) -> dict:
     """
     return {
         "roomId": room.room_id,
-        "gridSize": room.grid_size,
+        "gridWidth": room.grid_width,
+        "gridHeight": room.grid_height,
         "grid": (
             [[field.value for field in row] if row else None for row in room.grid]
             if room.grid
@@ -466,8 +467,9 @@ async def handle_configure_grid(message: dict, ctx: MessageContext) -> None:
 
     # Parse and validate message
     config_msg = ConfigureGridMessage(**message)
-    grid_size = config_msg.size
-    print(f"  → Grid configuration: size={grid_size}")
+    grid_width = config_msg.width
+    grid_height = config_msg.height
+    print(f"  → Grid configuration: width={grid_width}, height={grid_height}")
 
     # Get current room state
     room = await ctx.get_room()
@@ -487,18 +489,19 @@ async def handle_configure_grid(message: dict, ctx: MessageContext) -> None:
         await ctx.send_error(error_msg)
         return
 
-    # Validate grid size (3-10)
-    is_valid, error_msg = validate_grid_size(grid_size)
+    # Validate grid dimensions (3-10)
+    is_valid, error_msg = validate_grid_dimensions(grid_width, grid_height)
     if not is_valid:
         await ctx.send_error(error_msg)
         return
 
     # Initialize game board
-    board = Board(grid_size)
-    print(f"  → Board initialized: {grid_size}x{grid_size} grid with all DRY fields")
+    board = Board(grid_width, grid_height)
+    print(f"  → Board initialized: {grid_width}x{grid_height} grid with all DRY fields")
 
     # Update room state
-    room.grid_size = grid_size
+    room.grid_width = grid_width
+    room.grid_height = grid_height
     room.grid = board.grid
     room.journeyman_position = Position(x=0, y=0)
     room.game_status = GameStatus.ACTIVE
@@ -560,7 +563,7 @@ async def handle_move(message: dict, ctx: MessageContext) -> None:
         return
 
     # Create board instance from room state
-    board = Board(room.grid_size)
+    board = Board(room.grid_width, room.grid_height)
     board.grid = room.grid
 
     # Validate move
@@ -672,7 +675,7 @@ async def handle_flood(message: dict, ctx: MessageContext) -> None:
         return
 
     # Create board instance from room state
-    board = Board(room.grid_size)
+    board = Board(room.grid_width, room.grid_height)
     board.grid = room.grid
 
     # Validate flood
@@ -792,7 +795,8 @@ async def get_or_create_room(room_id: str) -> GameRoom:
         # Create room if it doesn't exist (first player creates the room)
         room = GameRoom(
             room_id=room_id,
-            grid_size=None,
+            grid_width=None,
+            grid_height=None,
             grid=None,
             journeyman_position=None,
             current_turn=1,
