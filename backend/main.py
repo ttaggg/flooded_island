@@ -67,10 +67,14 @@ app.add_middleware(
 # Include WebSocket router
 app.include_router(websocket.router, tags=["websocket"])
 
-# Mount static files (frontend build)
+# Mount static files (frontend build) - mount everything except API routes
 frontend_dist_path = Path(__file__).parent.parent / "frontend" / "dist"
 if Path(frontend_dist_path).exists():
-    app.mount("/static", StaticFiles(directory=frontend_dist_path), name="static")
+    # Mount static files for all non-API routes
+    app.mount(
+        "/assets", StaticFiles(directory=frontend_dist_path / "assets"), name="assets"
+    )
+    app.mount("/vite.svg", StaticFiles(directory=frontend_dist_path), name="vite-svg")
 
 
 @app.get("/")
@@ -106,7 +110,7 @@ async def health_check():
     }
 
 
-@app.post("/rooms")
+@app.post("/api/rooms")
 async def create_room():
     """
     Create a new game room.
@@ -120,6 +124,24 @@ async def create_room():
         "status": room.game_status.value,
         "created_at": room.created_at.isoformat(),
     }
+
+
+@app.get("/{path:path}")
+async def catch_all(path: str):
+    """
+    Catch-all route to serve the frontend for any non-API routes.
+    This handles client-side routing for React.
+    """
+    # Skip API routes
+    if path.startswith("api/") or path.startswith("ws"):
+        return {"error": "Not found"}
+
+    frontend_dist_path = Path(__file__).parent.parent / "frontend" / "dist"
+    index_file = Path(frontend_dist_path) / "index.html"
+
+    if Path(index_file).exists():
+        return FileResponse(index_file)
+    return {"error": "Frontend not built"}
 
 
 if __name__ == "__main__":
