@@ -85,7 +85,7 @@ export function GameOver({ winner, stats, onPlayAgain }: GameOverProps) {
     : 'The Journeyman was trapped by the floods!';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex items-center justify-center px-4 py-8">
       <div className="max-w-4xl w-full">
         {/* Main Card */}
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl">

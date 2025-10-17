@@ -89,7 +89,7 @@ function App() {
   // Show connection status while connecting
   if (connectionState === 'connecting') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex items-center justify-center">
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center">
           <div className="text-white text-2xl mb-4">Connecting to game...</div>
           <div className="flex justify-center gap-2">
@@ -114,7 +114,7 @@ function App() {
   // Show disconnected state
   if (connectionState === 'disconnected') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex items-center justify-center">
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center">
           <div className="text-white text-2xl mb-4">Connection Lost</div>
           <p className="text-white/80">Attempting to reconnect...</p>
@@ -126,7 +126,7 @@ function App() {
   // Render based on game status
   if (!gameState) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex items-center justify-center">
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center">
           <div className="text-white text-2xl">Loading game state...</div>
         </div>
@@ -199,7 +199,7 @@ function App() {
 
   // Fallback
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex items-center justify-center px-4">
       <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center max-w-2xl">
         <h1 className="text-4xl font-bold text-white mb-4">Flooded Island</h1>
         <p className="text-white/80">Unknown game state</p>

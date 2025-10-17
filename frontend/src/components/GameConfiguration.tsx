@@ -162,7 +162,7 @@ export function GameConfiguration({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex items-center justify-center px-4 py-8">
       {/* Connection Status Component */}
       <ConnectionStatus
         connectionState={connectionState}
