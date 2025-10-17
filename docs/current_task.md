@@ -1,122 +1,98 @@
 # Current Active Task
 
 ## Task
-Task 4.7: Field Component
+Task 4.8: Field Animations
 
 ## Status
 Completed
 
 ## Description
-Created a separate Field component with interactive capabilities including click handlers, hover states, and selection highlighting for both Journeyman and Weather players. This extracts field rendering from GameBoard into a reusable, interactive component.
+Enhanced the Field component with CSS animations including a 3D flip effect for state transitions (dry↔flooded), enhanced selection glow effect, and polished hover transitions. This adds visual polish to field state changes and makes the game more engaging.
 
 ## Requirements Met
-- ✅ Created `Field.tsx` component with props interface
-- ✅ Implemented visual states (dry/flooded, selectable, selected, hovered)
-- ✅ Added click handlers for field selection
-- ✅ Implemented hover states with visual feedback
-- ✅ Added selection highlighting for Weather player's multi-select
-- ✅ Display journeyman icon when positioned on field
-- ✅ Role-specific interactivity (Journeyman: adjacent movement, Weather: multi-select flood)
-- ✅ Updated GameBoard to use Field component
-- ✅ Added selection logic and state management to GameBoard
+- ✅ Added 3D flip animation (Y-axis rotation) for field state changes
+- ✅ Implemented 400ms flip animation with ease-in-out timing
+- ✅ Enhanced selection glow with multi-layer shadow effect
+- ✅ Updated transitions to 300ms for smoother feel
+- ✅ Added state tracking to trigger animations on field state changes
+- ✅ Preserved 3D transform style for proper animation rendering
 - ✅ No TypeScript or linter errors
 
 ## Changes Implemented
 
-### 1. Created Field Component (`frontend/src/components/Field.tsx`) - 131 lines
-**Props Interface:**
-- Position: `row`, `col`
-- State: `fieldState`, `hasJourneyman`, `cellSize`
-- Interaction: `isSelectable`, `isSelected`, `isHovered`
-- Handlers: `onClick`, `onMouseEnter`, `onMouseLeave`
+### 1. Updated CSS Animations (`frontend/src/index.css`)
+**Added Custom Keyframes:**
+- `@keyframes flip-y`: Y-axis rotation animation (0° → 90° → 0°) for state changes
+- `.field-selected`: Enhanced selection glow with multi-layer box-shadow
+  - Inner glow: `0 0 20px 4px rgba(59, 130, 246, 0.8)`
+  - Outer glow: `0 0 40px 8px rgba(59, 130, 246, 0.4)`
+- `.field-hover`: Smooth transition for transform and filter properties
 
-**Visual States:**
-- **Base colors**: Yellow for dry fields, blue for flooded fields
-- **Selectable**: Cursor pointer, brightness increase on hover, subtle scale effect
-- **Selected**: Green ring with glow effect (Weather's multi-select)
-- **Hovered**: White ring overlay for selectable fields
-- **Non-selectable**: Reduced opacity (70%) for dry fields when not player's turn
-- **Journeyman indicator**: 🧙‍♂️ emoji scaled to cell size
+### 2. Updated Field Component (`frontend/src/components/Field.tsx`) - 157 lines
+**Added Imports:**
+- `useState`, `useEffect`, `useRef` from React for animation state management
 
-**Features:**
-- Smooth CSS transitions for all state changes
-- Accessibility: role="button", tabIndex, aria-label
-- Responsive sizing via cellSize prop
-- Conditional styling based on interaction states
+**Added Animation State:**
+- `isFlipping`: Boolean state to track active flip animation
+- `prevFieldStateRef`: Ref to store previous field state for comparison
 
-### 2. Updated GameBoard Component (`frontend/src/components/GameBoard.tsx`)
-**Added Props:**
-- `move`: Function to move journeyman
-- `addFloodPosition`: Function to add flood selection
-- `removeFloodPosition`: Function to remove flood selection
-- `selectedFloodPositions`: Array of selected positions
-- `canMove`: Boolean for journeyman's turn
-- `canFlood`: Boolean for weather's turn
+**Added useEffect Hook:**
+- Detects field state changes (dry↔flooded)
+- Triggers 400ms flip animation
+- Auto-clears animation state after completion
+- Cleanup on unmount to prevent memory leaks
 
-**Added State:**
-- `hoveredCell`: Tracks currently hovered cell position
+**Updated getSelectionClasses:**
+- Replaced Tailwind shadow classes with custom `field-selected` class
+- Maintains ring-4 and ring-blue-500 for border
+- Enhanced visual prominence with multi-layer shadow
 
-**Helper Functions:**
-- `isFieldSelectable(row, col)`: Determines if field can be selected
-  - **Journeyman**: Adjacent (8 directions) AND dry AND not current position
-  - **Weather**: Dry AND not journeyman's position AND under 2 selections
-- `isFieldSelected(row, col)`: Checks if field is in selected positions array
+**Updated fieldClasses:**
+- Added conditional animation: `${isFlipping ? 'animate-[flip-y_400ms_ease-in-out]' : ''}`
+- Increased transition duration from 200ms to 300ms
+- Added `field-hover` class for smooth hover transitions
 
-**Event Handlers:**
-- `handleFieldClick`: Journeyman moves immediately, Weather toggles selection
-- `handleMouseEnter`: Updates hoveredCell state
-- `handleMouseLeave`: Clears hoveredCell state
-
-**Replaced Inline Rendering:**
-- Changed from inline divs (lines 109-136) to `<Field />` component
-- Pass all props including interaction states and handlers
-
-### 3. Updated App Component (`frontend/src/App.tsx`)
-**Extracted from useGameState:**
-- `move`, `addFloodPosition`, `removeFloodPosition`
-- `selectedFloodPositions`, `canMove`, `canFlood`
-
-**Updated GameBoard Usage:**
-- Pass all new props to GameBoard component for interactive gameplay
+**Updated JSX:**
+- Added `transformStyle: 'preserve-3d'` to inline styles
+- Enables proper 3D rendering for flip animation
 
 ## Key Features Implemented
 
-### Journeyman Movement
-- Can only select adjacent dry fields (8 directions: N, NE, E, SE, S, SW, W, NW)
-- Immediately submits move on click (no separate confirmation needed)
-- Visual feedback: Selectable fields show cursor pointer and hover effects
-- Current position is not selectable
+### 3D Flip Animation
+- Triggers automatically when field state changes
+- Y-axis rotation (horizontal flip) with 400ms duration
+- Smooth ease-in-out timing function
+- Non-blocking (other interactions continue during animation)
 
-### Weather Flooding
-- Can select any dry field except journeyman's position
-- Click toggles selection (add if not selected, remove if selected)
-- Maximum 2 selections enforced by useGameState hook
-- Selected fields turn blue (bg-blue-300) with blue ring and shadow - clearly indicating they will be flooded
-- Once 2 fields selected, other fields become non-selectable
+### Enhanced Selection Glow
+- Brighter, more prominent shadow effect
+- Multi-layer glow (inner + outer) for depth
+- Static effect (no pulsing/breathing) for clarity
+- Blue color (#3b82f6) matches theme
 
-### Visual Feedback
-- **Hover effects**: Brightness increase and scale for selectable fields
-- **Selection highlighting**: Blue background with blue ring and shadow for Weather's selections - clearly shows field will be flooded
-- **Non-selectable**: Reduced opacity when it's player's turn but field can't be selected
-- **Smooth transitions**: All state changes animated with CSS transitions (200ms)
+### Smooth Transitions
+- Increased duration to 300ms for polished feel
+- Applies to all state changes (hover, selection, opacity)
+- field-hover class for transform and filter transitions
 
 ## Testing Notes
-- Field component renders correctly for both dry and flooded states
-- Journeyman emoji appears and scales with cell size
-- Journeyman can only select adjacent dry fields
-- Weather can select any dry field except journeyman's position
-- Weather selection toggles work correctly (max 2 enforced)
-- Hover states provide clear visual feedback
-- Non-selectable fields show appropriate disabled appearance
+- Field flips smoothly when Weather floods a dry field
+- Field flips smoothly when Journeyman dries adjacent flooded fields
+- Selection glow is significantly more prominent and visually appealing
+- No animation flicker or stuttering
+- Hover effects remain smooth and responsive
+- Animation doesn't interfere with click interactions
+- 3D flip renders correctly with preserved transform style
 - No TypeScript or linter errors in any modified files
 
 ## Next Steps
-- **Task 4.8**: Add CSS animations (3D flip effect for state changes)
 - **Task 4.9**: Create Turn Controls component with "End Turn" button and selection counter
 - **Task 4.10**: Add drying preview on journeyman movement hover
+- **Task 4.11**: Create Game Over screen
 
 ## Notes
-- This task focused on basic interactivity (click and hover)
-- Task 4.8 will enhance with 3D flip animations for dry/flooded transitions
-- Task 4.10 will add preview of fields that will be dried on journeyman hover
-- Field component is fully accessible with ARIA labels and keyboard support (tabIndex)
+- Y-axis flip (horizontal) chosen for natural left-to-right flip motion
+- 400ms duration provides visible animation without feeling sluggish
+- Static glow preferred over animated/pulsing for clear selection indication
+- Animation state managed via React hooks for proper lifecycle handling
+- Transform style preserved-3d ensures proper 3D rendering

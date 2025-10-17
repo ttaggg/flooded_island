@@ -1462,6 +1462,27 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Task 4.8: Field Animations
+- **Date**: 2025-10-17
+- **Status**: Completed
+- **Changes**:
+  - ✅ Added 3D flip animation (Y-axis) for field state changes to `index.css`
+  - ✅ Created custom `@keyframes flip-y` animation (400ms, ease-in-out)
+  - ✅ Enhanced selection glow with multi-layer shadow effect (`.field-selected`)
+  - ✅ Added animation state tracking to Field component (useState, useEffect, useRef)
+  - ✅ Implemented automatic flip trigger on field state changes
+  - ✅ Updated transition duration from 200ms to 300ms for smoother feel
+  - ✅ Added `transformStyle: 'preserve-3d'` for proper 3D rendering
+  - ✅ No TypeScript or linter errors
+- **Notes**: 
+  - Y-axis flip provides natural horizontal rotation effect
+  - 400ms animation duration balances visibility with responsiveness
+  - Static enhanced glow (not pulsing) for clear selection indication
+  - Animation doesn't block interactions, fields remain clickable during flip
+  - Multi-layer shadow creates prominent depth effect for selected fields
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]

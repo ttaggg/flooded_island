@@ -3,6 +3,7 @@
  * Renders an individual field on the game board with interactive states
  */
 
+import { useState, useEffect, useRef } from 'react';
 import { FieldState } from '../types';
 
 interface FieldProps {
@@ -39,6 +40,20 @@ export function Field({
   onMouseEnter,
   onMouseLeave,
 }: FieldProps) {
+  // State tracking for animations
+  const [isFlipping, setIsFlipping] = useState(false);
+  const prevFieldStateRef = useRef(fieldState);
+
+  // Trigger flip animation when field state changes
+  useEffect(() => {
+    if (prevFieldStateRef.current !== fieldState) {
+      setIsFlipping(true);
+      const timer = setTimeout(() => setIsFlipping(false), 400);
+      prevFieldStateRef.current = fieldState;
+      return () => clearTimeout(timer);
+    }
+  }, [fieldState]);
+
   // Base field color classes based on state
   const getBaseClasses = (): string => {
     if (fieldState === FieldState.DRY) {
@@ -71,7 +86,7 @@ export function Field({
   // Selection highlight classes
   const getSelectionClasses = (): string => {
     if (isSelected) {
-      return 'ring-4 ring-blue-500 ring-opacity-90 shadow-lg shadow-blue-500/60';
+      return 'ring-4 ring-blue-500 field-selected';
     }
     if (isHovered && isSelectable) {
       return 'ring-2 ring-white ring-opacity-60';
@@ -94,7 +109,8 @@ export function Field({
     ${getHoverClasses()}
     ${getSelectionClasses()}
     ${getOpacityClass()}
-    border-2 rounded transition-all duration-200 flex items-center justify-center relative
+    ${isFlipping ? 'animate-[flip-y_400ms_ease-in-out]' : ''}
+    border-2 rounded transition-all duration-300 flex items-center justify-center relative field-hover
   `.trim();
 
   // Handle click
@@ -115,6 +131,7 @@ export function Field({
       style={{
         width: `${cellSize}px`,
         height: `${cellSize}px`,
+        transformStyle: 'preserve-3d',
       }}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}

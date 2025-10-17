@@ -30,3 +30,31 @@ body {
   margin: 0 auto;
   text-align: center;
 }
+
+/* 3D flip animation for field state changes */
+@keyframes flip-y {
+  0% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(90deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+
+/* Enhanced selection glow */
+.field-selected {
+  animation: none;
+  box-shadow:
+    0 0 20px 4px rgba(59, 130, 246, 0.8),
+    0 0 40px 8px rgba(59, 130, 246, 0.4);
+}
+
+/* Smooth hover scale */
+.field-hover {
+  transition:
+    transform 0.2s ease-out,
+    filter 0.2s ease-out;
+}
