@@ -1,69 +1,79 @@
 # Current Active Task
 
 ## Task
-Task 6.2: Board Size Enhancement
+Task: Configurable Flood Count Setting
 
 ## Status
 Completed ✅
 
 ## Description
-Increased the playing board size by 1.5 times without changing the number of fields in the grid. This enhancement improves visibility and user interaction while maintaining the same game logic and grid dimensions.
+Added a configurable setting for the maximum number of fields Weather can flood per turn (1-3 range, default 2), integrated into the game configuration screen alongside grid dimensions.
 
 ## Problem Solved
-- **Issue**: Game board fields were too small for optimal visibility and interaction
-- **Root Cause**: Cell size calculation was based on original design requirements
-- **Impact**: Reduced user experience with smaller, harder-to-click fields
+- **Issue**: Weather player was limited to flooding exactly 2 fields per turn, with no flexibility for different difficulty levels
+- **Root Cause**: Hardcoded validation limit of 2 fields in backend validation logic
+- **Impact**: Limited strategic depth and inability to adjust game difficulty
 
 ## Solution Implemented
-- **GameBoard.tsx**: Updated `getCellSize` function to multiply cell size by 1.5
-- **GameConfiguration.tsx**: Updated `getSquareSize` function to multiply preview size by 1.5
-- **Consistent Scaling**: Both game board and configuration preview use the same 1.5x multiplier
+- **Backend Models**: Added `max_flood_count` field to `GameRoom` model with 1-3 range validation
+- **Backend Messages**: Updated `ConfigureGridMessage` to include `max_flood_count` parameter
+- **Backend Validation**: Updated `validate_weather_flood()` to use dynamic max flood count
+- **Backend Handlers**: Updated WebSocket handlers to process and store max flood count
+- **Frontend Types**: Added `maxFloodCount` to `GameState` and `ConfigureGridMessage` interfaces
+- **Frontend UI**: Added flood count selector to GameConfiguration component with quick selection buttons
+- **Frontend Logic**: Updated TurnControls and GameBoard to use dynamic maxFloodCount
+- **Frontend Hook**: Updated useGameState to handle maxFloodCount parameter
 
 ## Requirements Met
-- ✅ Board size increased by exactly 1.5x
-- ✅ No changes to grid dimensions or game logic
-- ✅ Configuration preview matches actual game board size
+- ✅ Configurable flood count range (1-3 fields per turn)
+- ✅ Default value of 2 maintains existing gameplay balance
+- ✅ Integrated into game configuration screen alongside grid dimensions
+- ✅ Journeyman player has authority to configure all game settings
+- ✅ Frontend UI shows current selection and preview
+- ✅ Backend validation enforces configured limits
+- ✅ Dynamic UI updates based on configured maximum
 - ✅ All linting checks pass
 - ✅ TypeScript compilation with no errors
-- ✅ Responsive design maintained
-- ✅ Accessibility features preserved
+- ✅ Backward compatibility maintained
 
 ## Implementation Details
 
-### GameBoard.tsx Changes
-- **getCellSize function**: Modified to multiply base cell size by 1.5
-  - Small grids (≤5): 60px → 90px
-  - Medium grids (≤7): 50px → 75px  
-  - Large grids (>7): 40px → 60px
-  - Used `Math.round()` to ensure integer pixel values
-  - Updated documentation to reflect new size range
+### Backend Changes
+- **GameRoom Model**: Added `max_flood_count: int` field with `ge=1, le=3` constraints and default value 2
+- **ConfigureGridMessage**: Added `max_flood_count: int` field with validation
+- **Validator**: Updated `validate_weather_flood()` to accept and use dynamic max flood count parameter
+- **WebSocket Handlers**: Updated `handle_configure_grid()` and `handle_flood()` to process max flood count
+- **Serialization**: Added `maxFloodCount` to serialized room state
 
-### GameConfiguration.tsx Changes
-- **getSquareSize function**: Modified to multiply base preview size by 1.5
-  - Small grids (≤5): 40px → 60px
-  - Medium grids (≤7): 30px → 45px
-  - Large grids (>7): 24px → 36px
-  - Used `Math.round()` to ensure integer pixel values
-  - Updated documentation to reflect new size range
+### Frontend Changes
+- **GameConfiguration Component**: Added flood count selector with quick selection buttons (1, 2, 3)
+- **TurnControls Component**: Updated to show dynamic selection counter and helper text
+- **GameBoard Component**: Updated field selection logic to respect configured maximum
+- **useGameState Hook**: Updated `configureGrid()` function to accept maxFloodCount parameter
+- **Type Definitions**: Added `maxFloodCount` to `GameState` and `ConfigureGridMessage` interfaces
 
-### Quality Assurance
-- All linting checks pass (ESLint, Prettier, Ruff)
-- No TypeScript compilation errors
-- Both frontend and backend servers running successfully
-- Visual consistency maintained between preview and actual game
+### UI Features
+- **Quick Selection**: Buttons for 1, 2, and 3 fields with visual feedback
+- **Number Input**: Manual input field with validation and clamping
+- **Visual Preview**: Shows selected flood count in configuration preview
+- **Dynamic Display**: Turn controls show current selection vs configured maximum
+- **Role-Specific**: Journeyman sees active controls, Weather sees read-only preview
 
 ## Benefits
-- Improved visibility and user interaction with larger fields
-- Better accessibility for users with visual or motor impairments
-- Enhanced user experience without changing game mechanics
-- Consistent visual scaling across all grid sizes
-- Maintained responsive design principles
+- **Strategic Depth**: More gameplay variety with different difficulty levels
+- **Player Control**: Journeyman can adjust game difficulty before starting
+- **Balanced Defaults**: Default value of 2 maintains existing gameplay balance
+- **Clear UI**: Intuitive interface for configuring flood count
+- **Consistent Design**: Matches existing configuration screen styling
+- **Type Safety**: Full TypeScript support with proper validation
 
 ## Next Steps
 Ready for the next task in the implementation plan.
 
 ## Notes
-- Board size enhancement completed successfully
-- No impact on game logic or backend functionality
-- Visual scaling applied consistently across all components
-- All existing features and animations preserved
+- Configurable flood count feature completed successfully
+- All backend and frontend components updated to support dynamic limits
+- Game configuration screen now includes flood count setting
+- Backend validation properly enforces configured limits
+- Frontend UI dynamically updates based on configuration
+- All existing features and functionality preserved

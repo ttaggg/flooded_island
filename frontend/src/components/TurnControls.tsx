@@ -54,11 +54,12 @@ export function TurnControls({
   submitFlood,
   clearFloodSelection,
 }: TurnControlsProps) {
-  const { currentTurn, currentRole } = gameState;
+  const { currentTurn, currentRole, maxFloodCount } = gameState;
 
   // Count selected flood positions
   const selectionCount = selectedFloodPositions.length;
   const hasSelection = selectionCount > 0;
+  const maxFlood = maxFloodCount || 2; // Fallback to 2 for backward compatibility
 
   /**
    * Handle End Turn button click for weather player
@@ -121,10 +122,12 @@ export function TurnControls({
               <div className="flex-1">
                 <div className="text-white">
                   <span className="text-white/70 text-sm">Selected:</span>{' '}
-                  <span className="font-bold text-xl">{selectionCount}/2 fields</span>
+                  <span className="font-bold text-xl">
+                    {selectionCount}/{maxFlood} fields
+                  </span>
                 </div>
                 <p className="text-white/60 text-xs mt-1">
-                  Select up to 2 dry fields to flood (auto-submits at 2)
+                  Select up to {maxFlood} dry fields to flood (auto-submits at {maxFlood})
                 </p>
               </div>
 

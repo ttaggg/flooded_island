@@ -74,6 +74,9 @@ export interface GameState {
   /** Winner of the game, null if not ended */
   winner: PlayerRole | null;
 
+  /** Maximum fields weather can flood per turn (1-3), null until configured */
+  maxFloodCount: number | null;
+
   /** Room creation timestamp (ISO format) */
   createdAt: string;
 

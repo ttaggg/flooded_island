@@ -24,6 +24,7 @@ export interface ConfigureGridMessage {
   type: 'configure_grid';
   width: number; // 3-10
   height: number; // 3-10
+  maxFloodCount: number; // 1-3
 }
 
 /**
@@ -39,7 +40,7 @@ export interface MoveMessage {
  */
 export interface FloodMessage {
   type: 'flood';
-  positions: Position[]; // 0-2 fields
+  positions: Position[]; // 0 to maxFloodCount fields
 }
 
 /**

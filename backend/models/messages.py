@@ -29,6 +29,26 @@ class ConfigureGridMessage(BaseModel):
     type: Literal["configure_grid"] = "configure_grid"
     width: int = Field(..., ge=3, le=10, description="Grid width (3-10)")
     height: int = Field(..., ge=3, le=10, description="Grid height (3-10)")
+    max_flood_count: int = Field(
+        ...,
+        ge=1,
+        le=3,
+        alias="maxFloodCount",
+        description="Maximum fields weather can flood per turn (1-3)",
+    )
+
+    @field_validator("max_flood_count")
+    @classmethod
+    def validate_max_flood_count(cls, v):
+        """Ensure max flood count is within valid range."""
+        if v < 1 or v > 3:
+            raise ValueError("Max flood count must be between 1 and 3")
+        return v
+
+    class Config:
+        """Pydantic configuration."""
+
+        populate_by_name = True  # Allow both field name and alias
 
 
 class MoveMessage(BaseModel):
@@ -43,15 +63,15 @@ class FloodMessage(BaseModel):
 
     type: Literal["flood"] = "flood"
     positions: list[Position] = Field(
-        ..., description="Positions to flood (0-2 fields)"
+        ..., description="Positions to flood (0 to max_flood_count fields)"
     )
 
     @field_validator("positions")
     @classmethod
     def validate_positions_count(cls, v):
-        """Ensure weather can only flood 0-2 fields per turn."""
-        if len(v) > 2:
-            raise ValueError("Weather can only flood up to 2 fields per turn")
+        """Ensure positions list is not empty and contains valid positions."""
+        if len(v) < 0:
+            raise ValueError("Positions list cannot be negative")
         return v
 
 

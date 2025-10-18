@@ -27,7 +27,7 @@ interface GameConfigurationProps {
   /** Whether the player can configure the grid (journeyman only) */
   canConfigureGrid: boolean;
   /** Function to configure grid with specified dimensions */
-  onConfigureGrid: (width: number, height: number) => void;
+  onConfigureGrid: (width: number, height: number, maxFloodCount: number) => void;
   /** Current WebSocket connection state */
   connectionState: 'disconnected' | 'connecting' | 'connected' | 'error';
   /** Current game state */
@@ -126,6 +126,7 @@ export function GameConfiguration({
   // Local state for selected grid dimensions (default: 10x10)
   const [selectedWidth, setSelectedWidth] = useState<number>(10);
   const [selectedHeight, setSelectedHeight] = useState<number>(10);
+  const [selectedMaxFlood, setSelectedMaxFlood] = useState<number>(2);
 
   // Determine if current player is Journeyman
   const isJourneyman = myRole === PlayerRole.JOURNEYMAN;
@@ -153,6 +154,13 @@ export function GameConfiguration({
     setSelectedHeight(clampedHeight);
   };
 
+  // Handle max flood count change
+  const handleMaxFloodChange = (newMaxFlood: number) => {
+    // Clamp between 1 and 3
+    const clampedMaxFlood = Math.max(1, Math.min(3, newMaxFlood));
+    setSelectedMaxFlood(clampedMaxFlood);
+  };
+
   // Handle start game button click
   const handleStartGame = () => {
     if (
@@ -160,9 +168,11 @@ export function GameConfiguration({
       selectedWidth >= 3 &&
       selectedWidth <= 10 &&
       selectedHeight >= 3 &&
-      selectedHeight <= 10
+      selectedHeight <= 10 &&
+      selectedMaxFlood >= 1 &&
+      selectedMaxFlood <= 3
     ) {
-      onConfigureGrid(selectedWidth, selectedHeight);
+      onConfigureGrid(selectedWidth, selectedHeight, selectedMaxFlood);
     }
   };
 
@@ -269,12 +279,71 @@ export function GameConfiguration({
             </div>
           </div>
 
+          {/* Max Flood Count Selector */}
+          <div className="mb-8">
+            <h3 className="text-2xl font-bold text-white mb-4 text-center">
+              Maximum Floods Per Turn
+            </h3>
+
+            {/* Current Max Flood Display */}
+            <div className="text-center mb-6">
+              <div className="inline-block bg-white/20 backdrop-blur-sm rounded-xl px-8 py-4">
+                <p className="text-white/70 text-sm mb-1">Weather Can Flood</p>
+                <p className="text-5xl font-bold text-white">
+                  {selectedMaxFlood} field{selectedMaxFlood !== 1 ? 's' : ''}
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Selection Buttons */}
+            <div className="flex justify-center gap-4 mb-6">
+              {[1, 2, 3].map((count) => (
+                <button
+                  key={count}
+                  onClick={() => handleMaxFloodChange(count)}
+                  disabled={!canConfigureGrid}
+                  className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                    selectedMaxFlood === count
+                      ? 'bg-blue-400 text-indigo-900 scale-105 ring-2 ring-blue-300'
+                      : canConfigureGrid
+                        ? 'bg-white/20 text-white hover:bg-white/30 hover:scale-105'
+                        : 'bg-white/10 text-white/50 cursor-not-allowed'
+                  }`}
+                >
+                  {count} field{count !== 1 ? 's' : ''}
+                </button>
+              ))}
+            </div>
+
+            {/* Number Input */}
+            <div className="flex items-center justify-center gap-2">
+              <label htmlFor="max-flood" className="text-white font-semibold">
+                Max Floods (1-3):
+              </label>
+              <input
+                id="max-flood"
+                type="number"
+                min="1"
+                max="3"
+                value={selectedMaxFlood}
+                onChange={(e) => handleMaxFloodChange(parseInt(e.target.value) || 1)}
+                disabled={!canConfigureGrid}
+                className={`w-20 px-4 py-2 rounded-lg text-center font-bold text-lg ${
+                  canConfigureGrid
+                    ? 'bg-white/90 text-indigo-900 focus:outline-none focus:ring-2 focus:ring-blue-400'
+                    : 'bg-white/20 text-white/50 cursor-not-allowed'
+                }`}
+              />
+            </div>
+          </div>
+
           {/* Visual Grid Preview */}
           <div className="mb-8">
             <h3 className="text-xl font-bold text-white mb-4 text-center">Preview</h3>
             <GridPreview width={selectedWidth} height={selectedHeight} />
             <p className="text-white/60 text-sm text-center mt-4">
-              All fields start as dry. Journeyman starts at the top-left corner.
+              All fields start as dry. Journeyman starts at the top-left corner. Weather can flood
+              up to {selectedMaxFlood} field{selectedMaxFlood !== 1 ? 's' : ''} per turn.
             </p>
           </div>
 
@@ -295,7 +364,8 @@ export function GameConfiguration({
                   Start Game
                 </button>
                 <p className="text-white/60 text-sm mt-4">
-                  Click "Start Game" to begin with a {selectedWidth}×{selectedHeight} grid
+                  Click "Start Game" to begin with a {selectedWidth}×{selectedHeight} grid and{' '}
+                  {selectedMaxFlood} max flood{selectedMaxFlood !== 1 ? 's' : ''} per turn
                 </p>
               </div>
             ) : (
@@ -321,7 +391,8 @@ export function GameConfiguration({
                   </div>
                 </div>
                 <p className="text-white/60 text-sm mt-4">
-                  Current selection: {selectedWidth}×{selectedHeight}
+                  Current selection: {selectedWidth}×{selectedHeight} grid, {selectedMaxFlood} max
+                  flood{selectedMaxFlood !== 1 ? 's' : ''} per turn
                 </p>
               </div>
             )}

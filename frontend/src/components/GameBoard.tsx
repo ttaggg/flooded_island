@@ -206,9 +206,10 @@ export function GameBoard({
         return false;
       }
 
-      // Can't select more than 2 positions
+      // Can't select more than maxFloodCount positions
+      const maxFlood = gameState.maxFloodCount || 2; // Fallback to 2 for backward compatibility
       const isAlreadySelected = selectedFloodPositions.some((p) => p.x === col && p.y === row);
-      if (!isAlreadySelected && selectedFloodPositions.length >= 2) {
+      if (!isAlreadySelected && selectedFloodPositions.length >= maxFlood) {
         return false;
       }
 

@@ -47,7 +47,7 @@ export interface UseGameStateReturn {
 
   // Action methods
   selectRole: (role: PlayerRole) => void;
-  configureGrid: (width: number, height: number) => void;
+  configureGrid: (width: number, height: number, maxFloodCount: number) => void;
   move: (position: Position) => void;
   addFloodPosition: (position: Position) => void;
   removeFloodPosition: (position: Position) => void;
@@ -280,7 +280,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
    * Configure the grid dimensions (journeyman only).
    */
   const configureGrid = useCallback(
-    (width: number, height: number) => {
+    (width: number, height: number, maxFloodCount: number) => {
       // Validate dimensions locally
       if (width < 3 || width > 10) {
         const errorMsg = `Invalid grid width: ${width}. Must be between 3 and 10.`;
@@ -300,13 +300,23 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
         }
         return;
       }
+      if (maxFloodCount < 1 || maxFloodCount > 3) {
+        const errorMsg = `Invalid max flood count: ${maxFloodCount}. Must be between 1 and 3.`;
+        console.error(errorMsg);
+        setLastError(errorMsg);
+        if (onErrorRef.current) {
+          onErrorRef.current(errorMsg);
+        }
+        return;
+      }
 
-      console.log(`📐 Configuring grid: ${width}x${height}`);
+      console.log(`📐 Configuring grid: ${width}x${height}, max flood: ${maxFloodCount}`);
 
       sendMessage({
         type: 'configure_grid',
         width,
         height,
+        maxFloodCount,
       });
     },
     [sendMessage]
@@ -328,8 +338,8 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
   );
 
   /**
-   * Add a position to flood selection (max 2).
-   * Auto-submits when 2 positions are selected.
+   * Add a position to flood selection (max based on configured limit).
+   * Auto-submits when maximum number of positions are selected.
    */
   const addFloodPosition = useCallback(
     (position: Position) => {
@@ -342,18 +352,21 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
           return prev;
         }
 
-        // Enforce max 2 selections
-        if (prev.length >= 2) {
-          console.log('⚠️ Maximum 2 flood positions allowed');
+        // Get max flood count from game state (fallback to 2 for backward compatibility)
+        const maxFlood = gameState?.maxFloodCount || 2;
+
+        // Enforce max selections based on configured limit
+        if (prev.length >= maxFlood) {
+          console.log(`⚠️ Maximum ${maxFlood} flood positions allowed`);
           return prev;
         }
 
         console.log(`➕ Added flood position (${position.x}, ${position.y})`);
         const newPositions = [...prev, position];
 
-        // Auto-submit if we now have 2 positions
-        if (newPositions.length === 2) {
-          console.log('🎯 Auto-submitting flood with 2 positions');
+        // Auto-submit if we now have the maximum number of positions
+        if (newPositions.length === maxFlood) {
+          console.log(`🎯 Auto-submitting flood with ${maxFlood} positions`);
           // Use setTimeout to avoid state update conflicts
           setTimeout(() => {
             sendMessage({
@@ -368,7 +381,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
         return newPositions;
       });
     },
-    [sendMessage]
+    [gameState?.maxFloodCount, sendMessage]
   );
 
   /**

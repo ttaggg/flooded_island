@@ -4,6 +4,63 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+## 2025-10-18
+
+### Task: Configurable Flood Count Setting
+- **Status**: Completed ✅
+- **Task**: Add configurable setting for maximum fields Weather can flood per turn (1-3 range, default 2)
+- **Changes**:
+  - **Backend Models**:
+    - **GameRoom Model**: Added `max_flood_count: int` field with `ge=1, le=3` constraints and default value 2
+    - **ConfigureGridMessage**: Added `max_flood_count: int` field with validation and `alias="maxFloodCount"` for camelCase support
+    - **FloodMessage**: Updated description to reference configurable limit
+  - **Backend Validation**:
+    - **validator.py**: Updated `validate_weather_flood()` to accept and use dynamic max flood count parameter
+    - Replaced hardcoded limit of 2 with configurable parameter
+    - Updated error messages to use dynamic count
+  - **Backend Handlers**:
+    - **websocket.py**: Updated `handle_configure_grid()` to process and store max flood count
+    - Updated `handle_flood()` to pass max flood count to validation
+    - Updated `serialize_room_state()` to include `maxFloodCount` in camelCase
+  - **Frontend Types**:
+    - **game.ts**: Added `maxFloodCount: number | null` to `GameState` interface
+    - **messages.ts**: Added `maxFloodCount: number` to `ConfigureGridMessage` interface
+    - Updated `FloodMessage` description to reference configurable limit
+  - **Frontend UI**:
+    - **GameConfiguration.tsx**: Added flood count selector with quick selection buttons (1, 2, 3)
+      - Added `selectedMaxFlood` state with default value 2
+      - Added UI section for "Maximum Floods Per Turn" setting
+      - Created buttons for quick selection with visual feedback
+      - Added number input field with validation and clamping
+      - Updated preview text to show configured flood count
+      - Updated start game button text to include flood count
+    - **TurnControls.tsx**: Updated to show dynamic selection counter and helper text
+      - Updated selection counter to show `{selectionCount}/{maxFlood} fields`
+      - Updated helper text to reference configured maximum
+    - **GameBoard.tsx**: Updated field selection logic to respect configured maximum
+      - Updated `isFieldSelectable()` to check against `gameState.maxFloodCount`
+      - Added fallback to 2 for backward compatibility
+  - **Frontend Logic**:
+    - **useGameState.ts**: Updated `configureGrid()` function to accept maxFloodCount parameter
+      - Added validation for 1-3 range
+      - Updated function signature and implementation
+      - Added error handling for invalid values
+    - **useGameState.ts**: Updated `addFloodPosition()` function to use dynamic maxFloodCount
+      - Replaced hardcoded limit of 2 with `gameState?.maxFloodCount || 2`
+      - Updated auto-submit logic to trigger at configured maximum
+      - Added fallback to 2 for backward compatibility
+- **Benefits**:
+  - Strategic depth with adjustable difficulty levels
+  - Player control over game configuration
+  - Balanced defaults maintaining existing gameplay
+  - Clear UI with intuitive controls
+  - Type safety with full TypeScript support
+- **Testing**: Backend validation working correctly, frontend UI integrated successfully
+- **Bug Fix**: Fixed field name mismatch between frontend (camelCase `maxFloodCount`) and backend (snake_case `max_flood_count`) by adding Pydantic field alias
+- **Bug Fix**: Fixed auto-submit logic in `addFloodPosition()` to use dynamic `maxFloodCount` instead of hardcoded value of 2
+
+---
+
 ## 2025-01-27
 
 ### Task 6.2: Board Size Enhancement

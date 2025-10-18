@@ -52,24 +52,28 @@ def validate_journeyman_move(
 
 
 def validate_weather_flood(
-    board: Board, positions: list[Position], journeyman_pos: Position
+    board: Board,
+    positions: list[Position],
+    journeyman_pos: Position,
+    max_flood_count: int,
 ) -> tuple[bool, str]:
     """
     Validate if weather can flood the specified positions.
 
     Args:
         board: The game board
-        positions: List of positions to flood (0-2 positions)
+        positions: List of positions to flood (0 to max_flood_count positions)
         journeyman_pos: Current position of the journeyman
+        max_flood_count: Maximum number of fields weather can flood per turn
 
     Returns:
         Tuple of (is_valid, error_message). If valid, error_message is empty string.
     """
-    # Check positions count is 0-2
-    if len(positions) > 2:
+    # Check positions count is within limit
+    if len(positions) > max_flood_count:
         return (
             False,
-            f"Weather can only flood up to 2 fields per turn, got {len(positions)}",
+            f"Weather can only flood up to {max_flood_count} fields per turn, got {len(positions)}",
         )
 
     # Validate each position

@@ -89,6 +89,9 @@ class GameRoom(BaseModel):
     ended_at: datetime | None = Field(
         None, description="Game end timestamp, None if not ended"
     )
+    max_flood_count: int = Field(
+        2, ge=1, le=3, description="Maximum fields weather can flood per turn (1-3)"
+    )
 
     @field_validator("grid")
     @classmethod

@@ -25,7 +25,7 @@ Two-player turn-based strategy game where journeyman tries to survive on an isla
 ### Weather (Night)
 - **Goal**: Trap the journeyman so they cannot move
 - **Flooding Action**:
-  - Can flood 0, 1, or 2 **dry fields** per turn
+  - Can flood 0 to **maxFloodCount** **dry fields** per turn (configurable: 1-3, default: 2)
   - Cannot flood already-flooded fields
   - Can flood any dry field on the grid
 - **Turn Order**: Goes after journeyman
@@ -40,7 +40,7 @@ Two-player turn-based strategy game where journeyman tries to survive on an isla
    - Journeyman moves, adjacent fields (N/S/E/W) are dried
    
 2. **Weather's Turn** (Night):
-   - Select 0-2 dry fields to flood
+   - Select 0 to maxFloodCount dry fields to flood
    - Can select/deselect choices
    - Press "End Turn" button to confirm
    - Selected fields become flooded
@@ -65,6 +65,12 @@ Two-player turn-based strategy game where journeyman tries to survive on an isla
 - Any player can modify grid size
 - Configuration locked once game begins
 - Only grid size is configurable (no other rule changes)
+
+## Game Configuration
+- **Grid Size**: Configurable rectangular grid (default: 10x10)
+- **Max Flood Count**: Configurable maximum fields weather can flood per turn (1-3, default: 2)
+- **Authority**: Journeyman player configures all game settings before start
+- **Timing**: Set once during game configuration phase, cannot be changed mid-game
 
 ## Movement & Adjacency
 

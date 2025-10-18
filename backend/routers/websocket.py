@@ -375,6 +375,7 @@ def serialize_room_state(room: GameRoom) -> dict:
         "players": room.players,
         "gameStatus": room.game_status.value,
         "winner": room.winner.value if room.winner else None,
+        "maxFloodCount": room.max_flood_count,
         "createdAt": room.created_at.isoformat(),
         "endedAt": room.ended_at.isoformat() if room.ended_at else None,
     }
@@ -484,7 +485,10 @@ async def handle_configure_grid(message: dict, ctx: MessageContext) -> None:
     config_msg = ConfigureGridMessage(**message)
     grid_width = config_msg.width
     grid_height = config_msg.height
-    print(f"  → Grid configuration: width={grid_width}, height={grid_height}")
+    max_flood_count = config_msg.max_flood_count
+    print(
+        f"  → Grid configuration: width={grid_width}, height={grid_height}, max_flood_count={max_flood_count}"
+    )
 
     # Get current room state
     room = await ctx.get_room()
@@ -517,6 +521,7 @@ async def handle_configure_grid(message: dict, ctx: MessageContext) -> None:
     # Update room state
     room.grid_width = grid_width
     room.grid_height = grid_height
+    room.max_flood_count = max_flood_count
     room.grid = board.grid
     room.journeyman_position = Position(x=0, y=0)
     room.game_status = GameStatus.ACTIVE
@@ -695,7 +700,7 @@ async def handle_flood(message: dict, ctx: MessageContext) -> None:
 
     # Validate flood
     is_valid, error_msg = validate_weather_flood(
-        board, flood_positions, room.journeyman_position
+        board, flood_positions, room.journeyman_position, room.max_flood_count
     )
     if not is_valid:
         await ctx.send_error(error_msg)
