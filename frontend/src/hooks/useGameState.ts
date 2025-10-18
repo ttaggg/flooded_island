@@ -329,27 +329,47 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
 
   /**
    * Add a position to flood selection (max 2).
+   * Auto-submits when 2 positions are selected.
    */
-  const addFloodPosition = useCallback((position: Position) => {
-    setSelectedFloodPositions((prev) => {
-      // Check if already selected
-      const alreadySelected = prev.some((p) => p.x === position.x && p.y === position.y);
+  const addFloodPosition = useCallback(
+    (position: Position) => {
+      setSelectedFloodPositions((prev) => {
+        // Check if already selected
+        const alreadySelected = prev.some((p) => p.x === position.x && p.y === position.y);
 
-      if (alreadySelected) {
-        console.log(`⚠️ Position (${position.x}, ${position.y}) already selected`);
-        return prev;
-      }
+        if (alreadySelected) {
+          console.log(`⚠️ Position (${position.x}, ${position.y}) already selected`);
+          return prev;
+        }
 
-      // Enforce max 2 selections
-      if (prev.length >= 2) {
-        console.log('⚠️ Maximum 2 flood positions allowed');
-        return prev;
-      }
+        // Enforce max 2 selections
+        if (prev.length >= 2) {
+          console.log('⚠️ Maximum 2 flood positions allowed');
+          return prev;
+        }
 
-      console.log(`➕ Added flood position (${position.x}, ${position.y})`);
-      return [...prev, position];
-    });
-  }, []);
+        console.log(`➕ Added flood position (${position.x}, ${position.y})`);
+        const newPositions = [...prev, position];
+
+        // Auto-submit if we now have 2 positions
+        if (newPositions.length === 2) {
+          console.log('🎯 Auto-submitting flood with 2 positions');
+          // Use setTimeout to avoid state update conflicts
+          setTimeout(() => {
+            sendMessage({
+              type: 'flood',
+              positions: newPositions,
+            });
+            // Clear selection after submitting
+            setSelectedFloodPositions([]);
+          }, 0);
+        }
+
+        return newPositions;
+      });
+    },
+    [sendMessage]
+  );
 
   /**
    * Remove a position from flood selection.

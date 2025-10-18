@@ -123,7 +123,9 @@ export function TurnControls({
                   <span className="text-white/70 text-sm">Selected:</span>{' '}
                   <span className="font-bold text-xl">{selectionCount}/2 fields</span>
                 </div>
-                <p className="text-white/60 text-xs mt-1">Select up to 2 dry fields to flood</p>
+                <p className="text-white/60 text-xs mt-1">
+                  Select up to 2 dry fields to flood (auto-submits at 2)
+                </p>
               </div>
 
               {/* Action Buttons */}
