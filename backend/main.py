@@ -4,7 +4,6 @@ Provides health check endpoint and configures CORS for frontend communication.
 """
 
 import asyncio
-import logging
 import os
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
@@ -18,13 +17,6 @@ from fastapi.staticfiles import StaticFiles
 from game.room_manager import start_cleanup_task
 from routers import websocket
 
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -40,19 +32,8 @@ async def lifespan(app: FastAPI):
     Replaces deprecated @app.on_event decorators.
     """
     # Startup
-    port = int(os.getenv("PORT", os.getenv("BACKEND_PORT", 8000)))
-    environment = os.getenv("ENVIRONMENT", "").lower()
-    is_production = environment == "production"
-
-    # Determine WebSocket protocol based on environment
-    ws_protocol = "wss" if is_production else "ws"
-    ws_host = "flooded-island.onrender.com" if is_production else f"0.0.0.0:{port}"
-
-    logger.info("🌊 Flooded Island API starting up...")
-    logger.info(f"📡 CORS enabled for: {frontend_url}")
-    logger.info(f"🔌 WebSocket endpoint: {ws_protocol}://{ws_host}/ws/{{room_id}}")
-    logger.info(f"🌐 Server listening on port: {port}")
-    logger.info(f"🔧 Environment: {environment or 'development'}")
+    print("🌊 Flooded Island API starting up...")
+    print(f"📡 CORS enabled for: {frontend_url}")
 
     # Start background cleanup task
     cleanup_task = asyncio.create_task(start_cleanup_task())
@@ -60,7 +41,7 @@ async def lifespan(app: FastAPI):
     yield
 
     # Shutdown
-    logger.info("🌊 Flooded Island API shutting down...")
+    print("🌊 Flooded Island API shutting down...")
     cleanup_task.cancel()
     with suppress(asyncio.CancelledError):
         await cleanup_task
@@ -75,7 +56,6 @@ app = FastAPI(
 )
 
 # Configure CORS middleware
-# Note: CORS doesn't apply to WebSocket connections, but helps with preflight requests
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allow all origins for development; restrict in production
@@ -127,8 +107,6 @@ async def health_check():
         "status": "ok",
         "message": "Flooded Island API is running",
         "version": "1.0.0",
-        "websocket_supported": True,
-        "websocket_endpoint": "/ws/{room_id}",
     }
 
 
@@ -169,8 +147,5 @@ async def catch_all(path: str):
 if __name__ == "__main__":
     import uvicorn
 
-    # Render.com uses PORT environment variable, fallback to BACKEND_PORT, then 8000
-    port = int(os.getenv("PORT", os.getenv("BACKEND_PORT", 8000)))
-    # Disable reload in production (Render sets this automatically)
-    reload = os.getenv("ENVIRONMENT", "").lower() != "production"
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=reload, log_level="info")
+    port = int(os.getenv("BACKEND_PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True, log_level="info")

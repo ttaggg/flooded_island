@@ -929,27 +929,8 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
         websocket: The WebSocket connection
         room_id: The room identifier to join
     """
-    # Log connection attempt with client info
-    client_host = websocket.client.host if websocket.client else "unknown"
-    client_port = websocket.client.port if websocket.client else "unknown"
-    logger.info(
-        f"🔌 WebSocket connection attempt: room={room_id}, "
-        f"client={client_host}:{client_port}"
-    )
-    print(
-        f"🔌 WebSocket connection attempt: room={room_id}, "
-        f"client={client_host}:{client_port}"
-    )
-
-    try:
-        # Accept connection first (required by FastAPI/Starlette)
-        await websocket.accept()
-        logger.info(f"✅ WebSocket connection accepted: room={room_id}")
-        print(f"✅ WebSocket connection accepted: room={room_id}")
-    except Exception as e:
-        logger.error(f"❌ Failed to accept WebSocket connection: {e}")
-        print(f"❌ Failed to accept WebSocket connection: {e}")
-        raise
+    # Accept connection first (required by FastAPI/Starlette)
+    await websocket.accept()
 
     # Generate unique player ID
     player_id = str(uuid.uuid4())
