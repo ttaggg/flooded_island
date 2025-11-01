@@ -64,6 +64,36 @@ echo ""
 echo "📦 Installing backend dependencies..."
 cd backend
 
+# Check if uv is available, install if not
+if ! command -v uv >/dev/null 2>&1; then
+    echo "   ⚙️  uv not found, installing uv..."
+
+    # Try official installation script first
+    if command -v curl >/dev/null 2>&1; then
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        # Add uv to PATH (typically installs to ~/.cargo/bin)
+        export PATH="$HOME/.cargo/bin:$PATH"
+    # Fallback to pip install if curl not available
+    elif command -v pip >/dev/null 2>&1 || command -v pip3 >/dev/null 2>&1; then
+        PIP_CMD=$(command -v pip3 2>/dev/null || command -v pip)
+        echo "   Installing uv via pip..."
+        $PIP_CMD install uv
+    else
+        echo "   ❌ Error: Cannot install uv. Need either curl or pip."
+        exit 1
+    fi
+
+    # Verify uv is now available
+    if ! command -v uv >/dev/null 2>&1; then
+        echo "   ❌ Error: Failed to install uv"
+        exit 1
+    fi
+
+    echo "   ✅ uv installed successfully"
+else
+    echo "   ✅ uv is available"
+fi
+
 # Check if virtual environment exists, create if not
 if [ ! -d ".venv" ]; then
     echo "   Creating virtual environment with uv..."
@@ -73,7 +103,7 @@ fi
 # Activate virtual environment
 source .venv/bin/activate
 
-# Install dependencies using uv
+# Install dependencies with uv
 echo "   Installing dependencies with uv..."
 uv pip install -r requirements.txt
 
