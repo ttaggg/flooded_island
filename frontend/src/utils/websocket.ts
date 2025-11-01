@@ -6,11 +6,37 @@
 import { ServerMessage } from '../types';
 
 /**
- * Get the backend URL from environment variables or default.
+ * Get the backend URL from environment variables or detect from current host.
+ * Works for both desktop (localhost) and mobile/server deployments.
+ *
+ * Priority:
+ * 1. VITE_BACKEND_URL environment variable (if set) - recommended for server deployments
+ * 2. Current page's origin (for server deployments with reverse proxy)
+ * 3. Default to localhost:8000 (for local development)
+ *
  * @returns The backend base URL (http/https)
  */
 export function getBackendUrl(): string {
-  return import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+  // If explicitly set in environment, use it (recommended for production)
+  const envUrl = import.meta.env.VITE_BACKEND_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+
+  // Auto-detect based on current hostname
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+
+  // If accessing via localhost, use localhost backend
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:8000';
+  }
+
+  // For server deployments, assume backend is on same origin
+  // This works for reverse proxy setups where backend is proxied to same domain
+  // If backend is on different port, set VITE_BACKEND_URL environment variable
+  const port = window.location.port;
+  return `${protocol}//${hostname}${port ? `:${port}` : ''}`;
 }
 
 /**

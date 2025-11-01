@@ -30,6 +30,7 @@ export interface UseGameStateReturn {
   // Connection
   connectionState: ConnectionState;
   isConnected: boolean;
+  connectionError: string | null;
 
   // Computed convenience values
   isMyTurn: boolean;
@@ -157,7 +158,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
   }, []);
 
   // WebSocket integration
-  const { connectionState, isConnected, sendMessage } = useWebSocket({
+  const { connectionState, isConnected, sendMessage, connectionError } = useWebSocket({
     roomId,
     onMessage: handleMessage,
     autoConnect: true,
@@ -446,6 +447,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
     // Connection
     connectionState,
     isConnected,
+    connectionError,
 
     // Computed convenience values
     isMyTurn,

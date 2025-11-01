@@ -40,10 +40,13 @@ export interface UseWebSocketReturn {
   disconnect: () => void;
   /** Convenience flag: true if connected */
   isConnected: boolean;
+  /** Connection error message, if any */
+  connectionError: string | null;
 }
 
 const INITIAL_RECONNECT_DELAY = 1000; // 1 second
 const MAX_MESSAGE_QUEUE_SIZE = 50;
+const CONNECTION_TIMEOUT = 10000; // 10 seconds
 
 /**
  * Custom hook for managing WebSocket connections with auto-reconnection.
@@ -62,10 +65,12 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
 
   // State
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   // Refs - values that don't trigger re-renders
   const websocketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
+  const connectionTimeoutRef = useRef<number | null>(null);
   const messageQueueRef = useRef<ClientMessage[]>([]);
   const reconnectDelayRef = useRef<number>(INITIAL_RECONNECT_DELAY);
   const intentionalDisconnectRef = useRef<boolean>(false);
@@ -83,6 +88,16 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     if (reconnectTimeoutRef.current !== null) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
+    }
+  }, []);
+
+  /**
+   * Clear any pending connection timeout.
+   */
+  const clearConnectionTimeout = useCallback(() => {
+    if (connectionTimeoutRef.current !== null) {
+      clearTimeout(connectionTimeoutRef.current);
+      connectionTimeoutRef.current = null;
     }
   }, []);
 
@@ -145,14 +160,31 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
       websocketRef.current = null;
     }
 
-    // Clear any pending reconnection
+    // Clear any pending timeouts
     clearReconnectTimeout();
+    clearConnectionTimeout();
 
     const url = getWebSocketUrl(roomId);
     console.log(`🔌 Connecting to WebSocket: ${url}`);
 
     setConnectionState('connecting');
+    setConnectionError(null);
     intentionalDisconnectRef.current = false;
+
+    // Set connection timeout
+    connectionTimeoutRef.current = window.setTimeout(() => {
+      if (websocketRef.current?.readyState !== WebSocket.OPEN) {
+        console.error('⏱️ Connection timeout');
+        const errorMsg = 'Connection timeout. Unable to reach server.';
+        setConnectionError(errorMsg);
+        setConnectionState('error');
+        if (websocketRef.current) {
+          websocketRef.current.close();
+          websocketRef.current = null;
+        }
+        scheduleReconnect();
+      }
+    }, CONNECTION_TIMEOUT);
 
     try {
       const ws = new WebSocket(url);
@@ -161,7 +193,9 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
       // Connection opened
       ws.onopen = () => {
         console.log('✅ WebSocket connected');
+        clearConnectionTimeout();
         setConnectionState('connected');
+        setConnectionError(null);
 
         // Reset reconnection delay on successful connection
         reconnectDelayRef.current = INITIAL_RECONNECT_DELAY;
@@ -188,7 +222,24 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
 
       // Connection closed
       ws.onclose = (event) => {
+        clearConnectionTimeout();
         console.log(`🔌 WebSocket closed (code: ${event.code}, clean: ${event.wasClean})`);
+
+        // Generate helpful error message based on close code
+        if (!event.wasClean && event.code !== 1000) {
+          let errorMsg = 'Connection closed unexpectedly';
+          if (event.code === 1006) {
+            errorMsg = 'Connection failed. Check if the server is running and accessible.';
+          } else if (event.code === 1001) {
+            errorMsg = 'Server disconnected';
+          } else if (event.code === 1002) {
+            errorMsg = 'Protocol error';
+          } else if (event.code === 1003) {
+            errorMsg = 'Invalid data received';
+          }
+          setConnectionError(errorMsg);
+        }
+
         websocketRef.current = null;
 
         if (intentionalDisconnectRef.current) {
@@ -203,15 +254,20 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
 
       // Connection error
       ws.onerror = (error) => {
+        clearConnectionTimeout();
         console.error('❌ WebSocket error:', error);
+        setConnectionError('Failed to connect to server. Check your network connection.');
         setConnectionState('error');
       };
     } catch (error) {
+      clearConnectionTimeout();
       console.error('Failed to create WebSocket:', error);
+      const errorMsg = `Failed to create connection: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      setConnectionError(errorMsg);
       setConnectionState('error');
       scheduleReconnect();
     }
-  }, [roomId, clearReconnectTimeout, flushMessageQueue, scheduleReconnect]);
+  }, [roomId, clearReconnectTimeout, clearConnectionTimeout, flushMessageQueue, scheduleReconnect]);
 
   /**
    * Manually disconnect from WebSocket.
@@ -221,6 +277,7 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
 
     intentionalDisconnectRef.current = true;
     clearReconnectTimeout();
+    clearConnectionTimeout();
 
     if (websocketRef.current) {
       websocketRef.current.close();
@@ -229,9 +286,10 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
 
     // Clear message queue on manual disconnect
     messageQueueRef.current = [];
+    setConnectionError(null);
 
     setConnectionState('disconnected');
-  }, [clearReconnectTimeout]);
+  }, [clearReconnectTimeout, clearConnectionTimeout]);
 
   /**
    * Send a message to the server.
@@ -279,13 +337,14 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     return () => {
       intentionalDisconnectRef.current = true;
       clearReconnectTimeout();
+      clearConnectionTimeout();
 
       if (websocketRef.current) {
         websocketRef.current.close();
         websocketRef.current = null;
       }
     };
-  }, [autoConnect, connect, clearReconnectTimeout]);
+  }, [autoConnect, connect, clearReconnectTimeout, clearConnectionTimeout]);
 
   // Reconnect when roomId changes
   useEffect(() => {
@@ -303,5 +362,6 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     connect,
     disconnect,
     isConnected: connectionState === 'connected',
+    connectionError,
   };
 }

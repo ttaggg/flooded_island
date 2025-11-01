@@ -11,6 +11,7 @@ import { GameOver } from './components/GameOver';
 import Home from './components/Home';
 import { GameStatus } from './types';
 import { generateRoomId } from './utils/roomId';
+import { getBackendUrl, getWebSocketUrl } from './utils/websocket';
 
 function App() {
   /**
@@ -50,6 +51,7 @@ function App() {
     canConfigureGrid,
     configureGrid,
     connectionState,
+    connectionError,
     move,
     addFloodPosition,
     removeFloodPosition,
@@ -90,9 +92,9 @@ function App() {
   if (connectionState === 'connecting') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex items-center justify-center">
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center">
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center max-w-md mx-4">
           <div className="text-white text-2xl mb-4">Connecting to game...</div>
-          <div className="flex justify-center gap-2">
+          <div className="flex justify-center gap-2 mb-4">
             <div
               className="w-3 h-3 bg-white rounded-full animate-bounce"
               style={{ animationDelay: '0ms' }}
@@ -106,6 +108,54 @@ function App() {
               style={{ animationDelay: '300ms' }}
             ></div>
           </div>
+          <p className="text-white/60 text-sm">Connecting to server...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state with helpful message
+  if (connectionState === 'error' && !gameState) {
+    const wsUrl = getWebSocketUrl(roomId);
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex items-center justify-center px-4">
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center max-w-md">
+          <div className="text-red-300 text-2xl mb-4">⚠️ Connection Failed</div>
+          <p className="text-white/80 mb-4">
+            {connectionError || 'Unable to connect to game server'}
+          </p>
+
+          <div className="bg-white/5 rounded-lg p-4 mb-4 text-left">
+            <p className="text-white/60 text-sm mb-2">Trying to connect to:</p>
+            <code className="text-white/80 text-xs break-all">{wsUrl}</code>
+          </div>
+
+          <div className="text-white/60 text-sm mb-4 space-y-2">
+            <p>
+              <strong>Common solutions:</strong>
+            </p>
+            <ul className="list-disc list-inside text-left space-y-1">
+              <li>Make sure the backend server is running</li>
+              <li>Check your network connection</li>
+              <li>Verify the server is accessible</li>
+              <li>Try refreshing the page</li>
+            </ul>
+          </div>
+
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-xl transition-colors"
+            >
+              Retry Connection
+            </button>
+            <button
+              onClick={() => (window.location.href = '/')}
+              className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-xl transition-colors"
+            >
+              Back to Home
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -117,7 +167,8 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex items-center justify-center">
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center">
           <div className="text-white text-2xl mb-4">Connection Lost</div>
-          <p className="text-white/80">Attempting to reconnect...</p>
+          <p className="text-white/80 mb-4">Attempting to reconnect...</p>
+          {connectionError && <p className="text-red-300 text-sm">{connectionError}</p>}
         </div>
       </div>
     );
@@ -125,10 +176,29 @@ function App() {
 
   // Render based on game status
   if (!gameState) {
+    // Show loading with connection status
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex items-center justify-center">
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center">
-          <div className="text-white text-2xl">Loading game state...</div>
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center max-w-md mx-4">
+          <div className="text-white text-2xl mb-4">Loading game state...</div>
+          <div className="flex justify-center gap-2 mb-4">
+            <div
+              className="w-3 h-3 bg-white rounded-full animate-bounce"
+              style={{ animationDelay: '0ms' }}
+            ></div>
+            <div
+              className="w-3 h-3 bg-white rounded-full animate-bounce"
+              style={{ animationDelay: '150ms' }}
+            ></div>
+            <div
+              className="w-3 h-3 bg-white rounded-full animate-bounce"
+              style={{ animationDelay: '300ms' }}
+            ></div>
+          </div>
+          {connectionError && <p className="text-red-300 text-sm mt-4">{connectionError}</p>}
+          {connectionState === 'connected' && !connectionError && (
+            <p className="text-white/60 text-sm mt-4">Waiting for game state from server...</p>
+          )}
         </div>
       </div>
     );
