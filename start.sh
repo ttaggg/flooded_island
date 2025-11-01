@@ -64,8 +64,11 @@ if [ ! -f ".venv/.installed" ]; then
     touch .venv/.installed
 fi
 
+# Get the full path to python executable in venv
+PYTHON_EXEC="$(pwd)/.venv/bin/python"
+
 # Start backend in background
-nohup python main.py > ../.pids/backend.log 2>&1 &
+nohup "$PYTHON_EXEC" main.py > ../.pids/backend.log 2>&1 &
 BACKEND_PID=$!
 echo $BACKEND_PID > ../.pids/backend.pid
 echo "   ✅ Backend started (PID: $BACKEND_PID)"
