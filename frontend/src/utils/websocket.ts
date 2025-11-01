@@ -6,13 +6,45 @@
 import { ServerMessage } from '../types';
 
 /**
+ * Check if a hostname is an IP address (IPv4 or IPv6).
+ * @param hostname - The hostname to check
+ * @returns True if hostname is an IP address, false otherwise
+ */
+function isIPAddress(hostname: string): boolean {
+  // IPv4 pattern: 4 groups of 1-3 digits separated by dots
+  const ipv4Pattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+
+  // IPv6 pattern: groups of hex digits separated by colons
+  // This is a simplified check - full IPv6 validation is more complex
+  const ipv6Pattern = /^([0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}$/;
+
+  // Also check for IPv6 with brackets (e.g., [::1] or [2001:db8::1])
+  const ipv6BracketedPattern = /^\[([0-9a-fA-F:]+)\]$/;
+
+  if (ipv4Pattern.test(hostname)) {
+    return true;
+  }
+
+  if (ipv6Pattern.test(hostname)) {
+    return true;
+  }
+
+  if (ipv6BracketedPattern.test(hostname)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Get the backend URL from environment variables or detect from current host.
  * Works for both desktop (localhost) and mobile/server deployments.
  *
  * Priority:
  * 1. VITE_BACKEND_URL environment variable (if set) - recommended for server deployments
- * 2. Current page's origin (for server deployments with reverse proxy)
- * 3. Default to localhost:8000 (for local development)
+ * 2. If localhost → use http://localhost:8000
+ * 3. If IP address → use same hostname with port 8000 (for mobile access)
+ * 4. Otherwise → same origin (for production/reverse proxy setups)
  *
  * @returns The backend base URL (http/https)
  */
@@ -32,7 +64,12 @@ export function getBackendUrl(): string {
     return 'http://localhost:8000';
   }
 
-  // For server deployments, assume backend is on same origin
+  // If accessing via IP address (mobile scenario), use same hostname with port 8000
+  if (isIPAddress(hostname)) {
+    return `${protocol}//${hostname}:8000`;
+  }
+
+  // For server deployments (hostnames/domains), assume backend is on same origin
   // This works for reverse proxy setups where backend is proxied to same domain
   // If backend is on different port, set VITE_BACKEND_URL environment variable
   const port = window.location.port;
