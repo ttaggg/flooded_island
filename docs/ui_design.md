@@ -25,7 +25,7 @@
 - **States**:
   - Dry: Yellow background
   - Flooded: Blue background
-  - Journeyman position: Highlighted/marked on current square
+  - Adventurer position: Highlighted/marked on current square
   - Selectable: Hover state showing it can be selected
   - Selected: Border or glow effect
 
@@ -46,7 +46,7 @@
 ## UI Components
 
 ### Role Selection Screen
-- Display available roles: "Journeyman" and "Weather"
+- Display available roles: "Adventurer" and "Weather"
 - Show which roles are taken/available
 - Clear call-to-action buttons
 - Indigo gradient background
@@ -65,7 +65,7 @@
 - "End Turn" button (prominent, disabled until valid action selected)
 
 ### Turn Controls
-- **Journeyman**:
+- **Adventurer**:
   - Clickable adjacent dry fields
   - Selected field highlighted
   - "End Turn" button

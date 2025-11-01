@@ -28,7 +28,7 @@ export interface ConfigureGridMessage {
 }
 
 /**
- * Message sent when journeyman moves.
+ * Message sent when adventurer moves.
  */
 export interface MoveMessage {
   type: 'move';

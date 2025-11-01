@@ -1,10 +1,10 @@
 # Flooded Island
 
-A turn-based multiplayer strategy game where two players compete on a flooding grid. One player (the Journeyman) tries to survive 365 days by moving strategically and drying adjacent fields, while the other player (the Weather) attempts to trap them by flooding the island.
+A turn-based multiplayer strategy game where two players compete on a flooding grid. One player (the Adventurer) tries to survive 365 days by moving strategically and drying adjacent fields, while the other player (the Weather) attempts to trap them by flooding the island.
 
 ## 🎮 Game Overview
 
-- **Two Asymmetric Roles**: Journeyman (survivor) vs Weather (adversary)
+- **Two Asymmetric Roles**: Adventurer (survivor) vs Weather (adversary)
 - **Turn-Based Strategy**: Each player makes strategic decisions to win
 - **Online Multiplayer**: Real-time WebSocket communication
 - **Configurable Grid**: Adjustable grid size (3x3 to 10x10)
@@ -94,14 +94,14 @@ flooded_island/
 ## 🎯 How to Play
 
 1. **Create/Join a Game Room**: One player creates a room, shares the room ID
-2. **Select Roles**: Players choose Journeyman or Weather
-3. **Configure Grid**: Journeyman selects grid size (3-10)
+2. **Select Roles**: Players choose Adventurer or Weather
+3. **Configure Grid**: Adventurer selects grid size (3-10)
 4. **Play**:
-   - **Journeyman's Turn**: Move to an adjacent dry field, automatically dry 4 surrounding fields (N/S/E/W)
+   - **Adventurer's Turn**: Move to an adjacent dry field, automatically dry 4 surrounding fields (N/S/E/W)
    - **Weather's Turn**: Flood 0-2 dry fields
 5. **Win Conditions**:
-   - **Journeyman wins**: Survive 365 days (turns)
-   - **Weather wins**: Trap the journeyman (no valid moves)
+   - **Adventurer wins**: Survive 365 days (turns)
+   - **Weather wins**: Trap the adventurer (no valid moves)
 
 ## 🛠️ Tech Stack
 

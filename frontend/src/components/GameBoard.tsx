@@ -1,7 +1,7 @@
 /**
  * Game Board Component for Flooded Island
  *
- * Displays the interactive game grid with field states, journeyman position,
+ * Displays the interactive game grid with field states, adventurer position,
  * and handles all player interactions during active gameplay. Provides visual
  * feedback for selectable fields, hover states, and drying previews.
  *
@@ -9,7 +9,7 @@
  * - Responsive grid rendering based on game dimensions
  * - Interactive field selection for both player roles
  * - Visual feedback for valid moves and flood selections
- * - Drying preview on hover for journeyman movement
+ * - Drying preview on hover for adventurer movement
  * - Turn controls and game status display
  * - Connection status monitoring
  */
@@ -26,9 +26,9 @@ import { ConnectionStatus } from './ConnectionStatus';
 interface GameBoardProps {
   /** Current game state including grid, positions, and turn info */
   gameState: GameState;
-  /** Player's assigned role (JOURNEYMAN, WEATHER, or null) */
+  /** Player's assigned role (ADVENTURER, WEATHER, or null) */
   myRole: PlayerRole | null;
-  /** Function to execute journeyman movement to a position */
+  /** Function to execute adventurer movement to a position */
   move: (position: Position) => void;
   /** Function to add a position to weather's flood selection */
   addFloodPosition: (position: Position) => void;
@@ -36,7 +36,7 @@ interface GameBoardProps {
   removeFloodPosition: (position: Position) => void;
   /** Currently selected positions for weather flooding (0-2 positions) */
   selectedFloodPositions: Position[];
-  /** Whether the player can currently move (journeyman's turn) */
+  /** Whether the player can currently move (adventurer's turn) */
   canMove: boolean;
   /** Whether the player can currently flood fields (weather's turn) */
   canFlood: boolean;
@@ -61,9 +61,9 @@ interface GameBoardProps {
  *
  * Renders the complete game interface including:
  * - Game header with day counter and turn information
- * - Interactive grid with field states and journeyman position
+ * - Interactive grid with field states and adventurer position
  * - Visual feedback for selectable fields and hover states
- * - Drying preview for journeyman movement
+ * - Drying preview for adventurer movement
  * - Turn controls for player actions
  * - Connection status monitoring
  *
@@ -87,14 +87,14 @@ export function GameBoard({
   onClearError,
   opponentDisconnected,
 }: GameBoardProps) {
-  const { grid, gridWidth, gridHeight, journeymanPosition, currentTurn, currentRole } = gameState;
+  const { grid, gridWidth, gridHeight, adventurerPosition, currentTurn, currentRole } = gameState;
 
   // Hover tracking state
   const [hoveredCell, setHoveredCell] = useState<Position | null>(null);
   const [dryingPreviewPositions, setDryingPreviewPositions] = useState<Position[]>([]);
 
   // Early return if grid is not initialized
-  if (!grid || !gridWidth || !gridHeight || !journeymanPosition) {
+  if (!grid || !gridWidth || !gridHeight || !adventurerPosition) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex items-center justify-center px-4">
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl text-center">
@@ -133,7 +133,7 @@ export function GameBoard({
    *
    * Returns the four cardinal directions from a position, filtering out
    * positions that are outside the grid bounds. Used specifically for
-   * showing which fields will be dried when journeyman moves.
+   * showing which fields will be dried when adventurer moves.
    *
    * @param position - Center position to find adjacents for
    * @returns Array of valid adjacent positions in cardinal directions
@@ -158,21 +158,21 @@ export function GameBoard({
   };
 
   /**
-   * Check if the journeyman is positioned at the given coordinates
+   * Check if the adventurer is positioned at the given coordinates
    *
    * @param row - Row index to check
    * @param col - Column index to check
-   * @returns True if journeyman is at the specified position
+   * @returns True if adventurer is at the specified position
    */
-  const isJourneymanAt = (row: number, col: number): boolean => {
-    return journeymanPosition.y === row && journeymanPosition.x === col;
+  const isAdventurerAt = (row: number, col: number): boolean => {
+    return adventurerPosition.y === row && adventurerPosition.x === col;
   };
 
   /**
    * Determine if a field is selectable based on current game state and player role
    *
-   * For Journeyman: Can move to adjacent dry fields (8 directions)
-   * For Weather: Can select any dry field except journeyman's position (max 2)
+   * For Adventurer: Can move to adjacent dry fields (8 directions)
+   * For Weather: Can select any dry field except adventurer's position (max 2)
    *
    * @param row - Row index of the field
    * @param col - Column index of the field
@@ -186,23 +186,23 @@ export function GameBoard({
       return false;
     }
 
-    // Journeyman's turn - can move to adjacent dry fields
+    // Adventurer's turn - can move to adjacent dry fields
     if (canMove) {
       // Can't move to current position
-      if (isJourneymanAt(row, col)) {
+      if (isAdventurerAt(row, col)) {
         return false;
       }
 
       // Check if adjacent (8 directions)
-      const rowDiff = Math.abs(row - journeymanPosition.y);
-      const colDiff = Math.abs(col - journeymanPosition.x);
+      const rowDiff = Math.abs(row - adventurerPosition.y);
+      const colDiff = Math.abs(col - adventurerPosition.x);
       return rowDiff <= 1 && colDiff <= 1 && (rowDiff > 0 || colDiff > 0);
     }
 
-    // Weather's turn - can flood any dry field except journeyman's position
+    // Weather's turn - can flood any dry field except adventurer's position
     if (canFlood) {
-      // Can't flood journeyman's position
-      if (isJourneymanAt(row, col)) {
+      // Can't flood adventurer's position
+      if (isAdventurerAt(row, col)) {
         return false;
       }
 
@@ -233,7 +233,7 @@ export function GameBoard({
   /**
    * Handle field click events for both player roles
    *
-   * Journeyman: Immediately moves to the clicked field
+   * Adventurer: Immediately moves to the clicked field
    * Weather: Toggles the field in/out of flood selection
    *
    * @param row - Row index of clicked field
@@ -243,7 +243,7 @@ export function GameBoard({
     const position: Position = { x: col, y: row };
 
     if (canMove) {
-      // Journeyman: Move immediately
+      // Adventurer: Move immediately
       move(position);
     } else if (canFlood) {
       // Weather: Toggle selection
@@ -259,7 +259,7 @@ export function GameBoard({
    * Handle mouse enter events for hover effects and drying preview
    *
    * Sets the hovered cell state and calculates drying preview positions
-   * for journeyman movement (shows which fields will be dried).
+   * for adventurer movement (shows which fields will be dried).
    *
    * @param row - Row index of hovered field
    * @param col - Column index of hovered field
@@ -268,7 +268,7 @@ export function GameBoard({
     const position = { x: col, y: row };
     setHoveredCell(position);
 
-    // Calculate drying preview for journeyman movement
+    // Calculate drying preview for adventurer movement
     if (canMove && isFieldSelectable(row, col)) {
       const adjacentPositions = getCardinalAdjacent(position);
       setDryingPreviewPositions(adjacentPositions);
@@ -330,7 +330,7 @@ export function GameBoard({
               </p>
             ) : (
               <p className="text-white/70 text-lg">
-                Waiting for {currentRole === PlayerRole.JOURNEYMAN ? 'Journeyman' : 'Weather'} to
+                Waiting for {currentRole === PlayerRole.ADVENTURER ? 'Adventurer' : 'Weather'} to
                 move...
               </p>
             )}
@@ -347,7 +347,7 @@ export function GameBoard({
               >
                 {grid.map((row, rowIndex) =>
                   row.map((fieldState, colIndex) => {
-                    const hasJourneyman = isJourneymanAt(rowIndex, colIndex);
+                    const hasAdventurer = isAdventurerAt(rowIndex, colIndex);
                     const isSelectable = isFieldSelectable(rowIndex, colIndex);
                     const isSelected = isFieldSelected(rowIndex, colIndex);
                     const isHovered =
@@ -364,7 +364,7 @@ export function GameBoard({
                         row={rowIndex}
                         col={colIndex}
                         fieldState={fieldState}
-                        hasJourneyman={hasJourneyman}
+                        hasAdventurer={hasAdventurer}
                         cellSize={cellSize}
                         isSelectable={isSelectable}
                         isSelected={isSelected}
@@ -395,7 +395,7 @@ export function GameBoard({
               <div className="w-6 h-6 bg-yellow-200 border-2 border-yellow-400 rounded flex items-center justify-center">
                 <span className="text-xs">🧙‍♂️</span>
               </div>
-              <span className="text-white/80 text-sm font-medium">Journeyman</span>
+              <span className="text-white/80 text-sm font-medium">Adventurer</span>
             </div>
           </div>
         </div>

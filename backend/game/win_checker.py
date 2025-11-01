@@ -6,35 +6,35 @@ and calculate game statistics.
 """
 
 from game.board import Board
-from game.validator import is_journeyman_trapped
+from game.validator import is_adventurer_trapped
 from models.game import FieldState, PlayerRole, Position
 
 
-def check_journeyman_victory(current_turn: int) -> bool:
+def check_adventurer_victory(current_turn: int) -> bool:
     """
-    Check if the journeyman has won by surviving 365 turns.
+    Check if the adventurer has won by surviving 365 turns.
 
     Args:
         current_turn: The current turn number
 
     Returns:
-        True if journeyman has survived 365 turns, False otherwise
+        True if adventurer has survived 365 turns, False otherwise
     """
     return current_turn >= 365
 
 
-def check_weather_victory(board: Board, journeyman_pos: Position) -> bool:
+def check_weather_victory(board: Board, adventurer_pos: Position) -> bool:
     """
-    Check if weather has won by trapping the journeyman.
+    Check if weather has won by trapping the adventurer.
 
     Args:
         board: The game board
-        journeyman_pos: Current position of the journeyman
+        adventurer_pos: Current position of the adventurer
 
     Returns:
-        True if journeyman is trapped (no valid moves), False otherwise
+        True if adventurer is trapped (no valid moves), False otherwise
     """
-    return is_journeyman_trapped(board, journeyman_pos)
+    return is_adventurer_trapped(board, adventurer_pos)
 
 
 def calculate_statistics(board: Board, current_turn: int) -> dict:
@@ -75,7 +75,7 @@ def calculate_statistics(board: Board, current_turn: int) -> dict:
 
 def check_win_condition(
     board: Board,
-    journeyman_pos: Position,
+    adventurer_pos: Position,
     current_turn: int,
     current_role: PlayerRole,
 ) -> tuple[PlayerRole | None, dict]:
@@ -87,7 +87,7 @@ def check_win_condition(
 
     Args:
         board: The game board
-        journeyman_pos: Current position of the journeyman
+        adventurer_pos: Current position of the adventurer
         current_turn: The current turn number
         current_role: The role that just completed their turn
 
@@ -99,15 +99,15 @@ def check_win_condition(
     statistics = calculate_statistics(board, current_turn)
     winner = None
 
-    # Check journeyman victory (365 turns completed)
-    # This should be checked after journeyman completes their turn
-    if current_role == PlayerRole.JOURNEYMAN and check_journeyman_victory(current_turn):
-        winner = PlayerRole.JOURNEYMAN
+    # Check adventurer victory (365 turns completed)
+    # This should be checked after adventurer completes their turn
+    if current_role == PlayerRole.ADVENTURER and check_adventurer_victory(current_turn):
+        winner = PlayerRole.ADVENTURER
 
-    # Check weather victory (journeyman trapped)
+    # Check weather victory (adventurer trapped)
     # This should be checked after weather completes their turn
     if current_role == PlayerRole.WEATHER and check_weather_victory(
-        board, journeyman_pos
+        board, adventurer_pos
     ):
         winner = PlayerRole.WEATHER
 

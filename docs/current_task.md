@@ -28,7 +28,7 @@ Added a configurable setting for the maximum number of fields Weather can flood 
 - ✅ Configurable flood count range (1-3 fields per turn)
 - ✅ Default value of 2 maintains existing gameplay balance
 - ✅ Integrated into game configuration screen alongside grid dimensions
-- ✅ Journeyman player has authority to configure all game settings
+- ✅ Adventurer player has authority to configure all game settings
 - ✅ Frontend UI shows current selection and preview
 - ✅ Backend validation enforces configured limits
 - ✅ Dynamic UI updates based on configured maximum
@@ -57,11 +57,11 @@ Added a configurable setting for the maximum number of fields Weather can flood 
 - **Number Input**: Manual input field with validation and clamping
 - **Visual Preview**: Shows selected flood count in configuration preview
 - **Dynamic Display**: Turn controls show current selection vs configured maximum
-- **Role-Specific**: Journeyman sees active controls, Weather sees read-only preview
+- **Role-Specific**: Adventurer sees active controls, Weather sees read-only preview
 
 ## Benefits
 - **Strategic Depth**: More gameplay variety with different difficulty levels
-- **Player Control**: Journeyman can adjust game difficulty before starting
+- **Player Control**: Adventurer can adjust game difficulty before starting
 - **Balanced Defaults**: Default value of 2 maintains existing gameplay balance
 - **Clear UI**: Intuitive interface for configuring flood count
 - **Consistent Design**: Matches existing configuration screen styling

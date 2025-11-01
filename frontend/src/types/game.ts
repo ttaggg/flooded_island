@@ -15,7 +15,7 @@ export enum FieldState {
  * Player role in the game.
  */
 export enum PlayerRole {
-  JOURNEYMAN = 'journeyman',
+  ADVENTURER = 'adventurer',
   WEATHER = 'weather',
 }
 
@@ -53,8 +53,8 @@ export interface GameState {
   /** 2D grid of field states, null until game starts */
   grid: FieldState[][] | null;
 
-  /** Current position of journeyman, null until game starts */
-  journeymanPosition: Position | null;
+  /** Current position of adventurer, null until game starts */
+  adventurerPosition: Position | null;
 
   /** Current turn number (1-365) */
   currentTurn: number;
@@ -64,7 +64,7 @@ export interface GameState {
 
   /** Which roles are filled */
   players: {
-    journeyman: boolean;
+    adventurer: boolean;
     weather: boolean;
   };
 

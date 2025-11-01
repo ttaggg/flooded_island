@@ -18,7 +18,7 @@
 
 ### Real-time Communication
 - **Protocol**: WebSockets
-- **Purpose**: Synchronize game state between journeyman and weather players
+- **Purpose**: Synchronize game state between adventurer and weather players
 - **Flow**: Both players connect to same game room, receive real-time updates on moves
 
 ### Other Tools & Libraries
@@ -50,7 +50,7 @@
 ### Communication Flow
 1. Players navigate to website
 2. Join/create game room (simple room code or URL)
-3. Select available role (journeyman or weather)
+3. Select available role (adventurer or weather)
 4. WebSocket connection established
 5. Game state updates broadcast to both players in real-time
 

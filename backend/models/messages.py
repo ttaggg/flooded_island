@@ -52,7 +52,7 @@ class ConfigureGridMessage(BaseModel):
 
 
 class MoveMessage(BaseModel):
-    """Message sent when journeyman moves."""
+    """Message sent when adventurer moves."""
 
     type: Literal["move"] = "move"
     position: Position = Field(..., description="Destination position")

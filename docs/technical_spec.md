@@ -10,7 +10,7 @@
 ### Role Assignment
 - **System**: First-come-first-served
 - **Flow**:
-  1. Two vacant roles initially: "Journeyman" and "Weather"
+  1. Two vacant roles initially: "Adventurer" and "Weather"
   2. First player clicks a role → that role becomes taken
   3. Second player sees one role taken, one available
   4. Second player takes remaining role
@@ -30,7 +30,7 @@
 
 ## Game Rules Details
 
-### Journeyman Movement
+### Adventurer Movement
 - **Required Action**: Must move every turn (cannot stay in place)
 - **Movement Options**: Any adjacent dry field (8 directions)
 - **Drying**: Happens automatically after move to new position
@@ -38,29 +38,29 @@
 ### Field State Rules
 - **Weather Flooding Restrictions**: 
   - Can only flood dry fields
-  - **Cannot** flood the field where journeyman currently stands
+  - **Cannot** flood the field where adventurer currently stands
   - Can flood 0, 1, or 2 fields per turn
 
 ### Grid Configuration
 - **Size Range**: Width and height independently configurable, each between 3 and 10
-- **Who Configures**: Journeyman sets the grid dimensions
+- **Who Configures**: Adventurer sets the grid dimensions
 - **When**: Before game starts, after both roles are filled
 - **Validation**: Enforce min/max limits for both width and height
 - **Default**: 10x10 (square grid)
 
 ### Win Conditions
-- **Journeyman Victory**: Completes their move on day 365 → immediate win (weather doesn't get turn 365)
-- **Weather Victory**: Journeyman has no valid dry adjacent fields to move to
+- **Adventurer Victory**: Completes their move on day 365 → immediate win (weather doesn't get turn 365)
+- **Weather Victory**: Adventurer has no valid dry adjacent fields to move to
 
 ## UI Specifications
 
-### Journeyman Representation
+### Adventurer Representation
 - **Icon**: Male player icon/avatar
 - **Background**: Same yellow color as dry fields
 - **Visibility**: Clearly distinguishable on the field
 
 ### Field Highlighting
-- **Movable Fields**: Show outline/border on adjacent dry fields where journeyman can move
+- **Movable Fields**: Show outline/border on adjacent dry fields where adventurer can move
 - **Drying Preview**: On hover over a movable field, show which 4 fields (N/S/E/W) will be dried
 - **Weather Selection**: Highlight selected fields (up to 2)
 
@@ -98,12 +98,12 @@ ROOM_CLEANUP_MINUTES=5
   - `grid_width`: int (3-10) or null
   - `grid_height`: int (3-10) or null
   - `grid`: 2D array of field states
-  - `journeyman_position`: {x, y}
+  - `adventurer_position`: {x, y}
   - `current_turn`: int (1-365)
-  - `current_role`: "journeyman" | "weather"
-  - `players`: {journeyman: WebSocket, weather: WebSocket}
+  - `current_role`: "adventurer" | "weather"
+  - `players`: {adventurer: WebSocket, weather: WebSocket}
   - `game_status`: "waiting" | "configuring" | "active" | "ended"
-  - `winner`: null | "journeyman" | "weather"
+  - `winner`: null | "adventurer" | "weather"
   - `created_at`: timestamp
   - `ended_at`: timestamp | null
 
@@ -118,7 +118,7 @@ ROOM_CLEANUP_MINUTES=5
 1. Player 1 navigates to `/game/{room_id}`
 2. Backend creates room if doesn't exist
 3. Player 1 sees role selection screen with both roles available
-4. Player 1 selects role (e.g., "Journeyman")
+4. Player 1 selects role (e.g., "Adventurer")
 5. Screen shows "Waiting for opponent..."
 
 ### Second Player Join
@@ -129,20 +129,20 @@ ROOM_CLEANUP_MINUTES=5
 
 ### Configuration Phase
 1. Both players see configuration screen
-2. Journeyman sees grid dimensions selectors (width and height, each 3-10)
-3. Weather sees "Waiting for journeyman to configure..."
-4. Journeyman selects grid dimensions and clicks "Start Game"
-5. Game initializes with journeyman on top-left corner
+2. Adventurer sees grid dimensions selectors (width and height, each 3-10)
+3. Weather sees "Waiting for adventurer to configure..."
+4. Adventurer selects grid dimensions and clicks "Start Game"
+5. Game initializes with adventurer on top-left corner
 
 ### Game Phase
-1. Journeyman's turn (Day 1):
+1. Adventurer's turn (Day 1):
    - Sees movable fields highlighted
    - Hovers to see drying preview
    - Clicks destination field
    - Clicks "End Turn"
    - Move executes, fields dry
 2. Weather's turn (Night 1):
-   - Can click any dry field (except journeyman's position)
+   - Can click any dry field (except adventurer's position)
    - Can select 0-2 fields
    - Clicks "End Turn"
    - Selected fields flood
@@ -161,7 +161,7 @@ ROOM_CLEANUP_MINUTES=5
 ```typescript
 {
   type: "select_role",
-  role: "journeyman" | "weather"
+  role: "adventurer" | "weather"
 }
 
 {
@@ -190,14 +190,14 @@ ROOM_CLEANUP_MINUTES=5
 {
   type: "room_state",
   state: {
-    players: { journeyman: boolean, weather: boolean },
+    players: { adventurer: boolean, weather: boolean },
     game_status: string,
     grid_width: number | null,
     grid_height: number | null,
     grid: any[][] | null,
     current_turn: number,
     current_role: string,
-    journeyman_position: { x: number, y: number } | null
+    adventurer_position: { x: number, y: number } | null
   }
 }
 
@@ -208,7 +208,7 @@ ROOM_CLEANUP_MINUTES=5
 
 {
   type: "game_over",
-  winner: "journeyman" | "weather",
+  winner: "adventurer" | "weather",
   stats: { ... }
 }
 
@@ -219,11 +219,11 @@ ROOM_CLEANUP_MINUTES=5
 
 {
   type: "player_disconnected",
-  role: "journeyman" | "weather"
+  role: "adventurer" | "weather"
 }
 
 {
   type: "player_reconnected",
-  role: "journeyman" | "weather"
+  role: "adventurer" | "weather"
 }
 ```

@@ -155,8 +155,8 @@ export function ConnectionStatus({
 
     if (gameState.gameStatus === GameStatus.WAITING) {
       const waitingForRole =
-        (myRole === PlayerRole.JOURNEYMAN && !gameState.players.weather) ||
-        (myRole === PlayerRole.WEATHER && !gameState.players.journeyman);
+        (myRole === PlayerRole.ADVENTURER && !gameState.players.weather) ||
+        (myRole === PlayerRole.WEATHER && !gameState.players.adventurer);
 
       if (waitingForRole) {
         return 'Waiting for opponent...';

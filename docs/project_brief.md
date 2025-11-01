@@ -4,7 +4,7 @@
 Flooded Island
 
 ## Overview
-A turn-based web game for two players where one player (journeyman) tries to survive on a flooding island while the other player (weather) attempts to trap them by flooding squares. The game is played on a configurable grid where the journeyman must strategically move and dry adjacent fields while the weather floods up to two fields per turn.
+A turn-based web game for two players where one player (adventurer) tries to survive on a flooding island while the other player (weather) attempts to trap them by flooding squares. The game is played on a configurable grid where the adventurer must strategically move and dry adjacent fields while the weather floods up to two fields per turn.
 
 ## Goals
 - Create an engaging two-player online game with simple but strategic gameplay
@@ -14,13 +14,13 @@ A turn-based web game for two players where one player (journeyman) tries to sur
 
 ## Key Features
 - **Two Asymmetric Roles**:
-  - **Journeyman**: Moves to adjacent dry fields, dries surrounding fields
+  - **Adventurer**: Moves to adjacent dry fields, dries surrounding fields
   - **Weather**: Floods 0-2 dry fields per turn
 - **Online Multiplayer**: Two players join via web browser, fill available roles
 - **Configurable Grid**: Users can adjust grid size (default 10x10) before game starts
 - **Win/Loss Conditions**:
-  - Journeyman wins by surviving 365 turns (days)
-  - Weather wins by trapping journeyman (no dry adjacent fields to move to)
+  - Adventurer wins by surviving 365 turns (days)
+  - Weather wins by trapping adventurer (no dry adjacent fields to move to)
 - **Animated Squares**: Fields flip/rotate when dried or flooded
 - **Real-time Updates**: WebSocket communication for instant game state synchronization
 

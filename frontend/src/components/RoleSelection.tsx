@@ -1,7 +1,7 @@
 /**
  * Role Selection Screen Component for Flooded Island
  *
- * Allows players to choose between Journeyman and Weather roles before
+ * Allows players to choose between Adventurer and Weather roles before
  * starting the game. Displays role descriptions, availability status,
  * and handles role selection with visual feedback.
  *
@@ -182,13 +182,13 @@ export function RoleSelection({
   opponentDisconnected,
 }: RoleSelectionProps) {
   // Determine role states
-  const journeymanTaken = gameState?.players.journeyman || false;
+  const adventurerTaken = gameState?.players.adventurer || false;
   const weatherTaken = gameState?.players.weather || false;
 
-  const journeymanSelected = myRole === PlayerRole.JOURNEYMAN;
+  const adventurerSelected = myRole === PlayerRole.ADVENTURER;
   const weatherSelected = myRole === PlayerRole.WEATHER;
 
-  const journeymanAvailable = availableRoles.includes(PlayerRole.JOURNEYMAN);
+  const adventurerAvailable = availableRoles.includes(PlayerRole.ADVENTURER);
   const weatherAvailable = availableRoles.includes(PlayerRole.WEATHER);
 
   // Status message
@@ -235,32 +235,32 @@ export function RoleSelection({
           <h1 className="text-6xl font-bold text-white mb-4 drop-shadow-lg">Flooded Island</h1>
           <h2 className="text-3xl font-semibold text-white/90 mb-3">Choose Your Role</h2>
           <p className="text-white/70 text-lg max-w-2xl mx-auto">
-            Two players, two roles. The Journeyman must survive 365 days while the Weather tries to
+            Two players, two roles. The Adventurer must survive 365 days while the Weather tries to
             trap them.
           </p>
         </div>
 
         {/* Role Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 max-w-5xl mx-auto">
-          {/* Journeyman Card */}
+          {/* Adventurer Card */}
           <RoleCard
-            title="Journeyman"
+            title="Adventurer"
             icon="🚶"
             goal="Survive 365 days"
             actions="Move & Dry adjacent fields"
             accentColor="yellow"
-            isAvailable={journeymanAvailable}
-            isTaken={journeymanTaken}
-            isSelected={journeymanSelected}
+            isAvailable={adventurerAvailable}
+            isTaken={adventurerTaken}
+            isSelected={adventurerSelected}
             canSelect={canSelectRole}
-            onSelect={() => onSelectRole(PlayerRole.JOURNEYMAN)}
+            onSelect={() => onSelectRole(PlayerRole.ADVENTURER)}
           />
 
           {/* Weather Card */}
           <RoleCard
             title="Weather"
             icon="🌧️"
-            goal="Trap the Journeyman"
+            goal="Trap the Adventurer"
             actions="Flood up to 2 fields per turn"
             accentColor="blue"
             isAvailable={weatherAvailable}

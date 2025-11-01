@@ -8,14 +8,14 @@ win condition checking, and room management.
 from game.board import Board
 from game.room_manager import RoomManager, room_manager
 from game.validator import (
-    is_journeyman_trapped,
+    is_adventurer_trapped,
+    validate_adventurer_move,
     validate_grid_dimensions,
-    validate_journeyman_move,
     validate_weather_flood,
 )
 from game.win_checker import (
     calculate_statistics,
-    check_journeyman_victory,
+    check_adventurer_victory,
     check_weather_victory,
     check_win_condition,
 )
@@ -23,11 +23,11 @@ from game.win_checker import (
 
 __all__ = [
     "Board",
-    "validate_journeyman_move",
+    "validate_adventurer_move",
     "validate_weather_flood",
-    "is_journeyman_trapped",
+    "is_adventurer_trapped",
     "validate_grid_dimensions",
-    "check_journeyman_victory",
+    "check_adventurer_victory",
     "check_weather_victory",
     "calculate_statistics",
     "check_win_condition",

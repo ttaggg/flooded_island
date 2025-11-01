@@ -1,17 +1,17 @@
 # Game Rules - Flooded Island
 
 ## Overview
-Two-player turn-based strategy game where journeyman tries to survive on an island while weather attempts to flood them.
+Two-player turn-based strategy game where adventurer tries to survive on an island while weather attempts to flood them.
 
 ## Setup
 - **Grid**: Configurable rectangular grid (default: 10x10)
 - **Initial State**: All fields are dry
-- **Starting Position**: Journeyman starts on top-left corner
-- **Roles**: Two players fill "journeyman" and "weather" roles
+- **Starting Position**: Adventurer starts on top-left corner
+- **Roles**: Two players fill "adventurer" and "weather" roles
 
 ## Roles
 
-### Journeyman (Day)
+### Adventurer (Day)
 - **Goal**: Survive for 365 days (turns)
 - **Movement**: 
   - Moves to any adjacent field (8 directions: vertical, horizontal, diagonal)
@@ -23,21 +23,21 @@ Two-player turn-based strategy game where journeyman tries to survive on an isla
 - **Loses When**: No dry adjacent fields available (trapped)
 
 ### Weather (Night)
-- **Goal**: Trap the journeyman so they cannot move
+- **Goal**: Trap the adventurer so they cannot move
 - **Flooding Action**:
   - Can flood 0 to **maxFloodCount** **dry fields** per turn (configurable: 1-3, default: 2)
   - Cannot flood already-flooded fields
   - Can flood any dry field on the grid
-- **Turn Order**: Goes after journeyman
+- **Turn Order**: Goes after adventurer
 
 ## Turn Dynamics
 
 ### Turn Sequence
-1. **Journeyman's Turn** (Day):
+1. **Adventurer's Turn** (Day):
    - Select destination field (adjacent, dry)
    - Can select/deselect choices
    - Press "End Turn" button to confirm
-   - Journeyman moves, adjacent fields (N/S/E/W) are dried
+   - Adventurer moves, adjacent fields (N/S/E/W) are dried
    
 2. **Weather's Turn** (Night):
    - Select 0 to maxFloodCount dry fields to flood
@@ -49,15 +49,15 @@ Two-player turn-based strategy game where journeyman tries to survive on an isla
 
 ## Win/Loss Conditions
 
-### Journeyman Wins
+### Adventurer Wins
 - Survives for **365 days (turns)**
 
 ### Weather Wins
-- Journeyman has no valid moves (all adjacent fields are flooded)
+- Adventurer has no valid moves (all adjacent fields are flooded)
 
 ## Field States
-- **Dry**: Yellow, journeyman can move here
-- **Flooded**: Blue, journeyman cannot move here
+- **Dry**: Yellow, adventurer can move here
+- **Flooded**: Blue, adventurer cannot move here
 - **Transition Animation**: Square rotates/flips when state changes
 
 ## Grid Configuration
@@ -69,7 +69,7 @@ Two-player turn-based strategy game where journeyman tries to survive on an isla
 ## Game Configuration
 - **Grid Size**: Configurable rectangular grid (default: 10x10)
 - **Max Flood Count**: Configurable maximum fields weather can flood per turn (1-3, default: 2)
-- **Authority**: Journeyman player configures all game settings before start
+- **Authority**: Adventurer player configures all game settings before start
 - **Timing**: Set once during game configuration phase, cannot be changed mid-game
 
 ## Movement & Adjacency
@@ -77,14 +77,14 @@ Two-player turn-based strategy game where journeyman tries to survive on an isla
 ### Movement Adjacency (8 directions)
 ```
 ■ ■ ■
-■ J ■    J = Journeyman can move to any ■
+■ A ■    A = Adventurer can move to any ■
 ■ ■ ■
 ```
 
 ### Drying Adjacency (4 directions)
 ```
   ■
-■ J ■    Only these 4 fields are dried
+■ A ■    Only these 4 fields are dried
   ■
 ```
 

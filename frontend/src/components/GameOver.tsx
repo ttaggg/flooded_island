@@ -76,13 +76,13 @@ export function GameOver({ winner, stats, onPlayAgain }: GameOverProps) {
   const totalFields = (stats.total_fields as number) ?? 0;
 
   // Winner-specific styling
-  const isJourneymanWinner = winner === PlayerRole.JOURNEYMAN;
-  const winnerColor = isJourneymanWinner ? 'text-yellow-300' : 'text-blue-300';
-  const winnerEmoji = isJourneymanWinner ? '🎉' : '🌧️';
-  const winnerTitle = isJourneymanWinner ? 'Journeyman Wins!' : 'Weather Wins!';
-  const winnerMessage = isJourneymanWinner
-    ? 'The Journeyman survived all 365 days!'
-    : 'The Journeyman was trapped by the floods!';
+  const isAdventurerWinner = winner === PlayerRole.ADVENTURER;
+  const winnerColor = isAdventurerWinner ? 'text-yellow-300' : 'text-blue-300';
+  const winnerEmoji = isAdventurerWinner ? '🎉' : '🌧️';
+  const winnerTitle = isAdventurerWinner ? 'Adventurer Wins!' : 'Weather Wins!';
+  const winnerMessage = isAdventurerWinner
+    ? 'The Adventurer survived all 365 days!'
+    : 'The Adventurer was trapped by the floods!';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex items-center justify-center px-4 py-8">

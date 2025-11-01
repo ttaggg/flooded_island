@@ -88,7 +88,7 @@ Running log of completed tasks and changes to the project.
   - **Frontend Components Enhanced**:
     - **GameBoard.tsx**: Added comprehensive JSDoc for component, props interface, and all helper functions
       - Documented component purpose, features, and behavior
-      - Added JSDoc for all helper functions (getCellSize, getCardinalAdjacent, isJourneymanAt, etc.)
+      - Added JSDoc for all helper functions (getCellSize, getCardinalAdjacent, isAdventurerAt, etc.)
       - Documented event handlers and their parameters
     - **Field.tsx**: Enhanced JSDoc for component and styling functions
       - Documented component features and accessibility support
@@ -335,7 +335,7 @@ Running log of completed tasks and changes to the project.
   - Extracted message handler functions with early returns:
     - `handle_select_role()` - Role selection logic (~72 lines)
     - `handle_configure_grid()` - Grid configuration logic (~64 lines)
-    - `handle_move()` - Journeyman move logic (~108 lines)
+    - `handle_move()` - Adventurer move logic (~108 lines)
     - `handle_flood()` - Weather flood logic (~104 lines)
   - Implemented message dispatcher pattern:
     - `MESSAGE_HANDLERS` registry for extensibility
@@ -384,7 +384,7 @@ Running log of completed tasks and changes to the project.
   - Updated `tech_context.md` with detailed technology stack (FastAPI, React, TypeScript, WebSockets)
   - Added architecture decisions and project structure
   - Created `game_rules.md` with comprehensive game mechanics:
-    - Journeyman and Weather role descriptions
+    - Adventurer and Weather role descriptions
     - Movement and adjacency rules
     - Win/loss conditions (365 days to win, trapped to lose)
     - Turn sequence and dynamics
@@ -579,14 +579,14 @@ Running log of completed tasks and changes to the project.
   - Created `backend/models/game.py` with core game data structures:
     - **Enums:**
       - `FieldState` - Field states (DRY, FLOODED)
-      - `PlayerRole` - Player roles (JOURNEYMAN, WEATHER)
+      - `PlayerRole` - Player roles (ADVENTURER, WEATHER)
       - `GameStatus` - Game status (WAITING, CONFIGURING, ACTIVE, ENDED)
     - **Models:**
       - `Position` - Grid coordinates with non-negative validation
       - Implements `__eq__` and `__hash__` for use in sets/dicts
       - `GameRoom` - Complete game room state with:
         - `room_id`, `grid_size` (3-10), `grid` (2D array)
-        - `journeyman_position`, `current_turn` (1-365), `current_role`
+        - `adventurer_position`, `current_turn` (1-365), `current_role`
         - `players` dict (tracks filled roles), `game_status`, `winner`
         - `created_at`, `ended_at` timestamps
     - **Validators:**
@@ -598,7 +598,7 @@ Running log of completed tasks and changes to the project.
     - **Client → Server Messages:**
       - `SelectRoleMessage` - Role selection with PlayerRole validation
       - `ConfigureGridMessage` - Grid size configuration (3-10 validated)
-      - `MoveMessage` - Journeyman movement with Position
+      - `MoveMessage` - Adventurer movement with Position
       - `FloodMessage` - Weather flooding with 0-2 positions validator
       - `EndTurnMessage` - Turn completion signal
     - **Server → Client Messages:**
@@ -669,21 +669,21 @@ Running log of completed tasks and changes to the project.
 - **Status**: Completed ✅
 - **Changes**:
   - Created `backend/game/validator.py` with move validation logic:
-    - **Journeyman Movement Validation:**
-      - `validate_journeyman_move(board, current_pos, target_pos)` - validates movement rules
+    - **Adventurer Movement Validation:**
+      - `validate_adventurer_move(board, current_pos, target_pos)` - validates movement rules
       - Checks target is adjacent (8 directions) using board adjacency calculation
       - Validates target is within grid bounds
       - Ensures target field is DRY
       - Returns tuple[bool, str] with validation result and error message
     - **Weather Flooding Validation:**
-      - `validate_weather_flood(board, positions, journeyman_pos)` - validates flood actions
+      - `validate_weather_flood(board, positions, adventurer_pos)` - validates flood actions
       - Enforces 0-2 positions limit
       - Validates each position is within bounds
       - Checks all fields are currently DRY
-      - Prevents flooding journeyman's current position
+      - Prevents flooding adventurer's current position
       - Returns detailed error messages for each violation
     - **Trap Detection:**
-      - `is_journeyman_trapped(board, journeyman_pos)` - detects win condition for weather
+      - `is_adventurer_trapped(board, adventurer_pos)` - detects win condition for weather
       - Gets all adjacent positions (8 directions)
       - Checks if any adjacent field is DRY
       - Returns True if no valid moves available
@@ -719,13 +719,13 @@ Running log of completed tasks and changes to the project.
 - **Status**: Completed ✅
 - **Changes**:
   - Created `backend/game/win_checker.py` with win condition checking logic:
-    - **Journeyman Victory Check:**
-      - `check_journeyman_victory(current_turn)` - checks if 365 turns completed
+    - **Adventurer Victory Check:**
+      - `check_adventurer_victory(current_turn)` - checks if 365 turns completed
       - Simple comparison: current_turn >= 365
       - Returns boolean result
     - **Weather Victory Check:**
-      - `check_weather_victory(board, journeyman_pos)` - checks if journeyman is trapped
-      - Leverages existing `is_journeyman_trapped()` from validator module
+      - `check_weather_victory(board, adventurer_pos)` - checks if adventurer is trapped
+      - Leverages existing `is_adventurer_trapped()` from validator module
       - Returns boolean result
     - **Statistics Calculation:**
       - `calculate_statistics(board, current_turn)` - computes game statistics
@@ -735,18 +735,18 @@ Running log of completed tasks and changes to the project.
       - Calculates total_fields (grid_size * grid_size)
       - Returns comprehensive dictionary
     - **Combined Win Condition Checker:**
-      - `check_win_condition(board, journeyman_pos, current_turn, current_role)` - main checker
+      - `check_win_condition(board, adventurer_pos, current_turn, current_role)` - main checker
       - Checks appropriate win condition based on whose turn just completed
-      - Journeyman victory only checked after journeyman's turn (turn 365+)
+      - Adventurer victory only checked after adventurer's turn (turn 365+)
       - Weather victory only checked after weather's turn (trapped)
       - Returns tuple: (winner or None, statistics dict)
       - Prevents false win detections by role-aware checking
   - Updated `backend/game/__init__.py`:
     - Exported all 4 win checker functions
-    - Added to __all__ list: check_journeyman_victory, check_weather_victory, calculate_statistics, check_win_condition
+    - Added to __all__ list: check_adventurer_victory, check_weather_victory, calculate_statistics, check_win_condition
   - **Testing:**
     - Created comprehensive test suite with 20 test cases
-    - Tested journeyman victory at various turns (1, 364, 365, 366)
+    - Tested adventurer victory at various turns (1, 364, 365, 366)
     - Tested weather victory with trapped scenarios (center, corner positions)
     - Tested statistics calculation accuracy (different board sizes, various flooded states)
     - Tested combined win condition checker (role-aware detection)
@@ -758,8 +758,8 @@ Running log of completed tasks and changes to the project.
     - Clean, well-documented code with docstrings
 - **Notes**: 
   - Win conditions correctly check based on whose turn just completed
-  - Journeyman wins at turn 365 (only checked after journeyman moves)
-  - Weather wins when journeyman trapped (only checked after weather floods)
+  - Adventurer wins at turn 365 (only checked after adventurer moves)
+  - Weather wins when adventurer trapped (only checked after weather floods)
   - Statistics provide comprehensive game state information for end-game display
   - Leverages existing validator functions for consistency
   - Ready for integration into WebSocket game flow handlers
@@ -925,7 +925,7 @@ Running log of completed tasks and changes to the project.
     - Handles role switching (player can change role before game starts)
     - Previous role is freed when player switches
   - **State Transition:**
-    - Checks if both `players["journeyman"]` and `players["weather"]` are True
+    - Checks if both `players["adventurer"]` and `players["weather"]` are True
     - Automatically transitions `game_status` to `CONFIGURING` when both roles filled
     - Status remains `WAITING` when only one role filled
   - **Broadcasting:**
@@ -946,7 +946,7 @@ Running log of completed tasks and changes to the project.
     - Added log statements for role selection and broadcast operations
     - Helps track message flow and identify issues
   - **Comprehensive Test Suite (`test_role_selection.py`):**
-    - Test 1: First player selects journeyman role ✅
+    - Test 1: First player selects adventurer role ✅
     - Test 2: Both players select roles, triggers CONFIGURING transition ✅
     - Test 3: Error returned when role already taken ✅
     - Test 4: Player can switch roles (frees previous role) ✅
@@ -957,10 +957,10 @@ Running log of completed tasks and changes to the project.
 - **Technical Details**:
   - **Message Flow**:
     ```
-    Player 1 → select_role(journeyman)
+    Player 1 → select_role(adventurer)
       → Validate role available
       → Assign to ConnectionManager
-      → Update room.players["journeyman"] = True
+      → Update room.players["adventurer"] = True
       → Save room state
       → Broadcast to all players
       → Status remains "waiting"
@@ -1010,18 +1010,18 @@ Running log of completed tasks and changes to the project.
     - Added imports: `Board`, `validate_grid_size`, `Position`, `ConfigureGridMessage`
     - Implemented validation chain: role check → state check → size validation
     - Initialize Board instance with validated grid size
-    - Place journeyman at (0, 0)
+    - Place adventurer at (0, 0)
     - Transition room from CONFIGURING → ACTIVE
     - Broadcast complete game state to all players
   - **Comprehensive Test Suite** (`backend/test_grid_configuration.py`):
-    - Test 1: Journeyman can configure grid (sizes 3, 5, 7, 10)
+    - Test 1: Adventurer can configure grid (sizes 3, 5, 7, 10)
     - Test 2: Weather player cannot configure (gets error)
     - Test 3: Invalid sizes rejected (2, 11, -1, 0, 100)
     - Test 4: Cannot configure without role
     - Test 5: Cannot configure in WAITING state
     - All 12 test cases passing (4 grid sizes × 1 + 8 other scenarios)
   - **Validation Logic**:
-    - Player role verification (only journeyman can configure)
+    - Player role verification (only adventurer can configure)
     - Room state verification (must be in CONFIGURING)
     - Grid size validation (3-10 inclusive using existing validator)
     - Clear, specific error messages for each failure case
@@ -1032,9 +1032,9 @@ Running log of completed tasks and changes to the project.
   - **State Updates**:
     - `room.grid_size` = validated size
     - `room.grid` = initialized board grid
-    - `room.journeyman_position` = Position(x=0, y=0)
+    - `room.adventurer_position` = Position(x=0, y=0)
     - `room.game_status` = ACTIVE
-    - `room.current_role` = JOURNEYMAN (first turn)
+    - `room.current_role` = ADVENTURER (first turn)
     - `room.current_turn` = 1
   - **Broadcast Verification**:
     - Both players receive identical game state
@@ -1042,7 +1042,7 @@ Running log of completed tasks and changes to the project.
     - Grid, position, status all synchronized
 - **Test Results**: All 12/12 tests passing
   ```
-  ✅ Journeyman configure grid sizes 3, 5, 7, 10
+  ✅ Adventurer configure grid sizes 3, 5, 7, 10
   ✅ Weather player cannot configure
   ✅ Invalid sizes 2, 11, -1, 0, 100 all rejected
   ✅ Cannot configure without role
@@ -1050,9 +1050,9 @@ Running log of completed tasks and changes to the project.
   ```
 - **Message Flow**:
   ```
-  Journeyman → configure_grid(size=5)
+  Adventurer → configure_grid(size=5)
     → Parse ConfigureGridMessage (Pydantic validation)
-    → Check player_role == JOURNEYMAN ✓
+    → Check player_role == ADVENTURER ✓
     → Check room.game_status == CONFIGURING ✓
     → Validate 3 <= size <= 10 ✓
     → Initialize Board(5) with all DRY fields
@@ -1077,13 +1077,13 @@ Running log of completed tasks and changes to the project.
 - **State Machine Verification**:
   - WAITING (roles not filled) → Cannot configure
   - WAITING → Both roles filled → CONFIGURING
-  - CONFIGURING → Journeyman configures → ACTIVE ✓
+  - CONFIGURING → Adventurer configures → ACTIVE ✓
   - ACTIVE → (gameplay in progress) → Future task
 - **Verification**:
   - No linter errors
   - All 12 tests passing
   - Grid initialization working correctly
-  - Journeyman placement at (0,0) verified
+  - Adventurer placement at (0,0) verified
   - State transition CONFIGURING → ACTIVE working
   - Broadcast synchronization confirmed
   - Server auto-reload working after cache clear
@@ -1106,7 +1106,7 @@ Running log of completed tasks and changes to the project.
   - Board initialization and state management working perfectly
   - Error handling comprehensive with clear user feedback
   - All acceptance criteria met and verified
-  - Ready for journeyman move and weather flood handlers
+  - Ready for adventurer move and weather flood handlers
   - Next task: Task 3.4 - Message Handlers (Gameplay: move and flood)
 
 ---
@@ -1118,19 +1118,19 @@ Running log of completed tasks and changes to the project.
 - **Changes**:
   - **Imports Added** (`backend/routers/websocket.py`):
     - `MoveMessage`, `FloodMessage`, `GameOverMessage` from models.messages
-    - `validate_journeyman_move`, `validate_weather_flood` from game.validator
+    - `validate_adventurer_move`, `validate_weather_flood` from game.validator
     - `check_win_condition` from game.win_checker
     - `FieldState` from models.game
   - **Move Handler Implementation** (lines 496-640):
     - Parse and validate `MoveMessage` with Pydantic
-    - Role validation (must be JOURNEYMAN)
+    - Role validation (must be ADVENTURER)
     - Game state validation (must be ACTIVE)
-    - Turn validation (must be journeyman's turn)
-    - Position validation via `validate_journeyman_move()`
-    - Update journeyman position
+    - Turn validation (must be adventurer's turn)
+    - Position validation via `validate_adventurer_move()`
+    - Update adventurer position
     - Dry adjacent fields in 4 directions (N, E, S, W)
     - Switch turn to weather
-    - Check win condition (365 turns = journeyman victory)
+    - Check win condition (365 turns = adventurer victory)
     - Broadcast `RoomStateMessage` or `GameOverMessage`
     - Comprehensive error handling
   - **Flood Handler Implementation** (lines 642-780):
@@ -1141,8 +1141,8 @@ Running log of completed tasks and changes to the project.
     - Position validation via `validate_weather_flood()`
     - Flood 0-2 specified positions
     - Increment turn counter
-    - Switch turn to journeyman
-    - Check win condition (journeyman trapped = weather victory)
+    - Switch turn to adventurer
+    - Check win condition (adventurer trapped = weather victory)
     - Broadcast `RoomStateMessage` or `GameOverMessage`
     - Comprehensive error handling
   - **Test Suite Created**:
@@ -1150,14 +1150,14 @@ Running log of completed tasks and changes to the project.
     - `test_final_gameplay.py`: Comprehensive test suite (6 tests, all passing)
 - **Test Results**:
   - ✅ Basic move/flood cycle
-  - ✅ Wrong role validation (weather can't move, journeyman can't flood)
+  - ✅ Wrong role validation (weather can't move, adventurer can't flood)
   - ✅ Turn management (out-of-turn actions blocked)
   - ✅ Flood zero fields allowed
-  - ✅ Cannot flood journeyman position
+  - ✅ Cannot flood adventurer position
   - ✅ Cannot re-flood already flooded field
   - ✅ All 6 comprehensive tests passed
 - **Game Logic Verified**:
-  - **Journeyman Move**:
+  - **Adventurer Move**:
     - Validates adjacency (8 directions for movement)
     - Validates target field is dry
     - Updates position
@@ -1166,17 +1166,17 @@ Running log of completed tasks and changes to the project.
   - **Weather Flood**:
     - Validates 0-2 positions
     - Validates positions are dry
-    - Validates positions are not journeyman's location
+    - Validates positions are not adventurer's location
     - Floods specified positions
     - Increments turn counter
-    - Switches role to journeyman
+    - Switches role to adventurer
   - **Turn Management**:
-    - Turn 1: Journeyman moves → Weather floods → Turn 2
+    - Turn 1: Adventurer moves → Weather floods → Turn 2
     - Turn counter only increments on weather's action
     - Represents one complete "day" cycle
   - **Win Conditions**:
-    - Journeyman wins after 365 turns
-    - Weather wins if journeyman is trapped (no adjacent dry fields)
+    - Adventurer wins after 365 turns
+    - Weather wins if adventurer is trapped (no adjacent dry fields)
     - Game transitions to ENDED status
     - Broadcasts `GameOverMessage` with winner and statistics
 - **Validation Layers**:
@@ -1191,7 +1191,7 @@ Running log of completed tasks and changes to the project.
   - ✅ Game not active
   - ✅ Out of turn
   - ✅ Invalid positions (out of bounds, flooded, non-adjacent)
-  - ✅ Flooding journeyman's position
+  - ✅ Flooding adventurer's position
   - ✅ Flooding already flooded field
   - ✅ Too many flood positions (>2)
   - ✅ Malformed messages (Pydantic validation)
@@ -1204,8 +1204,8 @@ Running log of completed tasks and changes to the project.
 - **Integration Points**:
   - Board class: `Board.get_adjacent_positions(pos, include_diagonals)`
   - Board class: `Board.set_field_state(pos, state)`
-  - Validator: `validate_journeyman_move(board, current, target)`
-  - Validator: `validate_weather_flood(board, positions, journeyman_pos)`
+  - Validator: `validate_adventurer_move(board, current, target)`
+  - Validator: `validate_weather_flood(board, positions, adventurer_pos)`
   - Win checker: `check_win_condition(board, pos, turn, role)`
   - Connection manager: `get_player_role()`, `broadcast()`
   - Room manager: `get_room()`, `update_room()`
@@ -1214,7 +1214,7 @@ Running log of completed tasks and changes to the project.
   - All 6 comprehensive tests passing
   - Simple gameplay test passing
   - Move validation working (adjacency, dry fields)
-  - Flood validation working (count, dry fields, not journeyman)
+  - Flood validation working (count, dry fields, not adventurer)
   - Drying logic working (4 directions)
   - Turn management working (switching, incrementing)
   - Broadcasting synchronized
@@ -1234,7 +1234,7 @@ Running log of completed tasks and changes to the project.
   - ✅ Moving to non-adjacent field
   - ✅ Moving out of bounds
   - ✅ Flooding too many positions
-  - ✅ Flooding journeyman's position
+  - ✅ Flooding adventurer's position
   - ✅ Flooding already flooded field
   - ✅ Flooding out of bounds
   - ✅ Empty flood (0 positions) - allowed
@@ -1299,7 +1299,7 @@ Running log of completed tasks and changes to the project.
 - **Changes**:
   - Created `frontend/src/types/game.ts` with core game type definitions
     - `FieldState` enum: DRY, FLOODED
-    - `PlayerRole` enum: JOURNEYMAN, WEATHER
+    - `PlayerRole` enum: ADVENTURER, WEATHER
     - `GameStatus` enum: WAITING, CONFIGURING, ACTIVE, ENDED
     - `Position` interface: x, y coordinates
     - `GameState` interface: complete room state with all game data
@@ -1393,8 +1393,8 @@ Running log of completed tasks and changes to the project.
   - Computed convenience values (memoized):
     - isMyTurn: Check if current player's turn
     - canSelectRole: Permission to select role (waiting phase)
-    - canConfigureGrid: Permission to configure (journeyman, configuring phase)
-    - canMove: Permission to move (journeyman's turn)
+    - canConfigureGrid: Permission to configure (adventurer, configuring phase)
+    - canMove: Permission to move (adventurer's turn)
     - canFlood: Permission to flood (weather's turn)
     - availableRoles: List of roles not yet taken
   - Action methods:
@@ -1409,7 +1409,7 @@ Running log of completed tasks and changes to the project.
   - Flood selection features:
     - Maximum 2 positions enforced
     - Duplicate position detection and prevention
-    - Auto-clear on turn switch to journeyman
+    - Auto-clear on turn switch to adventurer
     - Auto-clear after submitting flood action
     - Complete CRUD API for selection management
   - Error handling (dual approach):
@@ -1458,7 +1458,7 @@ Running log of completed tasks and changes to the project.
     - RoleSelection component integration for WAITING status
     - Placeholder screens for CONFIGURING, ACTIVE, and ENDED statuses
   - Component features:
-    - Two role cards (Journeyman and Weather) displayed side-by-side
+    - Two role cards (Adventurer and Weather) displayed side-by-side
     - Role descriptions with icon, goal, and actions
     - Three state indicators: Available, Taken, Selected
     - Dynamic button states and styling
@@ -1468,7 +1468,7 @@ Running log of completed tasks and changes to the project.
   - Styling implementation:
     - Indigo gradient background (`from-indigo-900 via-indigo-700 to-indigo-500`)
     - Semi-transparent cards with backdrop blur
-    - Role-specific accent colors (yellow for Journeyman, blue for Weather)
+    - Role-specific accent colors (yellow for Adventurer, blue for Weather)
     - Responsive grid layout (1 column mobile, 2 columns desktop)
     - Smooth transitions and hover effects (300ms duration)
     - Scale animations on hover and selection
@@ -1569,7 +1569,7 @@ Running log of completed tasks and changes to the project.
 - **Fix**: Updated `serialize_room_state()` function in `backend/routers/websocket.py` to use camelCase keys:
   - `room_id` → `roomId`
   - `grid_size` → `gridSize`
-  - `journeyman_position` → `journeymanPosition`
+  - `adventurer_position` → `adventurerPosition`
   - `current_turn` → `currentTurn`
   - `current_role` → `currentRole`
   - `game_status` → `gameStatus`
@@ -1592,7 +1592,7 @@ Running log of completed tasks and changes to the project.
     - Custom number input with validation (3-10 range)
     - Default grid size: 10×10
     - Dynamic square sizing based on grid dimensions (24-40px)
-    - Journeyman: Active controls with "Start Game" button
+    - Adventurer: Active controls with "Start Game" button
     - Weather: Read-only view with waiting animation
   - **Modified** `frontend/src/App.tsx`:
     - Imported GameConfiguration component
@@ -1628,10 +1628,10 @@ Running log of completed tasks and changes to the project.
   - ✅ Implemented N×N grid rendering with CSS Grid layout
   - ✅ Added responsive cell sizing (60px/50px/40px based on grid size)
   - ✅ Implemented field state colors (DRY=yellow, FLOODED=blue)
-  - ✅ Added journeyman position indicator with wizard emoji (🧙‍♂️)
+  - ✅ Added adventurer position indicator with wizard emoji (🧙‍♂️)
   - ✅ Created header with game information (day counter, current turn, player role)
   - ✅ Added turn indicator with animation (pulse effect when active)
-  - ✅ Implemented legend for field states and journeyman icon
+  - ✅ Implemented legend for field states and adventurer icon
   - ✅ Modified `frontend/src/App.tsx` to import and integrate GameBoard
   - ✅ Replaced ACTIVE status placeholder with GameBoard component
   - ✅ All linter checks passed (no TypeScript or ESLint errors)
@@ -1639,7 +1639,7 @@ Running log of completed tasks and changes to the project.
   - Dynamic grid rendering based on gameState.gridSize
   - Responsive cell sizing: 3-5 grid → 60px, 6-7 grid → 50px, 8-10 grid → 40px
   - Field state visualization: DRY (yellow) and FLOODED (blue)
-  - Journeyman indicator: 🧙‍♂️ emoji scaled to cell size
+  - Adventurer indicator: 🧙‍♂️ emoji scaled to cell size
   - Game info display: Day X/365, Current Turn, Your Role
   - Turn awareness: Highlights player's role when it's their turn
   - Visual legend: Explains all field states and icons
@@ -1663,7 +1663,7 @@ Running log of completed tasks and changes to the project.
     - Props interface: position, state, interaction flags, event handlers
     - Visual states: base colors, selectable, selected, hovered, non-selectable
     - Dynamic styling based on field state and interaction mode
-    - Journeyman emoji indicator scaled to cell size
+    - Adventurer emoji indicator scaled to cell size
     - Accessibility features: role="button", tabIndex, aria-label
     - Smooth CSS transitions (200ms) for all state changes
   - ✅ **Modified** `frontend/src/components/GameBoard.tsx`:
@@ -1671,8 +1671,8 @@ Running log of completed tasks and changes to the project.
     - Updated props: move, addFloodPosition, removeFloodPosition, selectedFloodPositions, canMove, canFlood
     - Added hover tracking state: hoveredCell
     - Implemented `isFieldSelectable(row, col)` helper:
-      - Journeyman: Adjacent (8 directions) + dry + not current position
-      - Weather: Dry + not journeyman position + under 2 selections
+      - Adventurer: Adjacent (8 directions) + dry + not current position
+      - Weather: Dry + not adventurer position + under 2 selections
     - Implemented `isFieldSelected(row, col)` helper for Weather selections
     - Added event handlers: handleFieldClick, handleMouseEnter, handleMouseLeave
     - Replaced inline field divs with Field component (lines 195-222)
@@ -1680,7 +1680,7 @@ Running log of completed tasks and changes to the project.
     - Extracted additional functions from useGameState
     - Passed new props to GameBoard component
 - **Key Features**:
-  - **Journeyman Movement**: Select adjacent dry fields, immediate move on click
+  - **Adventurer Movement**: Select adjacent dry fields, immediate move on click
   - **Weather Flooding**: Multi-select up to 2 dry fields, toggle on click
   - **Visual Feedback**: 
     - Selectable fields: Cursor pointer, brightness increase, scale on hover
@@ -1691,9 +1691,9 @@ Running log of completed tasks and changes to the project.
   - **Accessibility**: Full keyboard support and ARIA labels
 - **Testing**:
   - ✅ Field renders correctly for dry/flooded states
-  - ✅ Journeyman emoji displays and scales properly
-  - ✅ Journeyman can only select adjacent dry fields
-  - ✅ Weather can select any dry field except journeyman's position
+  - ✅ Adventurer emoji displays and scales properly
+  - ✅ Adventurer can only select adjacent dry fields
+  - ✅ Weather can select any dry field except adventurer's position
   - ✅ Weather selection toggles correctly (max 2 enforced)
   - ✅ Hover states provide clear visual feedback
   - ✅ No TypeScript or linter errors
@@ -1737,7 +1737,7 @@ Running log of completed tasks and changes to the project.
   - ✅ Display current day counter (Day X/365) and turn indicator
   - ✅ Show player's role with yellow highlight when it's their turn
   - ✅ Weather controls: selection counter (X/2 fields), "End Turn", and "Clear Selection" buttons
-  - ✅ Journeyman controls: helpful instruction text
+  - ✅ Adventurer controls: helpful instruction text
   - ✅ Waiting state: clear message when not player's turn
   - ✅ Updated `App.tsx` to pass `isMyTurn`, `submitFlood`, and `clearFloodSelection` props
   - ✅ Updated `GameBoard.tsx` to import and render TurnControls component
@@ -1761,7 +1761,7 @@ Running log of completed tasks and changes to the project.
 - **Date**: 2025-10-17
 - **Status**: Completed
 - **Changes**:
-  - ✅ Added visual preview showing which 4 cardinal fields (N/S/E/W) will be dried on journeyman movement hover
+  - ✅ Added visual preview showing which 4 cardinal fields (N/S/E/W) will be dried on adventurer movement hover
   - ✅ Updated `GameBoard.tsx`:
     - Added `dryingPreviewPositions` state to track fields to highlight
     - Created `getCardinalAdjacent()` helper function to calculate N/S/E/W positions
@@ -1773,7 +1773,7 @@ Running log of completed tasks and changes to the project.
     - Added `isDryingPreview: boolean` to FieldProps interface
     - Updated `getSelectionClasses()` to handle drying preview with highest priority
     - Applied lime ring (`ring-4 ring-lime-400`) and brightness effect (`brightness-110`)
-  - ✅ Preview only appears for journeyman on their turn when hovering over valid destinations
+  - ✅ Preview only appears for adventurer on their turn when hovering over valid destinations
   - ✅ Preview only highlights flooded fields (dry fields don't need preview)
   - ✅ Preview clears immediately when mouse leaves destination field
   - ✅ Works correctly at board edges (shows 2-3 positions at edges/corners)
@@ -1804,8 +1804,8 @@ Running log of completed tasks and changes to the project.
     - Exposed gameStats in return statement for consumption by components
   - ✅ Created `GameOver.tsx` component:
     - Accepts props: winner (PlayerRole), stats (statistics object), onPlayAgain (callback)
-    - Winner-specific styling: gold/yellow for Journeyman, blue for Weather
-    - Role-specific emojis: 🎉 for Journeyman win, 🌧️ for Weather win
+    - Winner-specific styling: gold/yellow for Adventurer, blue for Weather
+    - Role-specific emojis: 🎉 for Adventurer win, 🌧️ for Weather win
     - Descriptive win condition messages
     - Statistics grid with 4 StatCard components displaying:
       - Days Survived 📅

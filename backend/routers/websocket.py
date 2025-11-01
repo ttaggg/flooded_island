@@ -17,8 +17,8 @@ from pydantic import ValidationError
 from game.board import Board
 from game.room_manager import room_manager
 from game.validator import (
+    validate_adventurer_move,
     validate_grid_dimensions,
-    validate_journeyman_move,
     validate_weather_flood,
 )
 from game.win_checker import check_win_condition
@@ -362,12 +362,12 @@ def serialize_room_state(room: GameRoom) -> dict:
             if room.grid
             else None
         ),
-        "journeymanPosition": (
+        "adventurerPosition": (
             {
-                "x": room.journeyman_position.x,
-                "y": room.journeyman_position.y,
+                "x": room.adventurer_position.x,
+                "y": room.adventurer_position.y,
             }
-            if room.journeyman_position
+            if room.adventurer_position
             else None
         ),
         "currentTurn": room.current_turn,
@@ -439,7 +439,7 @@ async def handle_select_role(message: dict, ctx: MessageContext) -> None:
 
     # Check if both roles are filled
     if (
-        room.players["journeyman"]
+        room.players["adventurer"]
         and room.players["weather"]
         and room.game_status == GameStatus.WAITING
     ):
@@ -496,8 +496,8 @@ async def handle_configure_grid(message: dict, ctx: MessageContext) -> None:
         await ctx.send_error("Room not found")
         return
 
-    # Validate player has journeyman role
-    is_valid, error_msg = await validate_player_has_role(ctx, PlayerRole.JOURNEYMAN)
+    # Validate player has adventurer role
+    is_valid, error_msg = await validate_player_has_role(ctx, PlayerRole.ADVENTURER)
     if not is_valid:
         await ctx.send_error(error_msg)
         return
@@ -523,12 +523,12 @@ async def handle_configure_grid(message: dict, ctx: MessageContext) -> None:
     room.grid_height = grid_height
     room.max_flood_count = max_flood_count
     room.grid = board.grid
-    room.journeyman_position = Position(x=0, y=0)
+    room.adventurer_position = Position(x=0, y=0)
     room.game_status = GameStatus.ACTIVE
-    room.current_role = PlayerRole.JOURNEYMAN
+    room.current_role = PlayerRole.ADVENTURER
     room.current_turn = 1
 
-    print("  → Journeyman placed at (0, 0), game status: ACTIVE, turn: 1")
+    print("  → Adventurer placed at (0, 0), game status: ACTIVE, turn: 1")
 
     # Save updated room state
     await ctx.update_room(room)
@@ -545,7 +545,7 @@ async def handle_configure_grid(message: dict, ctx: MessageContext) -> None:
 
 async def handle_move(message: dict, ctx: MessageContext) -> None:
     """
-    Handle journeyman move message.
+    Handle adventurer move message.
 
     Args:
         message: The move message
@@ -556,7 +556,7 @@ async def handle_move(message: dict, ctx: MessageContext) -> None:
     # Parse and validate message
     move_msg = MoveMessage(**message)
     target_pos = move_msg.position
-    print(f"  → Journeyman move to: ({target_pos.x}, {target_pos.y})")
+    print(f"  → Adventurer move to: ({target_pos.x}, {target_pos.y})")
 
     # Get current room state
     room = await ctx.get_room()
@@ -564,8 +564,8 @@ async def handle_move(message: dict, ctx: MessageContext) -> None:
         await ctx.send_error("Room not found")
         return
 
-    # Validate player has journeyman role
-    is_valid, error_msg = await validate_player_has_role(ctx, PlayerRole.JOURNEYMAN)
+    # Validate player has adventurer role
+    is_valid, error_msg = await validate_player_has_role(ctx, PlayerRole.ADVENTURER)
     if not is_valid:
         await ctx.send_error(error_msg)
         return
@@ -576,8 +576,8 @@ async def handle_move(message: dict, ctx: MessageContext) -> None:
         await ctx.send_error(error_msg)
         return
 
-    # Check if it's journeyman's turn
-    is_valid, error_msg = await validate_current_turn(ctx, PlayerRole.JOURNEYMAN)
+    # Check if it's adventurer's turn
+    is_valid, error_msg = await validate_current_turn(ctx, PlayerRole.ADVENTURER)
     if not is_valid:
         await ctx.send_error(error_msg)
         return
@@ -587,16 +587,16 @@ async def handle_move(message: dict, ctx: MessageContext) -> None:
     board.grid = room.grid
 
     # Validate move
-    is_valid, error_msg = validate_journeyman_move(
-        board, room.journeyman_position, target_pos
+    is_valid, error_msg = validate_adventurer_move(
+        board, room.adventurer_position, target_pos
     )
     if not is_valid:
         await ctx.send_error(error_msg)
         return
 
-    # Execute move: Update journeyman position
-    room.journeyman_position = target_pos
-    print(f"  → Journeyman moved to ({target_pos.x}, {target_pos.y})")
+    # Execute move: Update adventurer position
+    room.adventurer_position = target_pos
+    print(f"  → Adventurer moved to ({target_pos.x}, {target_pos.y})")
 
     # Dry adjacent fields (4 directions: N, E, S, W)
     adjacent_positions = board.get_adjacent_positions(
@@ -617,11 +617,11 @@ async def handle_move(message: dict, ctx: MessageContext) -> None:
 
     # Check win condition
     winner, statistics = check_win_condition(
-        board, room.journeyman_position, room.current_turn, PlayerRole.JOURNEYMAN
+        board, room.adventurer_position, room.current_turn, PlayerRole.ADVENTURER
     )
 
     if winner:
-        # Game over - journeyman won
+        # Game over - adventurer won
         room.game_status = GameStatus.ENDED
         room.winner = winner
         room.ended_at = datetime.now()
@@ -700,7 +700,7 @@ async def handle_flood(message: dict, ctx: MessageContext) -> None:
 
     # Validate flood
     is_valid, error_msg = validate_weather_flood(
-        board, flood_positions, room.journeyman_position, room.max_flood_count
+        board, flood_positions, room.adventurer_position, room.max_flood_count
     )
     if not is_valid:
         await ctx.send_error(error_msg)
@@ -718,16 +718,16 @@ async def handle_flood(message: dict, ctx: MessageContext) -> None:
     room.current_turn += 1
     print(f"  → Turn incremented to {room.current_turn}")
 
-    # Switch turn to journeyman
-    room.current_role = PlayerRole.JOURNEYMAN
+    # Switch turn to adventurer
+    room.current_role = PlayerRole.ADVENTURER
 
     # Check win condition
     winner, statistics = check_win_condition(
-        board, room.journeyman_position, room.current_turn, PlayerRole.WEATHER
+        board, room.adventurer_position, room.current_turn, PlayerRole.WEATHER
     )
 
     if winner:
-        # Game over - weather won (journeyman trapped)
+        # Game over - weather won (adventurer trapped)
         room.game_status = GameStatus.ENDED
         room.winner = winner
         room.ended_at = datetime.now()
@@ -757,7 +757,7 @@ async def handle_flood(message: dict, ctx: MessageContext) -> None:
         broadcast_count = await ctx.broadcast(room_state_msg.model_dump())
         logger.info(f"Flood broadcast sent to {broadcast_count} player(s)")
         print(
-            f"  → Flood complete! Turn {room.current_turn} switched to journeyman. Broadcast to {broadcast_count} player(s)"
+            f"  → Flood complete! Turn {room.current_turn} switched to adventurer. Broadcast to {broadcast_count} player(s)"
         )
 
 
@@ -818,10 +818,10 @@ async def get_or_create_room(room_id: str) -> GameRoom:
             grid_width=None,
             grid_height=None,
             grid=None,
-            journeyman_position=None,
+            adventurer_position=None,
             current_turn=1,
-            current_role=PlayerRole.JOURNEYMAN,
-            players={"journeyman": False, "weather": False},
+            current_role=PlayerRole.ADVENTURER,
+            players={"adventurer": False, "weather": False},
             game_status=GameStatus.WAITING,
             winner=None,
             created_at=datetime.now(),

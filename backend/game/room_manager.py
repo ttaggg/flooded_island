@@ -61,7 +61,7 @@ class RoomManager:
         Create a new game room with a unique ID.
 
         Initializes a new GameRoom with default values (waiting status,
-        no players assigned, turn 1, journeyman's turn).
+        no players assigned, turn 1, adventurer's turn).
 
         Returns:
             The newly created GameRoom instance
@@ -72,10 +72,10 @@ class RoomManager:
                 room_id=room_id,
                 grid_size=None,
                 grid=None,
-                journeyman_position=None,
+                adventurer_position=None,
                 current_turn=1,
-                current_role=PlayerRole.JOURNEYMAN,
-                players={"journeyman": False, "weather": False},
+                current_role=PlayerRole.ADVENTURER,
+                players={"adventurer": False, "weather": False},
                 game_status=GameStatus.WAITING,
                 winner=None,
                 created_at=datetime.now(),

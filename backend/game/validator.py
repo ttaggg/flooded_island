@@ -1,7 +1,7 @@
 """
 Move validation logic for Flooded Island game.
 
-Provides validation functions for journeyman movement, weather flooding,
+Provides validation functions for adventurer movement, weather flooding,
 trap detection, and grid configuration.
 """
 
@@ -9,15 +9,15 @@ from game.board import Board
 from models.game import FieldState, Position
 
 
-def validate_journeyman_move(
+def validate_adventurer_move(
     board: Board, current_pos: Position, target_pos: Position
 ) -> tuple[bool, str]:
     """
-    Validate if journeyman can move from current position to target position.
+    Validate if adventurer can move from current position to target position.
 
     Args:
         board: The game board
-        current_pos: Current position of the journeyman
+        current_pos: Current position of the adventurer
         target_pos: Target position to move to
 
     Returns:
@@ -45,7 +45,7 @@ def validate_journeyman_move(
     if target_state != FieldState.DRY:
         return (
             False,
-            f"Target position ({target_pos.x}, {target_pos.y}) is flooded - journeyman can only move to dry fields",
+            f"Target position ({target_pos.x}, {target_pos.y}) is flooded - adventurer can only move to dry fields",
         )
 
     return (True, "")
@@ -54,7 +54,7 @@ def validate_journeyman_move(
 def validate_weather_flood(
     board: Board,
     positions: list[Position],
-    journeyman_pos: Position,
+    adventurer_pos: Position,
     max_flood_count: int,
 ) -> tuple[bool, str]:
     """
@@ -63,7 +63,7 @@ def validate_weather_flood(
     Args:
         board: The game board
         positions: List of positions to flood (0 to max_flood_count positions)
-        journeyman_pos: Current position of the journeyman
+        adventurer_pos: Current position of the adventurer
         max_flood_count: Maximum number of fields weather can flood per turn
 
     Returns:
@@ -93,30 +93,30 @@ def validate_weather_flood(
                 f"Position ({pos.x}, {pos.y}) is already flooded - can only flood dry fields",
             )
 
-        # Check if position is NOT the journeyman's current position
-        if pos == journeyman_pos:
+        # Check if position is NOT the adventurer's current position
+        if pos == adventurer_pos:
             return (
                 False,
-                f"Cannot flood position ({pos.x}, {pos.y}) - journeyman is currently there",
+                f"Cannot flood position ({pos.x}, {pos.y}) - adventurer is currently there",
             )
 
     return (True, "")
 
 
-def is_journeyman_trapped(board: Board, journeyman_pos: Position) -> bool:
+def is_adventurer_trapped(board: Board, adventurer_pos: Position) -> bool:
     """
-    Check if the journeyman is trapped (no valid moves available).
+    Check if the adventurer is trapped (no valid moves available).
 
     Args:
         board: The game board
-        journeyman_pos: Current position of the journeyman
+        adventurer_pos: Current position of the adventurer
 
     Returns:
-        True if journeyman is trapped (no dry adjacent fields), False otherwise
+        True if adventurer is trapped (no dry adjacent fields), False otherwise
     """
     # Get all adjacent positions (8 directions)
     adjacent_positions = board.get_adjacent_positions(
-        journeyman_pos, include_diagonals=True
+        adventurer_pos, include_diagonals=True
     )
 
     # Check if any adjacent field is DRY
@@ -124,7 +124,7 @@ def is_journeyman_trapped(board: Board, journeyman_pos: Position) -> bool:
         if board.get_field_state(pos) == FieldState.DRY:
             return False  # Found at least one dry field, not trapped
 
-    # No dry fields available - journeyman is trapped
+    # No dry fields available - adventurer is trapped
     return True
 
 

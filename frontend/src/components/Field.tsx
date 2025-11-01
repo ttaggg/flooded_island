@@ -10,9 +10,9 @@
  * - Interactive selection highlighting for weather player
  * - Hover effects and cursor changes
  * - 3D flip animation on state changes
- * - Drying preview highlighting for journeyman movement
+ * - Drying preview highlighting for adventurer movement
  * - Accessibility support with ARIA labels
- * - Journeyman position indicator with emoji
+ * - Adventurer position indicator with emoji
  */
 
 import { useState, useEffect, useRef, memo } from 'react';
@@ -28,8 +28,8 @@ interface FieldProps {
   col: number;
   /** Current state of the field (DRY or FLOODED) */
   fieldState: FieldState;
-  /** Whether the journeyman is positioned on this field */
-  hasJourneyman: boolean;
+  /** Whether the adventurer is positioned on this field */
+  hasAdventurer: boolean;
   /** Size of the field in pixels */
   cellSize: number;
 
@@ -65,7 +65,7 @@ function FieldComponent({
   row,
   col,
   fieldState,
-  hasJourneyman,
+  hasAdventurer,
   cellSize,
   isSelectable,
   isSelected,
@@ -213,9 +213,9 @@ function FieldComponent({
       onMouseLeave={onMouseLeave}
       role="button"
       tabIndex={isSelectable ? 0 : -1}
-      aria-label={`Field at row ${row + 1}, column ${col + 1}, ${fieldState}${hasJourneyman ? ', journeyman here' : ''}${isSelectable ? ', selectable' : ''}`}
+      aria-label={`Field at row ${row + 1}, column ${col + 1}, ${fieldState}${hasAdventurer ? ', adventurer here' : ''}${isSelectable ? ', selectable' : ''}`}
     >
-      {hasJourneyman && (
+      {hasAdventurer && (
         <div className="absolute inset-0 flex items-center justify-center">
           <span
             className="text-2xl drop-shadow-lg"

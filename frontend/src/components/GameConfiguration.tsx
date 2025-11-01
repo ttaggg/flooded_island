@@ -1,9 +1,9 @@
 /**
  * Game Configuration Screen Component for Flooded Island
  *
- * Allows the Journeyman player to configure grid dimensions with a visual
+ * Allows the Adventurer player to configure grid dimensions with a visual
  * preview before starting the game. Weather player sees a read-only waiting
- * view while the Journeyman configures the grid.
+ * view while the Adventurer configures the grid.
  *
  * Features:
  * - Interactive grid size configuration (3-10 range)
@@ -22,9 +22,9 @@ import { ConnectionStatus } from './ConnectionStatus';
  * Props for the GameConfiguration component
  */
 interface GameConfigurationProps {
-  /** Player's assigned role (JOURNEYMAN, WEATHER, or null) */
+  /** Player's assigned role (ADVENTURER, WEATHER, or null) */
   myRole: PlayerRole | null;
-  /** Whether the player can configure the grid (journeyman only) */
+  /** Whether the player can configure the grid (adventurer only) */
   canConfigureGrid: boolean;
   /** Function to configure grid with specified dimensions */
   onConfigureGrid: (width: number, height: number, maxFloodCount: number) => void;
@@ -128,8 +128,8 @@ export function GameConfiguration({
   const [selectedHeight, setSelectedHeight] = useState<number>(10);
   const [selectedMaxFlood, setSelectedMaxFlood] = useState<number>(2);
 
-  // Determine if current player is Journeyman
-  const isJourneyman = myRole === PlayerRole.JOURNEYMAN;
+  // Determine if current player is Adventurer
+  const isAdventurer = myRole === PlayerRole.ADVENTURER;
 
   // Quick selection sizes (square grids)
   const quickSizes = [5, 7, 10];
@@ -194,9 +194,9 @@ export function GameConfiguration({
           <h1 className="text-6xl font-bold text-white mb-4 drop-shadow-lg">Flooded Island</h1>
           <h2 className="text-3xl font-semibold text-white/90 mb-3">Game Configuration</h2>
           <p className="text-white/70 text-lg max-w-2xl mx-auto">
-            {isJourneyman
+            {isAdventurer
               ? 'Configure the game board size and start the game.'
-              : 'The Journeyman is configuring the game board.'}
+              : 'The Adventurer is configuring the game board.'}
           </p>
         </div>
 
@@ -342,15 +342,15 @@ export function GameConfiguration({
             <h3 className="text-xl font-bold text-white mb-4 text-center">Preview</h3>
             <GridPreview width={selectedWidth} height={selectedHeight} />
             <p className="text-white/60 text-sm text-center mt-4">
-              All fields start as dry. Journeyman starts at the top-left corner. Weather can flood
+              All fields start as dry. Adventurer starts at the top-left corner. Weather can flood
               up to {selectedMaxFlood} field{selectedMaxFlood !== 1 ? 's' : ''} per turn.
             </p>
           </div>
 
           {/* Action Section */}
           <div className="border-t border-white/20 pt-6">
-            {isJourneyman ? (
-              // Journeyman: Start Game Button
+            {isAdventurer ? (
+              // Adventurer: Start Game Button
               <div className="text-center">
                 <button
                   onClick={handleStartGame}
@@ -373,7 +373,7 @@ export function GameConfiguration({
               <div className="text-center">
                 <div className="animate-pulse">
                   <p className="text-white text-xl mb-3">
-                    Waiting for Journeyman to configure game...
+                    Waiting for Adventurer to configure game...
                   </p>
                   <div className="flex justify-center gap-2">
                     <div

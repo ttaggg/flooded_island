@@ -21,7 +21,7 @@ class FieldState(str, Enum):
 class PlayerRole(str, Enum):
     """Player role in the game."""
 
-    JOURNEYMAN = "journeyman"
+    ADVENTURER = "adventurer"
     WEATHER = "weather"
 
 
@@ -64,17 +64,17 @@ class GameRoom(BaseModel):
     grid: list[list[FieldState]] | None = Field(
         None, description="2D grid of field states, None until game starts"
     )
-    journeyman_position: Position | None = Field(
-        None, description="Current position of journeyman, None until game starts"
+    adventurer_position: Position | None = Field(
+        None, description="Current position of adventurer, None until game starts"
     )
     current_turn: int = Field(
         1, ge=1, le=365, description="Current turn number (1-365)"
     )
     current_role: PlayerRole = Field(
-        PlayerRole.JOURNEYMAN, description="Which player's turn it is"
+        PlayerRole.ADVENTURER, description="Which player's turn it is"
     )
     players: dict[str, bool] = Field(
-        default_factory=lambda: {"journeyman": False, "weather": False},
+        default_factory=lambda: {"adventurer": False, "weather": False},
         description="Which roles are filled",
     )
     game_status: GameStatus = Field(

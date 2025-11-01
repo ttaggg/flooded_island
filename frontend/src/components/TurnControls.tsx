@@ -21,7 +21,7 @@ import { GameState, PlayerRole, Position } from '../types';
 interface TurnControlsProps {
   /** Current game state including turn and role information */
   gameState: GameState;
-  /** Player's assigned role (JOURNEYMAN, WEATHER, or null) */
+  /** Player's assigned role (ADVENTURER, WEATHER, or null) */
   myRole: PlayerRole | null;
   /** Whether it's currently the player's turn */
   isMyTurn: boolean;
@@ -39,7 +39,7 @@ interface TurnControlsProps {
  * TurnControls component - provides turn information and action buttons
  *
  * Renders turn status information and role-specific controls for player actions.
- * Weather players see flood selection controls, while journeyman players see
+ * Weather players see flood selection controls, while adventurer players see
  * movement instructions.
  *
  * @param props - Component props
@@ -159,8 +159,8 @@ export function TurnControls({
             </div>
           )}
 
-          {/* Journeyman Player Controls */}
-          {isMyTurn && myRole === PlayerRole.JOURNEYMAN && (
+          {/* Adventurer Player Controls */}
+          {isMyTurn && myRole === PlayerRole.ADVENTURER && (
             <div className="w-full">
               <div className="text-yellow-400 font-medium text-lg">
                 🎯 Your Turn - Click an adjacent field to move
@@ -179,8 +179,8 @@ export function TurnControls({
                 to play...
               </div>
               <p className="text-white/50 text-sm mt-1">
-                {currentRole === PlayerRole.JOURNEYMAN
-                  ? 'Journeyman is choosing where to move'
+                {currentRole === PlayerRole.ADVENTURER
+                  ? 'Adventurer is choosing where to move'
                   : 'Weather is selecting fields to flood'}
               </p>
             </div>

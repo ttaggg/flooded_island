@@ -105,8 +105,8 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
         console.log('🔄 Game state updated');
         setGameState(message.state);
 
-        // Clear flood selection when turn changes to journeyman
-        if (message.state.currentRole === PlayerRole.JOURNEYMAN) {
+        // Clear flood selection when turn changes to adventurer
+        if (message.state.currentRole === PlayerRole.ADVENTURER) {
           setSelectedFloodPositions([]);
         }
         break;
@@ -183,18 +183,18 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
 
   /**
    * Check if player can configure grid.
-   * Only journeyman can configure grid during configuring phase.
+   * Only adventurer can configure grid during configuring phase.
    */
   const canConfigureGrid = useMemo(() => {
-    return myRole === PlayerRole.JOURNEYMAN && gameState?.gameStatus === GameStatus.CONFIGURING;
+    return myRole === PlayerRole.ADVENTURER && gameState?.gameStatus === GameStatus.CONFIGURING;
   }, [myRole, gameState?.gameStatus]);
 
   /**
-   * Check if player can move (journeyman's turn).
+   * Check if player can move (adventurer's turn).
    */
   const canMove = useMemo(() => {
     return (
-      isMyTurn && myRole === PlayerRole.JOURNEYMAN && gameState?.gameStatus === GameStatus.ACTIVE
+      isMyTurn && myRole === PlayerRole.ADVENTURER && gameState?.gameStatus === GameStatus.ACTIVE
     );
   }, [isMyTurn, myRole, gameState?.gameStatus]);
 
@@ -213,8 +213,8 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
 
     const roles: PlayerRole[] = [];
 
-    if (!gameState.players.journeyman) {
-      roles.push(PlayerRole.JOURNEYMAN);
+    if (!gameState.players.adventurer) {
+      roles.push(PlayerRole.ADVENTURER);
     }
 
     if (!gameState.players.weather) {
@@ -277,7 +277,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
   }, [isConnected, myRole, gameState?.gameStatus, sendMessage, roomId]);
 
   /**
-   * Configure the grid dimensions (journeyman only).
+   * Configure the grid dimensions (adventurer only).
    */
   const configureGrid = useCallback(
     (width: number, height: number, maxFloodCount: number) => {
@@ -323,7 +323,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
   );
 
   /**
-   * Move journeyman to a position.
+   * Move adventurer to a position.
    */
   const move = useCallback(
     (position: Position) => {

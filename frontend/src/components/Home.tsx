@@ -72,7 +72,7 @@ function Home() {
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-white mb-4">Flooded Island</h1>
           <p className="text-white/80 text-lg max-w-md mx-auto">
-            A strategic 2-player game where the Journeyman tries to survive 365 days while the
+            A strategic 2-player game where the Adventurer tries to survive 365 days while the
             Weather tries to trap them with floods.
           </p>
         </div>

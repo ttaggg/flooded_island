@@ -2,8 +2,8 @@
 
 ## General Idea
 Build a 2-player online turn-based strategy game where:
-- **Journeyman** tries to survive 365 days by moving on dry fields and drying adjacent fields
-- **Weather** tries to trap the journeyman by flooding up to 2 fields per turn
+- **Adventurer** tries to survive 365 days by moving on dry fields and drying adjacent fields
+- **Weather** tries to trap the adventurer by flooding up to 2 fields per turn
 - Real-time WebSocket communication synchronizes game state
 - In-memory state management (no database for MVP)
 - Indigo-themed UI with smooth animations
@@ -62,15 +62,15 @@ Build a 2-player online turn-based strategy game where:
 
 #### **Task 2.3: Game Logic - Move Validation**
 - Create `game/validator.py`:
-  - Validate journeyman movement (adjacent dry fields only)
-  - Validate weather flooding (dry fields, not journeyman's position, max 2)
-  - Check if journeyman is trapped (no valid moves)
+  - Validate adventurer movement (adjacent dry fields only)
+  - Validate weather flooding (dry fields, not adventurer's position, max 2)
+  - Check if adventurer is trapped (no valid moves)
   - Validate grid size configuration
 
 #### **Task 2.4: Game Logic - Win Conditions**
 - Create `game/win_checker.py`:
-  - Check journeyman victory (365 turns completed)
-  - Check weather victory (journeyman trapped)
+  - Check adventurer victory (365 turns completed)
+  - Check weather victory (adventurer trapped)
   - Calculate game statistics
 
 #### **Task 2.5: Room Management**
@@ -103,13 +103,13 @@ Build a 2-player online turn-based strategy game where:
 - Handle `configure_grid` message:
   - Validate grid size (3-10)
   - Initialize game board
-  - Place journeyman at top-left
+  - Place adventurer at top-left
   - Broadcast game start to both players
 
 #### **Task 3.4: Message Handlers - Gameplay**
-- Handle `move` message (journeyman):
+- Handle `move` message (adventurer):
   - Validate move
-  - Update journeyman position
+  - Update adventurer position
   - Dry adjacent fields (4 directions)
   - Check win condition
   - Switch turn to weather
@@ -117,9 +117,9 @@ Build a 2-player online turn-based strategy game where:
 - Handle `flood` message (weather):
   - Validate flood positions (0-2)
   - Update field states
-  - Check win condition (journeyman trapped)
+  - Check win condition (adventurer trapped)
   - Increment turn counter
-  - Switch turn to journeyman
+  - Switch turn to adventurer
   - Broadcast update
 
 #### **Task 3.5: Reconnection Logic**
@@ -164,7 +164,7 @@ Build a 2-player online turn-based strategy game where:
 
 #### **Task 4.5: Game Configuration Screen**
 - Create `components/GameConfiguration.tsx`:
-  - Grid size selector (journeyman only)
+  - Grid size selector (adventurer only)
   - Visual preview of grid
   - Start game button
   - Waiting state for weather player
@@ -173,7 +173,7 @@ Build a 2-player online turn-based strategy game where:
 - Create `components/GameBoard.tsx`:
   - Render NxN grid
   - Display field states (dry/flooded)
-  - Show journeyman position
+  - Show adventurer position
   - Responsive sizing
   - Grid layout
 
@@ -183,7 +183,7 @@ Build a 2-player online turn-based strategy game where:
   - Click handlers for selection
   - Hover states
   - Highlight selectable fields
-  - Show journeyman icon if positioned there
+  - Show adventurer icon if positioned there
 
 #### **Task 4.8: Field Animations**
 - Add CSS animations to `Field.tsx`:
@@ -200,7 +200,7 @@ Build a 2-player online turn-based strategy game where:
   - Selection counter for weather (0/2, 1/2, 2/2)
 
 #### **Task 4.10: Drying Preview**
-- Add hover preview to journeyman movement:
+- Add hover preview to adventurer movement:
   - Highlight 4 fields (N/S/E/W) that will be dried
   - Visual indicator on hover
   - Clear distinction from movement highlighting
