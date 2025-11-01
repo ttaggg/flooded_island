@@ -3,126 +3,120 @@
 # Flooded Island - Build Script
 # Builds both backend dependencies and frontend with proper environment variables
 
-set -e
+set -euo pipefail
 
-echo "🔨 Building Flooded Island..."
-echo ""
-
-# Get the directory where this script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
 # Load environment variables if .env exists
-if [ -f .env ]; then
-    export $(cat .env | grep -v '^#' | xargs)
-fi
-
-# Function to get the server's IP address
-get_server_ip() {
-    # Try to get the primary non-localhost IP address
-    # macOS/Linux compatible
-    if command -v ip >/dev/null 2>&1; then
-        # Linux
-        ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '127.0.0.1' | head -1
-    elif command -v ifconfig >/dev/null 2>&1; then
-        # macOS
-        ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -1
-    else
-        # Fallback: use hostname -I or hostname
-        hostname -I 2>/dev/null | awk '{print $1}' || hostname
-    fi
-}
+[ -f .env ] && export $(grep -v '^#' .env | xargs)
 
 # Determine backend URL
-# Priority: VITE_BACKEND_URL from .env > Auto-detect IP > Default to localhost
-if [ -n "$VITE_BACKEND_URL" ]; then
+if [ -n "${VITE_BACKEND_URL:-}" ]; then
     BACKEND_URL="$VITE_BACKEND_URL"
-    echo "✅ Using VITE_BACKEND_URL from .env: $BACKEND_URL"
-elif [ -n "$SERVER_IP" ]; then
-    # Use SERVER_IP if explicitly set
+elif [ -n "${SERVER_IP:-}" ]; then
     BACKEND_URL="http://${SERVER_IP}:8000"
-    echo "✅ Using SERVER_IP from environment: $BACKEND_URL"
 else
-    # Auto-detect server IP
-    SERVER_IP=$(get_server_ip)
-    if [ -n "$SERVER_IP" ] && [ "$SERVER_IP" != "127.0.0.1" ]; then
-        BACKEND_URL="http://${SERVER_IP}:8000"
-        echo "✅ Auto-detected server IP: $SERVER_IP"
-        echo "✅ Using backend URL: $BACKEND_URL"
-    else
-        # Fallback to localhost
-        BACKEND_URL="http://localhost:8000"
-        echo "⚠️  Could not detect server IP, using localhost: $BACKEND_URL"
-        echo "   To set manually, create .env with: VITE_BACKEND_URL=http://YOUR_IP:8000"
-    fi
+    BACKEND_URL="http://localhost:8000"
 fi
 
-# Export for Vite build
 export VITE_BACKEND_URL="$BACKEND_URL"
 
+echo "🔨 Building Flooded Island..."
+echo "   Backend URL: $BACKEND_URL"
 echo ""
+
+# Backend setup
 echo "📦 Installing backend dependencies..."
 cd backend
 
-# Check if uv is available, install if not
-if ! command -v uv >/dev/null 2>&1; then
-    echo "   ⚙️  uv not found, installing uv..."
+# Function to test if uv actually works
+uv_works() {
+    uv --version >/dev/null 2>&1
+}
 
-    # Try official installation script first
-    if command -v curl >/dev/null 2>&1; then
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        # Add uv to PATH (typically installs to ~/.cargo/bin)
-        export PATH="$HOME/.cargo/bin:$PATH"
-    # Fallback to pip install if curl not available
-    elif command -v pip >/dev/null 2>&1 || command -v pip3 >/dev/null 2>&1; then
-        PIP_CMD=$(command -v pip3 2>/dev/null || command -v pip)
-        echo "   Installing uv via pip..."
-        $PIP_CMD install uv
-    else
-        echo "   ❌ Error: Cannot install uv. Need either curl or pip."
-        exit 1
+# Function to find uv binary
+find_uv() {
+    local uv_path=""
+    # Check common locations
+    for path in "$HOME/.cargo/bin/uv" "$HOME/.local/bin/uv" "/usr/local/bin/uv"; do
+        if [ -f "$path" ] && [ -x "$path" ]; then
+            uv_path="$path"
+            break
+        fi
+    done
+    # Check PATH
+    if [ -z "$uv_path" ]; then
+        uv_path=$(command -v uv 2>/dev/null || true)
     fi
+    echo "$uv_path"
+}
 
-    # Verify uv is now available
-    if ! command -v uv >/dev/null 2>&1; then
-        echo "   ❌ Error: Failed to install uv"
-        exit 1
+# Ensure uv is available and working
+UV_CMD=""
+if uv_works; then
+    UV_CMD="uv"
+elif UV_PATH=$(find_uv) && [ -n "$UV_PATH" ]; then
+    export PATH="$(dirname "$UV_PATH"):$PATH"
+    if uv_works; then
+        UV_CMD="uv"
     fi
-
-    echo "   ✅ uv installed successfully"
-else
-    echo "   ✅ uv is available"
 fi
 
-# Check if virtual environment exists, create if not
+# Install uv if not available
+if [ -z "$UV_CMD" ]; then
+    echo "   Installing uv..."
+    if command -v curl >/dev/null 2>&1; then
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        export PATH="$HOME/.cargo/bin:$PATH"
+    elif command -v pip3 >/dev/null 2>&1 || command -v pip >/dev/null 2>&1; then
+        $(command -v pip3 2>/dev/null || command -v pip) install uv
+    else
+        echo "   ❌ Error: Cannot install uv. Need curl or pip."
+        exit 1
+    fi
+
+    # Verify uv works after installation
+    if ! uv_works; then
+        echo "   ❌ Error: uv installation failed or uv not in PATH"
+        exit 1
+    fi
+    UV_CMD="uv"
+fi
+
+# Create virtual environment
 if [ ! -d ".venv" ]; then
-    echo "   Creating virtual environment with uv..."
-    uv venv
+    echo "   Creating virtual environment..."
+    $UV_CMD venv || {
+        echo "   ⚠️  uv venv failed, falling back to python3 -m venv"
+        python3 -m venv .venv
+    }
 fi
 
 # Activate virtual environment
 source .venv/bin/activate
 
-# Install dependencies with uv
-echo "   Installing dependencies with uv..."
-uv pip install -r requirements.txt
+# Install dependencies
+echo "   Installing dependencies..."
+$UV_CMD pip install -r requirements.txt || {
+    echo "   ⚠️  uv pip failed, falling back to pip"
+    pip install -r requirements.txt
+}
 
 cd ..
 
+# Frontend setup
 echo ""
 echo "📦 Installing frontend dependencies..."
 cd frontend
 npm install
 
 echo ""
-echo "🏗️  Building frontend with VITE_BACKEND_URL=$VITE_BACKEND_URL..."
+echo "🏗️  Building frontend..."
 npm run build
 
 cd ..
 
 echo ""
 echo "✅ Build complete!"
-echo "   Backend URL configured: $BACKEND_URL"
 echo "   Frontend built in: frontend/dist"
-echo ""
-echo "🚀 To start the server, run your start command"
