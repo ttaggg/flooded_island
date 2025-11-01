@@ -52,28 +52,44 @@ export function getBackendUrl(): string {
   // If explicitly set in environment, use it (recommended for production)
   const envUrl = import.meta.env.VITE_BACKEND_URL;
   if (envUrl) {
+    console.log(`🔧 Using backend URL from environment: ${envUrl}`);
     return envUrl;
   }
 
   // Auto-detect based on current hostname
   const hostname = window.location.hostname;
   const protocol = window.location.protocol;
+  const port = window.location.port;
 
   // If accessing via localhost, use localhost backend
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'http://localhost:8000';
+    const url = 'http://localhost:8000';
+    console.log(`🔧 Detected localhost, using: ${url}`);
+    return url;
   }
 
   // If accessing via IP address (mobile scenario), use same hostname with port 8000
   if (isIPAddress(hostname)) {
-    return `${protocol}//${hostname}:8000`;
+    const url = `${protocol}//${hostname}:8000`;
+    console.log(`🔧 Detected IP address, using: ${url}`);
+    return url;
   }
 
   // For server deployments (hostnames/domains), assume backend is on same origin
   // This works for reverse proxy setups where backend is proxied to same domain
-  // If backend is on different port, set VITE_BACKEND_URL environment variable
-  const port = window.location.port;
-  return `${protocol}//${hostname}${port ? `:${port}` : ''}`;
+  // For HTTPS/WSS, don't include port (standard ports 443/80)
+  // For HTTP/WS, include port if specified
+  let url: string;
+  if (protocol === 'https:') {
+    // HTTPS: Standard port 443, don't include port in URL
+    url = `${protocol}//${hostname}`;
+  } else {
+    // HTTP: Include port if specified, otherwise no port
+    url = `${protocol}//${hostname}${port ? `:${port}` : ''}`;
+  }
+
+  console.log(`🔧 Detected domain (${hostname}), using same origin: ${url}`);
+  return url;
 }
 
 /**
@@ -89,7 +105,10 @@ export function getWebSocketUrl(roomId: string): string {
 
   // Remove trailing slash if present and append room path
   const baseUrl = wsUrl.replace(/\/$/, '');
-  return `${baseUrl}/ws/${roomId}`;
+  const fullUrl = `${baseUrl}/ws/${roomId}`;
+
+  console.log(`🔌 Constructed WebSocket URL: ${fullUrl}`);
+  return fullUrl;
 }
 
 /**

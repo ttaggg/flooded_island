@@ -41,10 +41,18 @@ async def lifespan(app: FastAPI):
     """
     # Startup
     port = int(os.getenv("PORT", os.getenv("BACKEND_PORT", 8000)))
+    environment = os.getenv("ENVIRONMENT", "").lower()
+    is_production = environment == "production"
+
+    # Determine WebSocket protocol based on environment
+    ws_protocol = "wss" if is_production else "ws"
+    ws_host = "flooded-island.onrender.com" if is_production else f"0.0.0.0:{port}"
+
     logger.info("🌊 Flooded Island API starting up...")
     logger.info(f"📡 CORS enabled for: {frontend_url}")
-    logger.info(f"🔌 WebSocket endpoint: ws://0.0.0.0:{port}/ws/{{room_id}}")
+    logger.info(f"🔌 WebSocket endpoint: {ws_protocol}://{ws_host}/ws/{{room_id}}")
     logger.info(f"🌐 Server listening on port: {port}")
+    logger.info(f"🔧 Environment: {environment or 'development'}")
 
     # Start background cleanup task
     cleanup_task = asyncio.create_task(start_cleanup_task())

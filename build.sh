@@ -13,10 +13,26 @@ cd "$SCRIPT_DIR"
 
 # Determine backend URL
 if [ -n "${VITE_BACKEND_URL:-}" ]; then
+    # Explicitly set - use it
     BACKEND_URL="$VITE_BACKEND_URL"
+elif [ -n "${RENDER:-}" ] || [ -n "${RENDER_EXTERNAL_URL:-}" ]; then
+    # Render.com deployment detected
+    if [ -n "${RENDER_EXTERNAL_URL:-}" ]; then
+        # Use Render's external URL (includes protocol and domain)
+        BACKEND_URL="$RENDER_EXTERNAL_URL"
+    elif [ -n "${RENDER_SERVICE_NAME:-}" ]; then
+        # Fallback: construct URL from service name
+        BACKEND_URL="https://${RENDER_SERVICE_NAME}.onrender.com"
+    else
+        # Generic Render URL fallback
+        BACKEND_URL="https://flooded-island.onrender.com"
+    fi
+    echo "   🌐 Render deployment detected"
 elif [ -n "${SERVER_IP:-}" ]; then
+    # Local server with IP address
     BACKEND_URL="http://${SERVER_IP}:8000"
 else
+    # Local development default
     BACKEND_URL="http://localhost:8000"
 fi
 
