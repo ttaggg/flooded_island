@@ -11,7 +11,7 @@ import { GameOver } from './components/GameOver';
 import Home from './components/Home';
 import { GameStatus } from './types';
 import { generateRoomId } from './utils/roomId';
-import { getBackendUrl, getWebSocketUrl } from './utils/websocket';
+import { getWebSocketUrl } from './utils/websocket';
 
 function App() {
   /**
