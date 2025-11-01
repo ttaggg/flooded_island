@@ -38,8 +38,8 @@ uv_works() {
 # Function to find uv binary
 find_uv() {
     local uv_path=""
-    # Check common locations
-    for path in "$HOME/.cargo/bin/uv" "$HOME/.local/bin/uv" "/usr/local/bin/uv"; do
+    # Check common locations (including Render-specific paths)
+    for path in "$HOME/.local/bin/uv" "$HOME/.cargo/bin/uv" "/opt/render/.local/bin/uv" "/usr/local/bin/uv"; do
         if [ -f "$path" ] && [ -x "$path" ]; then
             uv_path="$path"
             break
@@ -68,17 +68,30 @@ if [ -z "$UV_CMD" ]; then
     echo "   Installing uv..."
     if command -v curl >/dev/null 2>&1; then
         curl -LsSf https://astral.sh/uv/install.sh | sh
-        export PATH="$HOME/.cargo/bin:$PATH"
+        # Add common installation paths to PATH
+        export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+        # Source uv's env file if it exists (sets up PATH automatically)
+        if [ -f "$HOME/.local/bin/env" ]; then
+            source "$HOME/.local/bin/env" 2>/dev/null || true
+        fi
     elif command -v pip3 >/dev/null 2>&1 || command -v pip >/dev/null 2>&1; then
         $(command -v pip3 2>/dev/null || command -v pip) install uv
+        # Add pip installation path
+        export PATH="$HOME/.local/bin:$PATH"
     else
         echo "   ❌ Error: Cannot install uv. Need curl or pip."
         exit 1
     fi
 
+    # Try to find uv after installation
+    if UV_PATH=$(find_uv) && [ -n "$UV_PATH" ]; then
+        export PATH="$(dirname "$UV_PATH"):$PATH"
+    fi
+
     # Verify uv works after installation
     if ! uv_works; then
         echo "   ❌ Error: uv installation failed or uv not in PATH"
+        echo "   Attempted paths: $HOME/.local/bin, $HOME/.cargo/bin"
         exit 1
     fi
     UV_CMD="uv"
