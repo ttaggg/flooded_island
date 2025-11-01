@@ -238,6 +238,16 @@ export function RoleSelection({
             Two players, two roles. The Adventurer must survive 365 days while the Weather tries to
             trap them.
           </p>
+          {/* Display configuration if available */}
+          {gameState?.gridWidth && gameState?.gridHeight && gameState?.maxFloodCount && (
+            <div className="mt-6 inline-block bg-white/10 backdrop-blur-sm rounded-xl px-6 py-3">
+              <p className="text-white/80 text-sm mb-1">Game Configuration</p>
+              <p className="text-white font-semibold">
+                Board: {gameState.gridWidth}×{gameState.gridHeight} • Max Floods:{' '}
+                {gameState.maxFloodCount} per turn
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Role Cards */}

@@ -163,10 +163,7 @@ export function ConnectionStatus({
       }
     }
 
-    if (
-      gameState.gameStatus === GameStatus.CONFIGURING ||
-      gameState.gameStatus === GameStatus.ACTIVE
-    ) {
+    if (gameState.gameStatus === GameStatus.SETUP || gameState.gameStatus === GameStatus.ACTIVE) {
       return 'Opponent connected';
     }
 

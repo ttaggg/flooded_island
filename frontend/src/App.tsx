@@ -221,8 +221,8 @@ function App() {
     );
   }
 
-  // Game Configuration Screen (CONFIGURING status)
-  if (gameState.gameStatus === GameStatus.CONFIGURING) {
+  // Game Setup Screen (SETUP status - configuration before role selection)
+  if (gameState.gameStatus === GameStatus.SETUP) {
     return (
       <GameConfiguration
         myRole={myRole}

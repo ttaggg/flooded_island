@@ -15,7 +15,7 @@
  */
 
 import { useState } from 'react';
-import { PlayerRole, GameState } from '../types';
+import { PlayerRole, GameState, GameStatus } from '../types';
 import { ConnectionStatus } from './ConnectionStatus';
 
 /**
@@ -130,6 +130,8 @@ export function GameConfiguration({
 
   // Determine if current player is Adventurer
   const isAdventurer = myRole === PlayerRole.ADVENTURER;
+  // Check if we're in SETUP status (configuration before role selection)
+  const isSetupStatus = gameState?.gameStatus === GameStatus.SETUP;
 
   // Quick selection sizes (square grids)
   const quickSizes = [5, 7, 10];
@@ -194,9 +196,13 @@ export function GameConfiguration({
           <h1 className="text-6xl font-bold text-white mb-4 drop-shadow-lg">Flooded Island</h1>
           <h2 className="text-3xl font-semibold text-white/90 mb-3">Game Configuration</h2>
           <p className="text-white/70 text-lg max-w-2xl mx-auto">
-            {isAdventurer
-              ? 'Configure the game board size and start the game.'
-              : 'The Adventurer is configuring the game board.'}
+            {isSetupStatus
+              ? canConfigureGrid
+                ? 'Configure the game board size before choosing roles.'
+                : 'Waiting for game creator to configure the board...'
+              : isAdventurer
+                ? 'Configure the game board size and start the game.'
+                : 'The Adventurer is configuring the game board.'}
           </p>
         </div>
 
@@ -279,6 +285,16 @@ export function GameConfiguration({
             </div>
           </div>
 
+          {/* Visual Grid Preview */}
+          <div className="mb-8">
+            <h3 className="text-xl font-bold text-white mb-4 text-center">Preview</h3>
+            <GridPreview width={selectedWidth} height={selectedHeight} />
+            <p className="text-white/60 text-sm text-center mt-4">
+              All fields start as dry. Adventurer starts at the top-left corner. Weather can flood
+              up to {selectedMaxFlood} field{selectedMaxFlood !== 1 ? 's' : ''} per turn.
+            </p>
+          </div>
+
           {/* Max Flood Count Selector */}
           <div className="mb-8">
             <h3 className="text-2xl font-bold text-white mb-4 text-center">
@@ -296,7 +312,7 @@ export function GameConfiguration({
             </div>
 
             {/* Quick Selection Buttons */}
-            <div className="flex justify-center gap-4 mb-6">
+            <div className="flex justify-center gap-4">
               {[1, 2, 3].map((count) => (
                 <button
                   key={count}
@@ -314,43 +330,12 @@ export function GameConfiguration({
                 </button>
               ))}
             </div>
-
-            {/* Number Input */}
-            <div className="flex items-center justify-center gap-2">
-              <label htmlFor="max-flood" className="text-white font-semibold">
-                Max Floods (1-3):
-              </label>
-              <input
-                id="max-flood"
-                type="number"
-                min="1"
-                max="3"
-                value={selectedMaxFlood}
-                onChange={(e) => handleMaxFloodChange(parseInt(e.target.value) || 1)}
-                disabled={!canConfigureGrid}
-                className={`w-20 px-4 py-2 rounded-lg text-center font-bold text-lg ${
-                  canConfigureGrid
-                    ? 'bg-white/90 text-indigo-900 focus:outline-none focus:ring-2 focus:ring-blue-400'
-                    : 'bg-white/20 text-white/50 cursor-not-allowed'
-                }`}
-              />
-            </div>
-          </div>
-
-          {/* Visual Grid Preview */}
-          <div className="mb-8">
-            <h3 className="text-xl font-bold text-white mb-4 text-center">Preview</h3>
-            <GridPreview width={selectedWidth} height={selectedHeight} />
-            <p className="text-white/60 text-sm text-center mt-4">
-              All fields start as dry. Adventurer starts at the top-left corner. Weather can flood
-              up to {selectedMaxFlood} field{selectedMaxFlood !== 1 ? 's' : ''} per turn.
-            </p>
           </div>
 
           {/* Action Section */}
           <div className="border-t border-white/20 pt-6">
-            {isAdventurer ? (
-              // Adventurer: Start Game Button
+            {canConfigureGrid ? (
+              // Creator/Adventurer: Configure Button
               <div className="text-center">
                 <button
                   onClick={handleStartGame}
@@ -361,19 +346,22 @@ export function GameConfiguration({
                       : 'bg-gray-500 text-gray-300 cursor-not-allowed'
                   }`}
                 >
-                  Start Game
+                  {isSetupStatus ? 'Create Game' : 'Start Game'}
                 </button>
                 <p className="text-white/60 text-sm mt-4">
-                  Click "Start Game" to begin with a {selectedWidth}×{selectedHeight} grid and{' '}
-                  {selectedMaxFlood} max flood{selectedMaxFlood !== 1 ? 's' : ''} per turn
+                  {isSetupStatus
+                    ? `Configure the game with a ${selectedWidth}×${selectedHeight} grid and ${selectedMaxFlood} max flood${selectedMaxFlood !== 1 ? 's' : ''} per turn, then choose roles.`
+                    : `Click "Start Game" to begin with a ${selectedWidth}×${selectedHeight} grid and ${selectedMaxFlood} max flood${selectedMaxFlood !== 1 ? 's' : ''} per turn`}
                 </p>
               </div>
             ) : (
-              // Weather: Waiting State
+              // Waiting State (non-creator during SETUP)
               <div className="text-center">
                 <div className="animate-pulse">
                   <p className="text-white text-xl mb-3">
-                    Waiting for Adventurer to configure game...
+                    {isSetupStatus
+                      ? 'Waiting for game creator to configure the board...'
+                      : 'Waiting for configuration...'}
                   </p>
                   <div className="flex justify-center gap-2">
                     <div
@@ -402,7 +390,22 @@ export function GameConfiguration({
         {/* Game Info Footer */}
         <div className="mt-6 text-center">
           <p className="text-white/50 text-sm">
-            Your Role: <span className="font-semibold text-white/70">{myRole || 'Unknown'}</span>
+            {isSetupStatus ? (
+              <>
+                Status: <span className="font-semibold text-white/70">Setup</span>
+                {myRole && (
+                  <>
+                    {' • '}
+                    Your Role: <span className="font-semibold text-white/70">{myRole}</span>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                Your Role:{' '}
+                <span className="font-semibold text-white/70">{myRole || 'Unknown'}</span>
+              </>
+            )}
           </p>
         </div>
       </div>

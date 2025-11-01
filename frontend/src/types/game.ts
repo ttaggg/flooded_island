@@ -23,8 +23,8 @@ export enum PlayerRole {
  * Current status of the game.
  */
 export enum GameStatus {
+  SETUP = 'setup', // Creator configuring board before role selection
   WAITING = 'waiting', // Waiting for players to join/select roles
-  CONFIGURING = 'configuring', // Both roles filled, configuring grid
   ACTIVE = 'active', // Game in progress
   ENDED = 'ended', // Game finished
 }

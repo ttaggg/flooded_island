@@ -184,11 +184,18 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
 
   /**
    * Check if player can configure grid.
-   * Only adventurer can configure grid during configuring phase.
+   * During SETUP: creator can configure before role selection (no role check needed)
    */
   const canConfigureGrid = useMemo(() => {
-    return myRole === PlayerRole.ADVENTURER && gameState?.gameStatus === GameStatus.CONFIGURING;
-  }, [myRole, gameState?.gameStatus]);
+    if (!gameState) return false;
+
+    // SETUP status: configuration before role selection
+    // Allow configuration if grid is not yet configured
+    return (
+      gameState.gameStatus === GameStatus.SETUP &&
+      (gameState.gridWidth === null || gameState.gridHeight === null)
+    );
+  }, [gameState]);
 
   /**
    * Check if player can move (adventurer's turn).

@@ -407,10 +407,7 @@ async def handle_select_role(message: dict, ctx: MessageContext) -> None:
         # Check if this is a reconnection attempt
         # For reconnection, we allow the player to reclaim their role
         # even if it appears "taken" (because the previous connection was lost)
-        is_reconnection_attempt = room.game_status in [
-            GameStatus.CONFIGURING,
-            GameStatus.ACTIVE,
-        ]
+        is_reconnection_attempt = room.game_status == GameStatus.ACTIVE
 
         if is_reconnection_attempt:
             print(
@@ -443,10 +440,26 @@ async def handle_select_role(message: dict, ctx: MessageContext) -> None:
         and room.players["weather"]
         and room.game_status == GameStatus.WAITING
     ):
-        # Only transition to CONFIGURING if currently WAITING
-        # Keep ACTIVE status if already active (reconnection case)
-        room.game_status = GameStatus.CONFIGURING
-        print(f"  → Both roles filled! Room {ctx.room_id} transitioning to CONFIGURING")
+        # Both roles filled and configuration already done (from SETUP)
+        # Initialize board and start game immediately
+        if room.grid_width and room.grid_height:
+            board = Board(room.grid_width, room.grid_height)
+            print(
+                f"  → Board initialized: {room.grid_width}x{room.grid_height} grid with all DRY fields"
+            )
+            room.grid = board.grid
+            room.adventurer_position = Position(x=0, y=0)
+            room.game_status = GameStatus.ACTIVE
+            room.current_role = PlayerRole.ADVENTURER
+            room.current_turn = 1
+            print(f"  → Both roles filled! Room {ctx.room_id} transitioning to ACTIVE")
+        else:
+            # This shouldn't happen with the new flow, but handle gracefully
+            await ctx.send_error(
+                "Game configuration is required before selecting roles"
+            )
+            print("  → Error: Both roles selected but grid not configured")
+            return
 
     # Save updated room state
     await ctx.update_room(room)
@@ -496,14 +509,9 @@ async def handle_configure_grid(message: dict, ctx: MessageContext) -> None:
         await ctx.send_error("Room not found")
         return
 
-    # Validate player has adventurer role
-    is_valid, error_msg = await validate_player_has_role(ctx, PlayerRole.ADVENTURER)
-    if not is_valid:
-        await ctx.send_error(error_msg)
-        return
-
-    # Check room status (must be CONFIGURING)
-    is_valid, error_msg = await validate_game_status(ctx, GameStatus.CONFIGURING)
+    # Check room status (must be SETUP)
+    # SETUP: creator configuring before role selection (no role check needed)
+    is_valid, error_msg = await validate_game_status(ctx, GameStatus.SETUP)
     if not is_valid:
         await ctx.send_error(error_msg)
         return
@@ -514,33 +522,26 @@ async def handle_configure_grid(message: dict, ctx: MessageContext) -> None:
         await ctx.send_error(error_msg)
         return
 
-    # Initialize game board
-    board = Board(grid_width, grid_height)
-    print(f"  → Board initialized: {grid_width}x{grid_height} grid with all DRY fields")
-
-    # Update room state
+    # Update room state with configuration
     room.grid_width = grid_width
     room.grid_height = grid_height
     room.max_flood_count = max_flood_count
-    room.grid = board.grid
-    room.adventurer_position = Position(x=0, y=0)
-    room.game_status = GameStatus.ACTIVE
-    room.current_role = PlayerRole.ADVENTURER
-    room.current_turn = 1
 
-    print("  → Adventurer placed at (0, 0), game status: ACTIVE, turn: 1")
+    # Configuration done, transition to WAITING for role selection
+    room.game_status = GameStatus.WAITING
+    print("  → Configuration saved, room transitioning to WAITING status")
 
     # Save updated room state
     await ctx.update_room(room)
 
     # Broadcast updated room state to all players
-    logger.info(f"Broadcasting game start to room {ctx.room_id}")
+    logger.info(f"Broadcasting configuration update to room {ctx.room_id}")
     room_state_msg = RoomStateMessage(
         type="room_state", state=serialize_room_state(room)
     )
     broadcast_count = await ctx.broadcast(room_state_msg.model_dump())
-    logger.info(f"Game started! Broadcast sent to {broadcast_count} player(s)")
-    print(f"  → Game started! Broadcast sent to {broadcast_count} player(s)")
+    logger.info(f"Configuration broadcast sent to {broadcast_count} player(s)")
+    print(f"  → Configuration broadcast sent to {broadcast_count} player(s)")
 
 
 async def handle_move(message: dict, ctx: MessageContext) -> None:
@@ -813,6 +814,7 @@ async def get_or_create_room(room_id: str) -> GameRoom:
 
     if not room:
         # Create room if it doesn't exist (first player creates the room)
+        # Room starts with SETUP status so creator can configure before role selection
         room = GameRoom(
             room_id=room_id,
             grid_width=None,
@@ -822,7 +824,7 @@ async def get_or_create_room(room_id: str) -> GameRoom:
             current_turn=1,
             current_role=PlayerRole.ADVENTURER,
             players={"adventurer": False, "weather": False},
-            game_status=GameStatus.WAITING,
+            game_status=GameStatus.SETUP,
             winner=None,
             created_at=datetime.now(),
             ended_at=None,
@@ -830,7 +832,7 @@ async def get_or_create_room(room_id: str) -> GameRoom:
         # Directly add to room manager (update_room requires room to exist)
         async with room_manager.lock:
             room_manager.rooms[room_id] = room
-        print(f"🎮 Room {room_id} created by first player")
+        print(f"🎮 Room {room_id} created by first player (SETUP status)")
 
     return room
 
