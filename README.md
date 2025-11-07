@@ -142,12 +142,47 @@ VITE_WS_URL=ws://localhost:8000
 3. Test in browser at http://localhost:5173
 4. Use API docs at http://localhost:8000/docs for backend testing
 
+## 🚀 Production Deployment
+
+Deploy to your own server with nginx, Let's Encrypt SSL, and systemd:
+
+### Quick Deployment
+
+1. **On your remote server**, install prerequisites:
+   ```bash
+   sudo apt update && sudo apt install nginx certbot python3-certbot-nginx python3 python3-venv nodejs npm -y
+   ```
+
+2. **Copy project to server** (via git or rsync)
+
+3. **Create `.env.production`** with your domain configuration
+
+4. **Run deployment script**:
+   ```bash
+   sudo ./deploy.sh
+   ```
+
+5. **Configure SSL**:
+   ```bash
+   sudo certbot --nginx -d your-domain.com
+   ```
+
+For complete deployment instructions, see **[deploy/DEPLOYMENT.md](deploy/DEPLOYMENT.md)**
+
+### Deployment Files
+
+- `deploy/nginx/flooded-island.conf` - Nginx reverse proxy configuration
+- `deploy/systemd/flooded-island-backend.service` - Systemd service
+- `deploy/DEPLOYMENT.md` - Complete deployment guide
+- `deploy.sh` - Automated deployment script
+
 ## 📚 Documentation
 
 - [Game Rules](docs/game_rules.md) - Detailed game mechanics
 - [Technical Specification](docs/technical_spec.md) - System architecture
 - [UI Design](docs/ui_design.md) - Interface design decisions
 - [Implementation Plan](docs/implementation_plan.md) - Development roadmap
+- [Deployment Guide](deploy/DEPLOYMENT.md) - Production deployment instructions
 
 ## 🎨 Features
 

@@ -1,79 +1,184 @@
 # Current Active Task
 
 ## Task
-Task: Configurable Flood Count Setting
+Production Deployment Configuration for Remote Server
 
 ## Status
 Completed ✅
 
 ## Description
-Added a configurable setting for the maximum number of fields Weather can flood per turn (1-3 range, default 2), integrated into the game configuration screen alongside grid dimensions.
+Configured complete production deployment setup for remote server deployment (islands.olegmagn.es) with nginx reverse proxy, Let's Encrypt SSL, systemd process management, and automated deployment scripts.
 
 ## Problem Solved
-- **Issue**: Weather player was limited to flooding exactly 2 fields per turn, with no flexibility for different difficulty levels
-- **Root Cause**: Hardcoded validation limit of 2 fields in backend validation logic
-- **Impact**: Limited strategic depth and inability to adjust game difficulty
+- **Issue**: Application was only configured for development environment with no production deployment setup
+- **Root Cause**: Missing production configuration files, deployment scripts, and documentation for remote server deployment
+- **Impact**: Could not deploy application to production server with proper SSL, process management, and reverse proxy
 
 ## Solution Implemented
-- **Backend Models**: Added `max_flood_count` field to `GameRoom` model with 1-3 range validation
-- **Backend Messages**: Updated `ConfigureGridMessage` to include `max_flood_count` parameter
-- **Backend Validation**: Updated `validate_weather_flood()` to use dynamic max flood count
-- **Backend Handlers**: Updated WebSocket handlers to process and store max flood count
-- **Frontend Types**: Added `maxFloodCount` to `GameState` and `ConfigureGridMessage` interfaces
-- **Frontend UI**: Added flood count selector to GameConfiguration component with quick selection buttons
-- **Frontend Logic**: Updated TurnControls and GameBoard to use dynamic maxFloodCount
-- **Frontend Hook**: Updated useGameState to handle maxFloodCount parameter
+
+### Configuration Files Created
+1. **Nginx Configuration** (`deploy/nginx/flooded-island.conf`)
+   - HTTP to HTTPS redirect (port 80 → 443)
+   - SSL/TLS configuration for Let's Encrypt certificates
+   - Static file serving from `frontend/dist/`
+   - Reverse proxy for backend API (`/api/*` → localhost:8000)
+   - WebSocket proxy with proper upgrade headers (`/ws/*` → localhost:8000)
+   - Security headers (HSTS, X-Frame-Options, etc.)
+   - Gzip compression for performance
+   - Client-side routing support (SPA fallback to index.html)
+
+2. **Systemd Service** (`deploy/systemd/flooded-island-backend.service`)
+   - Runs backend as `www-data` user
+   - Working directory set to backend folder
+   - Uses virtual environment Python
+   - Loads environment variables from `.env.production`
+   - Auto-restart on failure with backoff
+   - Proper logging to `/var/log/flooded-island/`
+   - Security hardening (NoNewPrivileges, PrivateTmp, etc.)
+
+3. **Deployment Script** (`deploy.sh`)
+   - Automated deployment process
+   - Checks for sudo privileges
+   - Validates `.env.production` existence
+   - Creates deployment directory structure
+   - Copies application files via rsync
+   - Builds frontend with production environment variables
+   - Sets up backend virtual environment and dependencies
+   - Installs nginx and systemd configurations
+   - Reloads services (systemd, nginx)
+   - Provides helpful status and command output
+
+4. **Environment Template**
+   - Production environment variables documented
+   - Domain: islands.olegmagn.es
+   - HTTPS URLs for frontend and backend
+   - WSS (WebSocket Secure) URL configuration
+   - Backend port 8000 (internal only)
+
+### Build System Updates
+- **Updated `build.sh`**: Now checks for `.env.production` first, falls back to `.env` for development
+- Priority: `.env.production` > `.env`
+- Clear logging of which environment is being used
+
+### Documentation Created
+1. **Comprehensive Deployment Guide** (`deploy/DEPLOYMENT.md`)
+   - Server prerequisites and installation steps
+   - DNS configuration requirements
+   - Step-by-step deployment process (two options: local deploy, git deploy)
+   - SSL certificate setup with Let's Encrypt
+   - Service management commands
+   - Update and redeployment procedures
+   - Firewall configuration (UFW)
+   - Monitoring and log locations
+   - Detailed troubleshooting section
+   - Security considerations
+   - Performance optimization tips
+   - Backup and restore procedures
+   - Architecture diagram
+
+2. **Quick Reference** (`deploy/README.md`)
+   - Files overview
+   - Quick deployment steps
+   - Configuration file descriptions
+   - Service management commands
+   - Architecture diagram
+
+3. **Main README Updates**
+   - Added Production Deployment section
+   - Quick deployment steps
+   - Links to comprehensive documentation
 
 ## Requirements Met
-- ✅ Configurable flood count range (1-3 fields per turn)
-- ✅ Default value of 2 maintains existing gameplay balance
-- ✅ Integrated into game configuration screen alongside grid dimensions
-- ✅ Adventurer player has authority to configure all game settings
-- ✅ Frontend UI shows current selection and preview
-- ✅ Backend validation enforces configured limits
-- ✅ Dynamic UI updates based on configured maximum
-- ✅ All linting checks pass
-- ✅ TypeScript compilation with no errors
-- ✅ Backward compatibility maintained
+- ✅ Nginx reverse proxy configuration with SSL support
+- ✅ Let's Encrypt automatic certificate generation support
+- ✅ WebSocket proxy with proper upgrade headers
+- ✅ Systemd service for process management
+- ✅ Automated deployment script
+- ✅ Production environment variable configuration
+- ✅ Build system updated for production builds
+- ✅ Comprehensive deployment documentation
+- ✅ Security headers and hardening
+- ✅ Proper logging configuration
+- ✅ Service auto-restart on failure
+- ✅ Static file serving optimized with caching
+- ✅ Gzip compression for performance
+- ✅ HTTP to HTTPS redirect
+- ✅ Ports 80/443 configuration
 
 ## Implementation Details
 
-### Backend Changes
-- **GameRoom Model**: Added `max_flood_count: int` field with `ge=1, le=3` constraints and default value 2
-- **ConfigureGridMessage**: Added `max_flood_count: int` field with validation
-- **Validator**: Updated `validate_weather_flood()` to accept and use dynamic max flood count parameter
-- **WebSocket Handlers**: Updated `handle_configure_grid()` and `handle_flood()` to process max flood count
-- **Serialization**: Added `maxFloodCount` to serialized room state
+### Nginx Configuration
+- **Domain**: islands.olegmagn.es
+- **Ports**: 80 (HTTP redirect), 443 (HTTPS)
+- **SSL**: Let's Encrypt certificates at `/etc/letsencrypt/live/islands.olegmagn.es/`
+- **Root**: `/var/www/flooded-island/frontend/dist`
+- **Backend Proxy**: localhost:8000 (internal)
+- **WebSocket**: Upgrade headers, 60s timeouts, no buffering
+- **API**: Standard proxy headers, 30s timeouts
+- **Static Assets**: 1-year cache with immutable flag
+- **SPA Routing**: Fallback to index.html for client-side routes
 
-### Frontend Changes
-- **GameConfiguration Component**: Added flood count selector with quick selection buttons (1, 2, 3)
-- **TurnControls Component**: Updated to show dynamic selection counter and helper text
-- **GameBoard Component**: Updated field selection logic to respect configured maximum
-- **useGameState Hook**: Updated `configureGrid()` function to accept maxFloodCount parameter
-- **Type Definitions**: Added `maxFloodCount` to `GameState` and `ConfigureGridMessage` interfaces
+### Systemd Service
+- **User/Group**: www-data (nginx default)
+- **Working Directory**: `/var/www/flooded-island/backend`
+- **Environment File**: `/var/www/flooded-island/.env.production`
+- **Executable**: `.venv/bin/python main.py`
+- **Restart Policy**: Always restart with 10s delay, 5 attempts in 200s window
+- **Logging**: Append to `/var/log/flooded-island/backend.log` and `backend-error.log`
+- **Security**: ProtectSystem=strict, ProtectHome=true, PrivateTmp=true
 
-### UI Features
-- **Quick Selection**: Buttons for 1, 2, and 3 fields with visual feedback
-- **Number Input**: Manual input field with validation and clamping
-- **Visual Preview**: Shows selected flood count in configuration preview
-- **Dynamic Display**: Turn controls show current selection vs configured maximum
-- **Role-Specific**: Adventurer sees active controls, Weather sees read-only preview
+### Deployment Process
+1. Check prerequisites (sudo, .env.production)
+2. Create deployment directory (`/var/www/flooded-island`)
+3. Rsync application files (excluding git, node_modules, venv, etc.)
+4. Copy `.env.production` to deployment directory
+5. Build frontend with production environment
+6. Set up backend virtual environment
+7. Install Python dependencies
+8. Set ownership to www-data:www-data
+9. Install nginx configuration
+10. Install systemd service
+11. Reload systemd and nginx
+12. Restart backend service
+13. Display status and helpful commands
+
+### URL Configuration
+- **Production URL**: https://islands.olegmagn.es
+- **API Endpoints**: https://islands.olegmagn.es/api/*
+- **WebSocket**: wss://islands.olegmagn.es/ws/*
+- **Frontend**: Smart URL detection in `websocket.ts`
+  - Uses `VITE_BACKEND_URL` if set
+  - Falls back to same origin for domain deployments
+  - Auto-converts http→ws and https→wss
 
 ## Benefits
-- **Strategic Depth**: More gameplay variety with different difficulty levels
-- **Player Control**: Adventurer can adjust game difficulty before starting
-- **Balanced Defaults**: Default value of 2 maintains existing gameplay balance
-- **Clear UI**: Intuitive interface for configuring flood count
-- **Consistent Design**: Matches existing configuration screen styling
-- **Type Safety**: Full TypeScript support with proper validation
+- **One-Command Deployment**: Single script handles entire deployment process
+- **Security**: SSL/TLS encryption, security headers, process isolation
+- **Reliability**: Auto-restart, proper logging, systemd management
+- **Performance**: Gzip compression, static file caching, HTTP/2
+- **Maintainability**: Clear documentation, easy updates, service management
+- **Production Ready**: Follows best practices for web application deployment
+- **Flexibility**: Works for any domain by changing `.env.production`
+
+## Testing Checklist
+- [ ] Deploy on remote server
+- [ ] Verify SSL certificate generation
+- [ ] Test HTTPS access
+- [ ] Test WebSocket connections
+- [ ] Verify API endpoints
+- [ ] Check service auto-restart
+- [ ] Monitor logs
+- [ ] Test deployment updates
 
 ## Next Steps
-Ready for the next task in the implementation plan.
+Ready for production deployment testing on remote server.
 
 ## Notes
-- Configurable flood count feature completed successfully
-- All backend and frontend components updated to support dynamic limits
-- Game configuration screen now includes flood count setting
-- Backend validation properly enforces configured limits
-- Frontend UI dynamically updates based on configuration
-- All existing features and functionality preserved
+- All deployment files created and documented
+- Build system updated to support production environment
+- Main README updated with deployment section
+- No changes to application code required
+- Environment variables properly configured for domain
+- WebSocket proxy configured with proper headers and timeouts
+- Static file serving optimized with caching
+- Service management via systemd for reliability

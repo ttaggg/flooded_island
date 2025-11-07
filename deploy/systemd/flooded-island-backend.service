@@ -1,0 +1,41 @@
+[Unit]
+Description=Flooded Island Backend Service
+After=network.target
+Documentation=https://github.com/your-repo/flooded_island
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/flooded-island/backend
+
+# Environment variables
+EnvironmentFile=/var/www/flooded-island/.env.production
+
+# Use virtual environment Python
+ExecStart=/var/www/flooded-island/backend/.venv/bin/python main.py
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitInterval=200
+StartLimitBurst=5
+
+# Logging
+StandardOutput=append:/var/log/flooded-island/backend.log
+StandardError=append:/var/log/flooded-island/backend-error.log
+SyslogIdentifier=flooded-island-backend
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/flooded-island
+ReadWritePaths=/var/log/flooded-island
+
+# Resource limits
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

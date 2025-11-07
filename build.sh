@@ -8,8 +8,15 @@ set -euo pipefail
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
-# Load environment variables if .env exists
-[ -f .env ] && export $(grep -v '^#' .env | xargs)
+# Load environment variables
+# Priority: .env.production (if exists) > .env
+if [ -f .env.production ]; then
+    echo "📝 Loading production environment (.env.production)..."
+    export $(grep -v '^#' .env.production | xargs)
+elif [ -f .env ]; then
+    echo "📝 Loading development environment (.env)..."
+    export $(grep -v '^#' .env | xargs)
+fi
 
 # Determine backend URL
 if [ -n "${VITE_BACKEND_URL:-}" ]; then
