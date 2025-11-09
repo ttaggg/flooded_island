@@ -4,6 +4,61 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+## 2025-11-09
+
+### Task: Configuration & Build System Refactoring - Planning Phase
+- **Status**: Planning Complete - Brief Created ✅
+- **Task**: Identify and document critical issues with production deployment and create comprehensive refactoring plan
+- **Problem Analysis**:
+  - **Critical Bug**: WebSocket connection tries to connect to localhost instead of production domain
+    - Missing `return` statement in `frontend/src/utils/websocket.ts:76`
+    - Blocks all production gameplay functionality
+  - **Poor Dev/Prod Separation**: Mixed build/deployment scripts without clear environment distinction
+    - Scripts: `build.sh`, `deploy.sh`, `start.sh`, `stop.sh` lack consistent naming
+    - No clear indication which script is for which environment
+  - **Configuration Duplication**: Domain and URLs hardcoded in multiple locations
+    - `deploy.sh`: Hardcoded domain in multiple places
+    - `deploy/nginx/flooded-island.conf`: Hardcoded domain in server_name and SSL paths
+    - `backend/main.py`: Hardcoded FRONTEND_URL default
+    - No single source of truth for configuration
+- **Documentation Created**:
+  - **`docs/refactoring_brief.md`**: Comprehensive 400+ line implementation guide
+    - Executive summary of all three issues
+    - Detailed problem analysis with code locations
+    - 8-phase implementation plan with step-by-step instructions
+    - Environment configuration file templates
+    - Build script refactoring approach
+    - Configuration template system design
+    - Backend configuration updates
+    - Deployment script improvements
+    - Complete implementation checklist (40+ items)
+    - Risk assessment and mitigation strategies
+    - Timeline estimates (~10 hours total)
+    - Success criteria and testing plan
+- **Proposed Solution**:
+  - **Immediate**: Fix critical WebSocket bug (15 minutes)
+  - **Phase 1**: Create environment files (`.env.development`, `.env.production`)
+  - **Phase 2**: Refactor scripts to `build_dev.sh`, `build_prod.sh`, `start_dev.sh`, `stop_dev.sh`, `deploy_prod.sh`
+  - **Phase 3**: Create configuration templates for nginx and systemd
+  - **Phase 4**: Update backend to read all config from env files
+  - **Phase 5**: Update deployment to generate configs from templates
+  - **Phase 6**: Comprehensive documentation
+  - **Phase 7**: Testing and validation
+- **Benefits**:
+  - ✅ WebSocket connections work correctly in production
+  - ✅ Clear separation between dev and prod workflows
+  - ✅ Single source of truth for configuration
+  - ✅ Domain changes require editing only `.env.production`
+  - ✅ Scalable architecture (easy to add staging, etc.)
+  - ✅ Better developer experience
+- **Next Steps**:
+  - Apply critical WebSocket bug fix immediately
+  - Proceed with refactoring phases
+  - Test each phase before moving to next
+  - Update documentation alongside implementation
+
+---
+
 ## 2025-10-18
 
 ### Task: Configurable Flood Count Setting
