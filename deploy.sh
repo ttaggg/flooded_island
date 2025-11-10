@@ -30,10 +30,13 @@ NGINX_ENABLED="/etc/nginx/sites-enabled/flooded-island.conf"
 SYSTEMD_SERVICE="/etc/systemd/system/${SERVICE_NAME}.service"
 LOG_DIR="/var/log/flooded-island"
 
-# Check if .env.production exists
-if [ ! -f ".env.production" ]; then
-    echo "⚠️  .env.production not found!"
-    echo "   Please create .env.production with production configuration"
+# Ensure .env exists (should contain production configuration)
+ENV_FILE=".env"
+if [ ! -f "$ENV_FILE" ]; then
+    echo "⚠️  $ENV_FILE not found!"
+    echo "   Please create .env by copying the appropriate template, e.g.:"
+    echo "     cp .env_prod.example .env"
+    echo "   or move .env_prod -> .env before running this script."
     echo "   You can use the following template:"
     echo ""
     cat << 'EOF'
@@ -68,12 +71,15 @@ rsync -av --delete \
     --exclude='.env.local' \
     . "$DEPLOY_DIR/"
 
-# Copy .env.production
-cp .env.production "$DEPLOY_DIR/.env.production"
+# Copy env file
+cp "$ENV_FILE" "$DEPLOY_DIR/.env"
 
 # Load environment variables for build
 cd "$DEPLOY_DIR"
-export $(cat .env.production | grep -v '^#' | xargs)
+set -a
+# shellcheck disable=SC1091
+source .env
+set +a
 
 # Build frontend
 echo ""
@@ -154,8 +160,8 @@ systemctl status "$SERVICE_NAME" --no-pager -l || true
 
 echo ""
 echo "🌐 Application URLs:"
-echo "   Production: https://island.olegmagn.es"
-echo "   API Health: https://island.olegmagn.es/api/health"
+echo "   Production: ${FRONTEND_URL:-https://island.olegmagn.es}"
+echo "   API Health: ${FRONTEND_URL:-https://island.olegmagn.es}/api/health"
 echo ""
 echo "📝 Logs:"
 echo "   Backend: journalctl -u ${SERVICE_NAME} -f"
@@ -170,10 +176,10 @@ echo "   Logs:    sudo journalctl -u ${SERVICE_NAME} -f"
 echo ""
 
 # Check if SSL is configured
-if [ ! -f "/etc/letsencrypt/live/island.olegmagn.es/fullchain.pem" ]; then
+if [ -n "${DOMAIN:-}" ] && [ ! -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]; then
     echo "⚠️  SSL Certificate not found!"
     echo ""
     echo "To configure SSL with Let's Encrypt, run:"
-    echo "   sudo certbot --nginx -d island.olegmagn.es"
+    echo "   sudo certbot --nginx -d ${DOMAIN:-your-domain.com}"
     echo ""
 fi

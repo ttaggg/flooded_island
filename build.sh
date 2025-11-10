@@ -9,28 +9,37 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
 # Load environment variables
-# Priority: .env.production (if exists) > .env
-if [ -f .env.production ]; then
-    echo "📝 Loading production environment (.env.production)..."
-    export $(grep -v '^#' .env.production | xargs)
-elif [ -f .env ]; then
-    echo "📝 Loading development environment (.env)..."
-    export $(grep -v '^#' .env | xargs)
+if [ -f .env ]; then
+    echo "📝 Loading environment from .env"
+    set -a; source .env; set +a
+else
+    echo "⚠️  .env not found; using built-in defaults."
+    [ -f .env_prod ] || [ -f .env_dev ] && \
+      echo "   Tip: copy the desired environment file to .env (e.g., cp .env_dev .env)"
+fi
+
+DEFAULT_BACKEND_URL="${BACKEND_PROTOCOL}://${BACKEND_HOST}"
+if [ -n "${BACKEND_PORT}" ]; then
+    DEFAULT_BACKEND_URL="${DEFAULT_BACKEND_URL}:${BACKEND_PORT}"
+fi
+
+if [ -n "${FRONTEND_URL:-}" ]; then
+    :
+else
+    FRONTEND_URL="${FRONTEND_PROTOCOL}://${FRONTEND_HOST}"
+    if [ -n "${FRONTEND_PORT}" ]; then
+        FRONTEND_URL="${FRONTEND_URL}:${FRONTEND_PORT}"
+    fi
 fi
 
 # Determine backend URL
-if [ -n "${VITE_BACKEND_URL:-}" ]; then
-    BACKEND_URL="$VITE_BACKEND_URL"
-elif [ -n "${SERVER_IP:-}" ]; then
-    BACKEND_URL="http://${SERVER_IP}:8000"
-else
-    BACKEND_URL="http://localhost:8000"
-fi
-
+BACKEND_URL="${VITE_BACKEND_URL:-$DEFAULT_BACKEND_URL}"
 export VITE_BACKEND_URL="$BACKEND_URL"
+export FRONTEND_URL
 
 echo "🔨 Building Flooded Island..."
 echo "   Backend URL: $BACKEND_URL"
+echo "   Frontend URL: $FRONTEND_URL"
 echo ""
 
 # Backend setup

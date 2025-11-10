@@ -8,6 +8,7 @@ import os
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
+import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,7 +20,7 @@ from routers import websocket
 
 
 # Load environment variables
-load_dotenv()
+load_dotenv(".env")
 
 # Get frontend URL for CORS
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
@@ -145,7 +146,6 @@ async def catch_all(path: str):
 
 
 if __name__ == "__main__":
-    import uvicorn
-
     port = int(os.getenv("BACKEND_PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True, log_level="info")
+    host = os.getenv("BACKEND_HOST")
+    uvicorn.run("main:app", host=host, port=port, log_level="info")

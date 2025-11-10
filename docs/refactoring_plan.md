@@ -26,19 +26,17 @@ This document breaks down the refactoring work into discrete, actionable issues 
 Frontend tries to connect to `localhost` instead of production domain after deployment.
 
 ### Root Cause
-Missing `return` statement in `frontend/src/utils/websocket.ts` line 76:
-```typescript
-const port = window.location.port;
-`${protocol}//${hostname}${port ? `:${port}` : ''}`;  // ❌ Missing return!
-```
+The production bundle inherited `VITE_BACKEND_URL=http://localhost:8000` from the legacy `.env`. When the site is served from `island.olegmagn.es`, the frontend obeys that override and connects back to localhost instead of the public domain.
 
 ### Changes Required
-1. Fix `frontend/src/utils/websocket.ts` line 76 - add `return` statement
-2. Rebuild frontend
-3. Redeploy to production
+1. Provide environment templates (`.env_dev`, `.env_prod.example`) while keeping the active configuration in `.env` after copying the appropriate template.
+2. Update `frontend/src/utils/websocket.ts` to trust the configured `VITE_BACKEND_URL` when present.
+3. Rebuild frontend
+4. Redeploy to production
 
 ### Acceptance Criteria
-- [ ] `return` statement added before the template string
+- [ ] Environment templates exist, and the workflow documents copying the desired file to `.env` before running scripts.
+- [ ] `getBackendUrl()` uses `VITE_BACKEND_URL` when defined
 - [ ] Frontend builds without errors
 - [ ] Production site connects to `wss://island.olegmagn.es/ws/...` (not localhost)
 - [ ] "Create Game" button creates room and connects successfully

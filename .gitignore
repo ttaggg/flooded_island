@@ -1,7 +1,7 @@
 # Environment
 .env
-.env.local
-.env.production
+.env_prod
+.env_prod.local
 
 # Python
 __pycache__/

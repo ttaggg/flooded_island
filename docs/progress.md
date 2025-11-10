@@ -1901,6 +1901,20 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Issue #1: WebSocket Localhost Connection Bug
+- **Date**: 2025-11-09
+- **Status**: Completed
+- **Changes**:
+  - Added `.env_dev` (tracked) and `.env_prod.example` (template) to centralize host configuration for both stacks—copy the appropriate file to `.env` before running commands.
+  - Updated `build.sh`, `start.sh`, and `deploy.sh` to load environment variables strictly from `.env`, with guidance to copy the desired template as needed.
+  - Updated `frontend/src/utils/websocket.ts` to trust `VITE_BACKEND_URL` as the authoritative value when provided.
+  - Ran `npm run lint` and `npm run build` to verify the frontend compiles cleanly.
+- **Notes**:
+  - Root cause was a localhost override leaking from the legacy `.env` into the production bundle; the new workflow keeps environment-specific templates while ensuring the active configuration lives in `.env`.
+  - With the environment set correctly, the frontend connects using the configured backend URL in both local and remote setups.
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]

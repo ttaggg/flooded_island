@@ -13,9 +13,24 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
 # Load environment variables
-if [ -f .env ]; then
-    export $(cat .env | grep -v '^#' | xargs)
+ENV_FILE=".env"
+if [ -f "$ENV_FILE" ]; then
+    echo "📝 Loading environment from $ENV_FILE"
+    set -a
+    # shellcheck disable=SC1090
+    source "$ENV_FILE"
+    set +a
+else
+    echo "⚠️  $ENV_FILE not found; using defaults."
+    if [ -f .env_dev ]; then
+        echo "   Tip: copy .env_dev to .env for local development."
+    fi
 fi
+
+BACKEND_HOST=${BACKEND_HOST:-localhost}
+BACKEND_PORT=${BACKEND_PORT:-8000}
+FRONTEND_HOST=${FRONTEND_HOST:-localhost}
+FRONTEND_PORT=${FRONTEND_PORT:-5173}
 
 # Create PID file directory if it doesn't exist
 mkdir -p .pids
@@ -72,8 +87,8 @@ nohup "$PYTHON_EXEC" main.py > ../.pids/backend.log 2>&1 &
 BACKEND_PID=$!
 echo $BACKEND_PID > ../.pids/backend.pid
 echo "   ✅ Backend started (PID: $BACKEND_PID)"
-echo "   📡 API: http://localhost:${BACKEND_PORT:-8000}"
-echo "   📚 Docs: http://localhost:${BACKEND_PORT:-8000}/docs"
+echo "   📡 API: http://${BACKEND_HOST}:${BACKEND_PORT}"
+echo "   📚 Docs: http://${BACKEND_HOST}:${BACKEND_PORT}/docs"
 
 cd ..
 
@@ -93,7 +108,7 @@ nohup npm run dev > ../.pids/frontend.log 2>&1 &
 FRONTEND_PID=$!
 echo $FRONTEND_PID > ../.pids/frontend.pid
 echo "   ✅ Frontend started (PID: $FRONTEND_PID)"
-echo "   🌐 App: http://localhost:5173"
+echo "   🌐 App: http://${FRONTEND_HOST}:${FRONTEND_PORT}"
 
 cd ..
 
@@ -116,7 +131,7 @@ fi
 echo ""
 echo "✅ Both servers are running!"
 echo ""
-echo "🎮 Open http://localhost:5173 in your browser to play"
+echo "🎮 Open http://${FRONTEND_HOST}:${FRONTEND_PORT} in your browser to play"
 echo ""
 echo "📝 Logs:"
 echo "   Backend: tail -f .pids/backend.log"

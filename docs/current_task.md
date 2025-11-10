@@ -34,9 +34,9 @@ See **`docs/refactoring_plan.md`** for 15 discrete, actionable issues that can b
 ## Key Problems Solved
 
 ### Issue 1: WebSocket Localhost Connection Bug ⚠️ CRITICAL
-- **Root Cause**: Missing `return` statement in `frontend/src/utils/websocket.ts:76`
+- **Root Cause**: Production builds were shipping `VITE_BACKEND_URL=http://localhost:8000`, forcing browsers to connect back to localhost even when served from the production domain.
 - **Impact**: Production deployment is non-functional
-- **Solution**: Issue #1 - One-line fix
+- **Solution**: Issue #1 - Added environment templates plus a workflow that copies the desired file to `.env`, and updated `getBackendUrl()` to rely on the configured `VITE_BACKEND_URL`.
 
 ### Issue 2: Poor Dev/Prod Separation
 - **Problem**: No clear naming convention for environment-specific scripts

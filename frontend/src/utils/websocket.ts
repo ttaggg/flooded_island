@@ -37,6 +37,15 @@ function isIPAddress(hostname: string): boolean {
 }
 
 /**
+ * Determine if the hostname refers to the local machine.
+ * @param hostname - Hostname to check
+ * @returns True when hostname is localhost or loopback
+ */
+function isLocalHostname(hostname: string): boolean {
+  return hostname === 'localhost' || hostname === '127.0.0.1';
+}
+
+/**
  * Get the backend URL from environment variables or detect from current host.
  * Works for both desktop (localhost) and mobile/server deployments.
  *
@@ -49,18 +58,25 @@ function isIPAddress(hostname: string): boolean {
  * @returns The backend base URL (http/https)
  */
 export function getBackendUrl(): string {
-  // If explicitly set in environment, use it (recommended for production)
-  const envUrl = import.meta.env.VITE_BACKEND_URL;
-  if (envUrl) {
-    return envUrl;
-  }
-
-  // Auto-detect based on current hostname
   const hostname = window.location.hostname;
   const protocol = window.location.protocol;
 
+  // If explicitly set in environment, use it (recommended for production)
+  const envUrlRaw = import.meta.env.VITE_BACKEND_URL?.trim();
+  if (envUrlRaw) {
+    try {
+      return new URL(envUrlRaw, `${protocol}//${hostname}`).toString();
+    } catch (error) {
+      console.warn(
+        'Invalid VITE_BACKEND_URL provided; falling back to automatic detection.',
+        error
+      );
+    }
+  }
+
+  // Auto-detect based on current hostname
   // If accessing via localhost, use localhost backend
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+  if (isLocalHostname(hostname)) {
     return 'http://localhost:8000';
   }
 
