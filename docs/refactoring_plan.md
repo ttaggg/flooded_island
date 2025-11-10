@@ -29,7 +29,7 @@ Frontend tries to connect to `localhost` instead of production domain after depl
 The production bundle inherited `VITE_BACKEND_URL=http://localhost:8000` from the legacy `.env`. When the site is served from `island.olegmagn.es`, the frontend obeys that override and connects back to localhost instead of the public domain.
 
 ### Changes Required
-1. Provide environment templates (`.env_dev`, `.env_prod.example`) while keeping the active configuration in `.env` after copying the appropriate template.
+1. Provide environment templates (`.env.dev`, `.env_prod.example`) while keeping the active configuration in `.env` after copying the appropriate template.
 2. Update `frontend/src/utils/websocket.ts` to trust the configured `VITE_BACKEND_URL` when present.
 3. Rebuild frontend
 4. Redeploy to production

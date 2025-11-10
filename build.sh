@@ -14,8 +14,8 @@ if [ -f .env ]; then
     set -a; source .env; set +a
 else
     echo "⚠️  .env not found; using built-in defaults."
-    [ -f .env_prod ] || [ -f .env_dev ] && \
-      echo "   Tip: copy the desired environment file to .env (e.g., cp .env_dev .env)"
+    [ -f .env.prod ] || [ -f .env.dev ] && \
+      echo "   Tip: copy the desired environment file to .env (e.g., cp .env.dev .env)"
 fi
 
 DEFAULT_BACKEND_URL="${BACKEND_PROTOCOL}://${BACKEND_HOST}"

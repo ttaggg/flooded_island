@@ -1,6 +1,6 @@
 # Environment
 .env
-.env_prod
+.env.prod
 
 # Python
 __pycache__/

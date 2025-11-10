@@ -35,8 +35,8 @@ ENV_FILE=".env"
 if [ ! -f "$ENV_FILE" ]; then
     echo "⚠️  $ENV_FILE not found!"
     echo "   Please create .env by copying the appropriate template, e.g.:"
-    echo "     cp .env_prod.example .env"
-    echo "   or move .env_prod -> .env before running this script."
+    echo "     cp .env.prod.example .env"
+    echo "   or move .env.prod -> .env before running this script."
     echo "   You can use the following template:"
     echo ""
     cat << 'EOF'

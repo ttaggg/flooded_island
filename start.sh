@@ -22,8 +22,8 @@ if [ -f "$ENV_FILE" ]; then
     set +a
 else
     echo "⚠️  $ENV_FILE not found; using defaults."
-    if [ -f .env_dev ]; then
-        echo "   Tip: copy .env_dev to .env for local development."
+    if [ -f .env.dev ]; then
+        echo "   Tip: copy .env.dev to .env for local development."
     fi
 fi
 
