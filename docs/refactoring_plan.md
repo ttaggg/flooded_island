@@ -260,7 +260,7 @@ LOG_DIR=/var/log/flooded-island
 Need dedicated development build script that uses `.env.development`.
 
 ### Changes Required
-1. Create `build_dev.sh` in repo root
+1. Create `build_dev.sh` in `scripts/` directory
 2. Load environment from `.env.development`
 3. Set up backend virtual environment
 4. Install backend dependencies
@@ -339,11 +339,11 @@ echo ""
 echo "🎉 Development build complete!"
 echo ""
 echo "Next steps:"
-echo "   ./start_dev.sh    # Start development servers"
+echo "   ./scripts/deploy_dev.sh    # Start development servers"
 ```
 
 ### Acceptance Criteria
-- [ ] Script created and executable (`chmod +x build_dev.sh`)
+- [ ] Script created and executable (`chmod +x scripts/build_dev.sh`)
 - [ ] Script loads `.env.development`
 - [ ] Script clears Python cache (`__pycache__`, `*.pyc`)
 - [ ] Script clears npm cache (`node_modules/.vite`)
@@ -357,7 +357,7 @@ echo "   ./start_dev.sh    # Start development servers"
 
 ### Testing
 ```bash
-./build_dev.sh
+./scripts/build_dev.sh
 # Should complete without errors
 # Check frontend/dist/ exists
 # Check backend/venv/ exists
@@ -375,7 +375,7 @@ echo "   ./start_dev.sh    # Start development servers"
 Need dedicated production build script that uses `.env.production`.
 
 ### Changes Required
-1. Create `build_prod.sh` in repo root
+1. Create `build_prod.sh` in `scripts/` directory
 2. Load environment from `.env.production`
 3. Set up backend virtual environment
 4. Install backend dependencies
@@ -461,7 +461,7 @@ echo ""
 ```
 
 ### Acceptance Criteria
-- [ ] Script created and executable (`chmod +x build_prod.sh`)
+- [ ] Script created and executable (`chmod +x scripts/build_prod.sh`)
 - [ ] Script loads `.env.production`
 - [ ] Script clears Python cache
 - [ ] Script clears npm cache and `.cache` directory
@@ -475,7 +475,7 @@ echo ""
 
 ### Testing
 ```bash
-./build_prod.sh
+./scripts/build_prod.sh
 # Should complete without errors
 # Check frontend/dist/ contains production build
 # Verify dist/index.html references production URLs
@@ -526,11 +526,11 @@ fi
 
 ### Testing
 ```bash
-./start_dev.sh
+./scripts/deploy_dev.sh
 # Should start both servers with correct ports
-# Should display configuration from .env.development
+# Should display configuration from .env.dev
 
-./stop_dev.sh
+./scripts/stop_dev.sh
 # Should stop both servers
 ```
 
@@ -874,6 +874,7 @@ Need comprehensive production deployment script that uses templates and env file
 8. Run smoke tests
 
 ### Implementation: `deploy_prod.sh`
+> Note: The final script should assume `scripts/build_prod.sh` has already produced the frontend bundle and only verify its presence during deployment.
 ```bash
 #!/bin/bash
 # Production Deployment Script
@@ -945,11 +946,11 @@ echo "🔨 Building application..."
 cd "$DEPLOY_DIR"
 
 # Build using build_prod.sh
-if [ -f build_prod.sh ]; then
-    chmod +x build_prod.sh
-    ./build_prod.sh
+if [ -f scripts/build_prod.sh ]; then
+    chmod +x scripts/build_prod.sh
+    ./scripts/build_prod.sh
 else
-    echo "❌ build_prod.sh not found!"
+    echo "❌ scripts/build_prod.sh not found!"
     exit 1
 fi
 
@@ -1107,7 +1108,7 @@ echo ""
 ### Testing
 ```bash
 # On server
-sudo ./deploy_prod.sh
+sudo ./scripts/deploy_prod.sh
 
 # Should complete without errors
 # Should display all green checkmarks for smoke tests
@@ -1141,8 +1142,8 @@ Old `build.sh` is obsolete, replaced by `build_dev.sh` and `build_prod.sh`.
 ### Testing
 ```bash
 # Verify new scripts work
-./build_dev.sh
-./build_prod.sh
+./scripts/build_dev.sh
+./scripts/build_prod.sh
 
 # Delete old script
 rm build.sh
@@ -1174,7 +1175,7 @@ Old `deploy.sh` is obsolete, replaced by `deploy_prod.sh`.
 
 ### Testing
 ```bash
-# After successful production deployment with deploy_prod.sh
+# After successful production deployment with scripts/deploy_prod.sh
 rm deploy.sh
 
 # Check for references
@@ -1237,16 +1238,16 @@ Documentation needs to reflect new build/deployment system.
 ### Development Workflow
 - [ ] Clone fresh repo
 - [ ] Create `.env.development` (or use committed one)
-- [ ] Run `./build_dev.sh` - completes without errors
-- [ ] Run `./start_dev.sh` - both servers start
+- [ ] Run `./scripts/build_dev.sh` - completes without errors
+- [ ] Run `./scripts/deploy_dev.sh` - both servers start
 - [ ] Visit `http://localhost:5173` - app loads
 - [ ] Create game - WebSocket connects to localhost:8000
 - [ ] Play game - works correctly
-- [ ] Run `./stop_dev.sh` - servers stop
+- [ ] Run `./scripts/stop_dev.sh` - servers stop
 
 ### Production Build Workflow
 - [ ] Create `.env.production` from example
-- [ ] Run `./build_prod.sh` - completes without errors
+- [ ] Run `./scripts/build_prod.sh` - completes without errors
 - [ ] Check `frontend/dist/` exists
 - [ ] Check `backend/venv/` exists
 - [ ] Verify dist files reference production URLs
@@ -1255,7 +1256,7 @@ Documentation needs to reflect new build/deployment system.
 - [ ] SSH to server
 - [ ] Clone/pull latest code
 - [ ] Create `.env.production` on server
-- [ ] Run `sudo ./deploy_prod.sh` - completes without errors
+- [ ] Run `sudo ./scripts/deploy_prod.sh` - completes without errors
 - [ ] All smoke tests pass (green checkmarks)
 - [ ] Visit `https://island.olegmagn.es` - app loads
 - [ ] Create game - WebSocket connects to `wss://island.olegmagn.es`
@@ -1265,7 +1266,7 @@ Documentation needs to reflect new build/deployment system.
 
 ### Domain Change Test
 - [ ] Update `DOMAIN` in `.env.production`
-- [ ] Run `sudo ./deploy_prod.sh`
+- [ ] Run `sudo ./scripts/deploy_prod.sh`
 - [ ] Nginx config has new domain
 - [ ] SSL paths have new domain
 - [ ] Frontend connects to new domain

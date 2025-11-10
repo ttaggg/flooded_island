@@ -40,6 +40,16 @@ Running log of completed tasks and changes to the project.
 - **Notes**:
   - `pre-commit` command unavailable in sandbox environment; manual review performed.
 
+### Task: Script Restructuring – Dev/Prod Tooling
+- **Status**: Completed ✅
+- **Summary**:
+  - Added dedicated scripts: `scripts/build_dev.sh`, `scripts/build_prod.sh`, `scripts/deploy_dev.sh`, `scripts/deploy_prod.sh`, `scripts/stop_dev.sh`, `scripts/stop_prod.sh`.
+  - Updated production automation to consume `.env.prod`, copying the file during deployment, verifying pre-built frontend assets, wiping the previous release, and aligning the systemd service definition.
+  - Removed legacy `build.sh`, `start.sh`, and `stop.sh`, renaming `deploy.sh` to `deploy_prod.sh`.
+  - Refreshed `README.md` and `deploy/README.md` to reflect the build-before-deploy workflow and added `.env.dev` to `.gitignore`.
+- **Verification**:
+  - `chmod +x scripts/build_prod.sh scripts/build_dev.sh scripts/deploy_prod.sh scripts/deploy_dev.sh scripts/stop_prod.sh scripts/stop_dev.sh`
+
 ---
 
 ## 2025-11-09
@@ -76,7 +86,7 @@ Running log of completed tasks and changes to the project.
 - **Proposed Solution**:
   - **Immediate**: Fix critical WebSocket bug (15 minutes)
   - **Phase 1**: Create environment files (`.env.development`, `.env.production`)
-  - **Phase 2**: Refactor scripts to `build_dev.sh`, `build_prod.sh`, `start_dev.sh`, `stop_dev.sh`, `deploy_prod.sh`
+  - **Phase 2**: Refactor scripts to `build_dev.sh`, `build_prod.sh`, `deploy_dev.sh`, `stop_dev.sh`, `deploy_prod.sh`
   - **Phase 3**: Create configuration templates for nginx and systemd
   - **Phase 4**: Update backend to read all config from env files
   - **Phase 5**: Update deployment to generate configs from templates

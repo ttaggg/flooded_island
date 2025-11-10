@@ -26,10 +26,14 @@ git clone <repository-url>
 cd flooding_islands
 ```
 
-2. **Start both servers** (easiest way)
+2. **Configure environment**
+
+Create `.env.dev` in the project root with the variables shown below.
+
+3. **Start both servers** (development stack)
 ```bash
-chmod +x start.sh stop.sh
-./start.sh
+chmod +x scripts/deploy_dev.sh scripts/stop_dev.sh
+./scripts/deploy_dev.sh
 ```
 
 This will:
@@ -37,9 +41,9 @@ This will:
 - Set up and start the frontend dev server on http://localhost:5173
 - Display URLs and status information
 
-3. **Stop both servers**
+4. **Stop both servers**
 ```bash
-./stop.sh
+./scripts/stop_dev.sh
 ```
 
 ### Manual Setup
@@ -86,9 +90,13 @@ flooded_island/
 │   │   └── utils/       # Utility functions
 │   └── package.json     # Node dependencies
 ├── docs/                # Project documentation
-├── .env                 # Environment variables (not committed)
-├── start.sh             # Start both servers
-└── stop.sh              # Stop both servers
+├── scripts/             # Automation scripts (dev/prod)
+│   ├── build_dev.sh
+│   ├── build_prod.sh
+│   ├── deploy_dev.sh
+│   ├── deploy_prod.sh
+│   ├── stop_dev.sh
+│   └── stop_prod.sh
 ```
 
 ## 🎯 How to Play
@@ -121,13 +129,17 @@ flooded_island/
 
 ### Environment Variables
 
-The `.env` file in the root directory contains:
+Development scripts read from `.env.dev`. A typical local file looks like:
 ```env
+BACKEND_HOST=localhost
 BACKEND_PORT=8000
-FRONTEND_URL=http://localhost:5173
+FRONTEND_HOST=localhost
+FRONTEND_PORT=5173
 VITE_BACKEND_URL=http://localhost:8000
 VITE_WS_URL=ws://localhost:8000
 ```
+
+Production automation relies on `.env.prod`, containing your public URLs and any secrets required by the server environment.
 
 ### Available Endpoints
 
@@ -155,26 +167,33 @@ Deploy to your own server with nginx, Let's Encrypt SSL, and systemd:
 
 2. **Copy project to server** (via git or rsync)
 
-3. **Create `.env.production`** with your domain configuration
+3. **Create `.env.prod`** with your domain configuration
 
-4. **Run deployment script**:
+4. **Build production artifacts locally**:
    ```bash
-   sudo ./deploy.sh
+   ./scripts/build_prod.sh
    ```
 
-5. **Configure SSL**:
+5. **Run deployment script**:
+   ```bash
+   sudo ./scripts/deploy_prod.sh
+   ```
+
+6. **Configure SSL**:
    ```bash
    sudo certbot --nginx -d your-domain.com
    ```
 
 For complete deployment instructions, see **[deploy/DEPLOYMENT.md](deploy/DEPLOYMENT.md)**
 
+> ℹ️ `scripts/deploy_prod.sh` assumes `scripts/build_prod.sh` has already produced the `frontend/dist` bundle. The deploy step stops the running service, replaces `/var/www/flooded-island`, and restarts the stack.
+
 ### Deployment Files
 
 - `deploy/nginx/flooded-island.conf` - Nginx reverse proxy configuration
 - `deploy/systemd/flooded-island-backend.service` - Systemd service
 - `deploy/DEPLOYMENT.md` - Complete deployment guide
-- `deploy.sh` - Automated deployment script
+- `deploy_prod.sh` - Automated deployment script
 
 ## 📚 Documentation
 
@@ -196,4 +215,4 @@ For complete deployment instructions, see **[deploy/DEPLOYMENT.md](deploy/DEPLOY
 
 ---
 
-**Ready to play?** Run `./start.sh` and open http://localhost:5173 in your browser!
+**Ready to play?** Run `./scripts/deploy_dev.sh` and open http://localhost:5173 in your browser!

@@ -4,7 +4,7 @@
 Configuration & Build System Refactoring
 
 ## Status
-Implementation in Progress – Issue #4 underway (filenames normalized) ✅
+Implementation in Progress – Script tooling (Issues #5-7, #12-13) completed; environment templates pending.
 
 ## Description
 Fix critical WebSocket connection bug and refactor the build/deployment system to properly separate development and production environments with centralized configuration.
@@ -19,7 +19,7 @@ See **`docs/refactoring_plan.md`** for 15 discrete, actionable issues that can b
 4. **[HIGH]** Create environment configuration files - 30 min
 5. **[MEDIUM]** Create `build_dev.sh` script - 45 min
 6. **[MEDIUM]** Create `build_prod.sh` script - 45 min
-7. **[MEDIUM]** Rename and update development scripts - 30 min
+7. **[MEDIUM]** Create `deploy_dev.sh` / `stop_dev.sh` scripts - 30 min
 8. **[MEDIUM]** Create nginx configuration template - 45 min
 9. **[MEDIUM]** Create systemd service template - 30 min
 10. **[HIGH]** Update backend configuration loading - 30 min
@@ -65,7 +65,13 @@ See **`docs/refactoring_plan.md`** for 15 discrete, actionable issues that can b
 - [x] Issue #1 – WebSocket localhost bug resolved (2025-11-09)
 - [x] Issue #2 – Backend health check endpoint delivered (2025-11-10)
 - [x] Issue #3 – `.gitignore` updated to ignore build artifacts (2025-11-10)
-- [ ] Issue #4 – Create environment configuration files (filenames normalized to dotted convention; templates still pending)
+- [ ] Issue #4 – Create environment configuration files (templates still pending)
+- [x] Issue #5 – `scripts/build_dev.sh` implemented for local builds (2025-11-10)
+- [x] Issue #6 – `scripts/build_prod.sh` implemented for production builds (2025-11-10)
+- [x] Issue #7 – `scripts/deploy_dev.sh` / `scripts/stop_dev.sh` replace legacy dev scripts (2025-11-10)
+- [x] Issue #11 – `scripts/deploy_prod.sh` created from legacy deploy script (2025-11-10)
+- [x] Issue #12 – Removed obsolete `build.sh` (2025-11-10)
+- [x] Issue #13 – Removed legacy `deploy.sh` entry point (2025-11-10)
 
 ## Recommended Execution Order
 1. **Issue #1** - Fix WebSocket (CRITICAL, blocks production)

@@ -44,12 +44,11 @@ const port = window.location.port;
 - Hard to understand which script to use for which environment
 
 **Desired State**:
-- `build_dev.sh` - Build for development
-- `build_prod.sh` - Build for production
-- `deploy_dev.sh` - Deploy to development environment (optional)
-- `deploy_prod.sh` - Deploy to production server
-- `start_dev.sh` - Start development servers
-- `stop_dev.sh` - Stop development servers
+- `scripts/build_dev.sh` - Build for development
+- `scripts/build_prod.sh` - Build for production
+- `scripts/deploy_dev.sh` - Deploy/start development stack
+- `scripts/deploy_prod.sh` - Deploy to production server
+- `scripts/stop_dev.sh` - Stop development servers
 
 ---
 
@@ -261,6 +260,7 @@ mv stop.sh stop_dev.sh
 - Ensure it uses development configuration
 
 #### Create `deploy_prod.sh` (rename/update current `deploy.sh`):
+- Assume the production build (`frontend/dist`) is generated ahead of time via `scripts/build_prod.sh`; the deployment step should simply validate its presence and sync it to `/var/www/flooded-island`.
 - Reads all configuration from `.env.production`
 - Generates nginx config from template
 - No hardcoded values
@@ -578,7 +578,7 @@ set -e
 3. **Deploy refactored version** (Phase 4-6)
    ```bash
    # After creating templates and new scripts
-   sudo ./deploy_prod.sh
+   sudo ./scripts/deploy_prod.sh
    ```
 
 4. **Clean up old files** (Phase 6)

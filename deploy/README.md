@@ -29,7 +29,7 @@ deploy/
 #### Systemd (`systemd/flooded-island-backend.service`)
 - Runs backend as `www-data` user
 - Auto-restart on failure
-- Loads environment from `.env.production`
+- Loads environment from `.env.prod`
 - Logs to `/var/log/flooded-island/`
 
 ## Prerequisites
@@ -83,7 +83,7 @@ cd /tmp/flooded-island
 ### 3. Create Environment File
 
 ```bash
-cat > .env.production << 'EOF'
+cat > .env.prod << 'EOF'
 BACKEND_PORT=8000
 HOST=0.0.0.0
 FRONTEND_URL=https://island.olegmagn.es
@@ -94,13 +94,21 @@ PYTHONUNBUFFERED=1
 EOF
 ```
 
-### 4. Deploy
+### 4. Build locally
 
 ```bash
-sudo ./deploy.sh
+./scripts/build_prod.sh
 ```
 
-### 5. Setup SSL
+### 5. Deploy
+
+```bash
+sudo ./scripts/deploy_prod.sh
+```
+
+> ℹ️ The deployment script stops the running backend service, wipes `/var/www/flooded-island`, and then syncs the freshly built artifacts.
+
+### 6. Setup SSL
 
 ```bash
 sudo certbot --nginx -d island.olegmagn.es

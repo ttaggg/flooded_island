@@ -11,7 +11,7 @@ echo ""
 # Check if running with sudo
 if [ "$EUID" -ne 0 ]; then
     echo "❌ This script must be run with sudo"
-    echo "Usage: sudo ./deploy.sh"
+    echo "Usage: sudo ./scripts/deploy_prod.sh"
     exit 1
 fi
 
@@ -20,7 +20,8 @@ ACTUAL_USER="${SUDO_USER:-$USER}"
 
 # Get the directory where this script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$SCRIPT_DIR"
+REPO_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
+cd "$REPO_ROOT"
 
 # Configuration
 DEPLOY_DIR="/var/www/flooded-island"
@@ -30,30 +31,26 @@ NGINX_ENABLED="/etc/nginx/sites-enabled/flooded-island.conf"
 SYSTEMD_SERVICE="/etc/systemd/system/${SERVICE_NAME}.service"
 LOG_DIR="/var/log/flooded-island"
 
-# Ensure .env exists (should contain production configuration)
-ENV_FILE=".env"
+# Ensure .env.prod exists (should contain production configuration)
+ENV_FILE="$REPO_ROOT/.env.prod"
 if [ ! -f "$ENV_FILE" ]; then
     echo "⚠️  $ENV_FILE not found!"
-    echo "   Please create .env by copying the appropriate template, e.g.:"
-    echo "     cp .env.prod.example .env"
-    echo "   or move .env.prod -> .env before running this script."
-    echo "   You can use the following template:"
-    echo ""
-    cat << 'EOF'
-BACKEND_PORT=8000
-HOST=0.0.0.0
-FRONTEND_URL=https://island.olegmagn.es
-VITE_BACKEND_URL=https://island.olegmagn.es
-VITE_WS_URL=wss://island.olegmagn.es
-DOMAIN=island.olegmagn.es
-PYTHONUNBUFFERED=1
-EOF
-    echo ""
+    echo "   Please create .env.prod (copy from your secure template)."
     exit 1
+fi
+
+# Stop existing service before replacing files
+if systemctl list-units --type=service | grep -q "$SERVICE_NAME"; then
+    echo "🛑 Stopping existing $SERVICE_NAME service..."
+    systemctl stop "$SERVICE_NAME" || true
 fi
 
 # Create deploy directory if it doesn't exist
 echo "📁 Setting up deployment directory..."
+if [ -d "$DEPLOY_DIR" ]; then
+    echo "   Removing previous deployment at $DEPLOY_DIR"
+    rm -rf "$DEPLOY_DIR"
+fi
 mkdir -p "$DEPLOY_DIR"
 mkdir -p "$LOG_DIR"
 
@@ -68,35 +65,33 @@ rsync -av --delete \
     --exclude='.pids' \
     --exclude='*.log' \
     --exclude='.env' \
+    --exclude='.env.dev' \
+    --exclude='.env.prod' \
     --exclude='.env.local' \
-    . "$DEPLOY_DIR/"
+    "$REPO_ROOT/" "$DEPLOY_DIR/"
 
 # Copy env file
-cp "$ENV_FILE" "$DEPLOY_DIR/.env"
+cp "$ENV_FILE" "$DEPLOY_DIR/.env.prod"
 
 # Load environment variables for build
 cd "$DEPLOY_DIR"
 set -a
 # shellcheck disable=SC1091
-source .env
+source .env.prod
 set +a
 
-# Build frontend
 echo ""
-echo "🏗️  Building frontend..."
-cd frontend
-sudo -u "$ACTUAL_USER" npm install
-sudo -u "$ACTUAL_USER" npm run build
-
-if [ ! -d "dist" ]; then
-    echo "❌ Frontend build failed - dist directory not found"
+echo "🔍 Verifying production build artifacts..."
+if [ ! -d "$DEPLOY_DIR/frontend/dist" ] || [ ! -f "$DEPLOY_DIR/frontend/dist/index.html" ]; then
+    echo "❌ Production assets not found (missing frontend/dist)."
+    echo "   Run ./scripts/build_prod.sh before deploying."
     exit 1
 fi
 
 # Setup backend
 echo ""
 echo "🐍 Setting up backend..."
-cd ../backend
+cd "$DEPLOY_DIR/backend"
 
 # Create virtual environment
 if [ ! -d ".venv" ]; then
