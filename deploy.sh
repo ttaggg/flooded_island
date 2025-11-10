@@ -161,7 +161,7 @@ systemctl status "$SERVICE_NAME" --no-pager -l || true
 echo ""
 echo "🌐 Application URLs:"
 echo "   Production: ${FRONTEND_URL:-https://island.olegmagn.es}"
-echo "   API Health: ${FRONTEND_URL:-https://island.olegmagn.es}/api/health"
+echo "   API Health: ${FRONTEND_URL:-https://island.olegmagn.es}/health"
 echo ""
 echo "📝 Logs:"
 echo "   Backend: journalctl -u ${SERVICE_NAME} -f"

@@ -6,6 +6,7 @@ Provides health check endpoint and configures CORS for frontend communication.
 import asyncio
 import os
 from contextlib import asynccontextmanager, suppress
+from datetime import UTC, datetime
 from pathlib import Path
 
 import uvicorn
@@ -78,6 +79,17 @@ if Path(frontend_dist_path).exists():
     app.mount("/vite.svg", StaticFiles(directory=frontend_dist_path), name="vite-svg")
 
 
+def health_payload() -> dict[str, str]:
+    """
+    Return a consistent payload for health endpoints.
+    """
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now(UTC).isoformat(),
+        "service": "flooded-island-backend",
+    }
+
+
 @app.get("/")
 async def serve_frontend():
     """
@@ -98,17 +110,13 @@ async def serve_frontend():
     }
 
 
-@app.get("/api/health")
+@app.get("/health")
 async def health_check():
     """
     Health check endpoint.
     Returns API status and basic information.
     """
-    return {
-        "status": "ok",
-        "message": "Flooded Island API is running",
-        "version": "1.0.0",
-    }
+    return health_payload()
 
 
 @app.post("/api/rooms")

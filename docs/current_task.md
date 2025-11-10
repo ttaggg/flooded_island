@@ -4,7 +4,7 @@
 Configuration & Build System Refactoring
 
 ## Status
-Ready for Implementation - Discrete Issues Created ✅
+Implementation in Progress – Issues #1-#3 Completed ✅
 
 ## Description
 Fix critical WebSocket connection bug and refactor the build/deployment system to properly separate development and production environments with centralized configuration.
@@ -62,7 +62,10 @@ See **`docs/refactoring_plan.md`** for 15 discrete, actionable issues that can b
 - [x] Root causes identified  
 - [x] Comprehensive brief created (`refactoring_brief.md`)
 - [x] Discrete actionable issues created (`refactoring_plan.md`)
-- [ ] **Next**: Start with Issue #1 (Critical WebSocket fix)
+- [x] Issue #1 – WebSocket localhost bug resolved (2025-11-09)
+- [x] Issue #2 – Backend health check endpoint delivered (2025-11-10)
+- [x] Issue #3 – `.gitignore` updated to ignore build artifacts (2025-11-10)
+- [ ] **Next**: Issue #4 – Create environment configuration files
 
 ## Recommended Execution Order
 1. **Issue #1** - Fix WebSocket (CRITICAL, blocks production)

@@ -4,6 +4,34 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+## 2025-11-10
+
+### Task: Issue #2 - Backend Health Check Endpoint
+- **Status**: Completed ✅
+- **Summary**:
+  - Added shared `health_payload()` helper in `backend/main.py` to produce `status`, `timestamp`, and `service`.
+  - Exposed new unauthenticated `/health` endpoint, updated `/api/health` to reuse the same payload for backward compatibility.
+  - Created `backend/tests/test_health.py` verifying both endpoints and ISO-8601 timestamps via FastAPI `TestClient`.
+  - Declared `pytest` in `backend/requirements.txt` to ensure the backend test suite is available.
+- **Verification**:
+  - `ruff check .`
+  - `pytest` (installation blocked by offline sandbox; tests rely on FastAPI `TestClient` and run when dependencies are available.)
+
+### Task: Issue #3 - Update .gitignore for Build Artifacts
+- **Status**: Completed ✅
+- **Changes**:
+  - Added ignore patterns for production environment files while keeping `.env.development` tracked for local templates.
+  - Ensured build artifacts like `frontend/dist/` and dependency directories (`frontend/node_modules/`, root `node_modules/`) are ignored.
+  - Added backend cache and virtual environment directories (`backend/__pycache__/`, `backend/**/__pycache__/`, `backend/.venv/`, `backend/venv/`) to the ignore list.
+  - Included cache directories (`.npm/`, `.vite/`) and explicit `*.pyc` coverage to keep transient files out of version control.
+- **Verification**:
+  - Confirmed via `git status --ignored` that build artifacts and caches are ignored while `.env.production` is untracked.
+  - Verified `.env.development` remains available for tracking templates.
+- **Notes**:
+  - No tracked artifacts required removal; repository index already excluded build outputs.
+
+---
+
 ## 2025-11-09
 
 ### Task: Configuration & Build System Refactoring - Planning Phase
