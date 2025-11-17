@@ -94,21 +94,15 @@ PYTHONUNBUFFERED=1
 EOF
 ```
 
-### 4. Build locally
-
-```bash
-./scripts/build_prod.sh
-```
-
-### 5. Deploy
+### 4. Build & Deploy
 
 ```bash
 sudo ./scripts/deploy_prod.sh
 ```
 
-> ℹ️ The deployment script stops the running backend service, wipes `/var/www/flooded-island`, and then syncs the freshly built artifacts.
+> ℹ️ The deployment script now handles the production build, stops the running backend service, wipes `/var/www/flooded-island`, and then syncs the freshly built artifacts.
 
-### 6. Setup SSL
+### 5. Setup SSL
 
 ```bash
 sudo certbot --nginx -d island.olegmagn.es

@@ -4,26 +4,39 @@
 
 set -e
 
-echo "🛑 Stopping Flooded Island production services..."
-echo ""
+log() {
+    printf '%s\n' "$1"
+}
+
+log "🛑 Stopping Flooded Island production services..."
+log ""
 
 if [ "$EUID" -ne 0 ]; then
-    echo "❌ This script must be run with sudo"
-    echo "Usage: sudo ./scripts/stop_prod.sh"
+    log "❌ This script must be run with sudo"
+    log "Usage: sudo ./scripts/stop_prod.sh"
     exit 1
 fi
 
 SERVICE_NAME="flooded-island-backend"
+NGINX_ENABLED="/etc/nginx/sites-enabled/flooded-island.conf"
 
-echo "   Stopping ${SERVICE_NAME}..."
+log "   Stopping ${SERVICE_NAME}..."
 systemctl stop "$SERVICE_NAME"
 
-echo "   Reloading nginx..."
-systemctl reload nginx || echo "   ⚠️  Failed to reload nginx (check logs)."
+if [ -L "$NGINX_ENABLED" ]; then
+    log "   Disabling nginx site..."
+    rm "$NGINX_ENABLED"
+    log "   Reloading nginx..."
+    systemctl reload nginx
+else
+    log "   ⚠️  Nginx site already disabled"
+fi
 
-echo ""
-echo "✅ Production services stopped."
-echo ""
-echo "📊 Current status:"
+log ""
+log "✅ Production services stopped and site disabled."
+log ""
+log "📊 Backend status:"
 systemctl status "$SERVICE_NAME" --no-pager -l || true
-echo ""
+log ""
+log "ℹ️  To re-enable the site, run: sudo ./scripts/deploy_prod.sh"
+log ""

@@ -1963,6 +1963,67 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Production WebSocket Outage (Post-Deploy)
+- **Date**: 2025-11-17
+- **Status**: Completed ✅
+- **Changes**:
+  - Updated `scripts/deploy_prod.sh` to recreate `/var/www/flooded-island/backend/.venv` on every deployment, install `requirements.txt`, and fail fast when Python is missing.
+  - Tightened the script’s safety (`set -euo pipefail`) and added interpreter auto-detection plus cleanup of stale virtualenv directories.
+  - Pointed `deploy/systemd/flooded-island-backend.service` at the absolute `main.py` path inside the freshly provisioned virtualenv to prevent `ExecStart` resolution issues.
+  - Documented the new deployment behavior in `docs/current_task.md`.
+- **Notes**:
+  - The backend service was crashing because the systemd unit referenced `.venv` even though the production deploy excludes virtual environments; recreating the venv during deployment keeps dependencies in sync with the code that was just copied over.
+  - To validate the fix after deployment, run `sudo systemctl status flooded-island-backend`, `curl -I https://island.olegmagn.es/health`, and `wscat --connect wss://island.olegmagn.es/ws/<room>` to confirm persistent WebSocket connectivity through nginx.
+
+---
+
+### Unified Build + Deploy Scripts
+- **Date**: 2025-11-17
+- **Status**: Completed ✅
+- **Changes**:
+  - Deleted `scripts/build_dev.sh` and `scripts/build_prod.sh`; their logic now lives inside `scripts/deploy_dev.sh` and `scripts/deploy_prod.sh`.
+  - `scripts/deploy_dev.sh` installs backend/frontend dependencies, builds the Vite bundle, and then launches the dev servers so a single command handles the full local workflow.
+  - `scripts/deploy_prod.sh` runs the production build (as the invoking user) before rsyncing to `/var/www/flooded-island`, ensuring fresh assets without a separate pre-step.
+  - Updated `README.md` to describe the streamlined process and removed references to the old build scripts.
+- **Notes**:
+  - Keeping build + deploy in one command avoids stale artifacts and prevents confusion about when `.venv` exists on the target host.
+  - Production builds still happen on the same machine that runs `deploy_prod.sh`, but now there’s no chance of skipping the build step accidentally.
+
+---
+
+### Deploy Script Conciseness Refactor
+- **Date**: 2025-11-17
+- **Status**: Completed
+- **Changes**:
+  - Refactored `scripts/deploy_dev.sh` with shared logging helpers, generalized backend/frontend preparation functions, and unified PID/process management utilities to collapse repeated `echo`/`nohup` blocks.
+  - Restructured `scripts/deploy_prod.sh` into discrete phases (build, sync, backend setup, nginx/systemd) with consistent logging plus consolidated helper functions inside the build heredoc.
+  - Fixed PID capture bug: `start_process` returns only the numeric PID, while `start_backend`/`start_frontend` simply call it without any logging; all status messages moved to the main script after capturing PIDs, preventing `ps: Invalid process id` errors.
+  - Simplified environment defaults, validation, and success output to make both scripts shorter and easier to scan.
+- **Notes**:
+  - The bug occurred because any stdout from `start_backend()`/`start_frontend()` is captured by command substitution, so even a single `log` call contaminated the PID variable with multi-line text.
+  - Solution: `start_process` echoes only the PID, and start helpers produce zero output; the main script logs everything after capturing clean PIDs.
+  - Future cleanups could still extract these helpers into a shared library once the deployment workflow stabilizes.
+
+---
+
+### Stop Scripts Enhancement
+- **Date**: 2025-11-17
+- **Status**: Completed
+- **Changes**:
+  - Updated `scripts/stop_prod.sh` to disable the nginx site configuration when stopping services.
+  - Added check for symlink existence before removal to handle already-disabled case gracefully.
+  - Refactored `scripts/stop_dev.sh` to use helper functions (`stop_service`, `cleanup_logs`, `check_any_running`) and consistent `log()` output.
+  - Replaced duplicated backend/frontend stop logic with a loop over `SERVICES` array.
+  - Added `set -euo pipefail` for safer script execution.
+  - Reused `service_pid_file()` and `service_log_file()` helpers matching `deploy_dev.sh`.
+- **Notes**:
+  - Production: previous behavior only stopped the backend service, leaving the static frontend accessible via nginx; new behavior removes `/etc/nginx/sites-enabled/flooded-island.conf` symlink and reloads nginx, making the entire site return 404.
+  - This approach is safe for shared servers running multiple sites - only affects Flooded Island, not other nginx sites.
+  - The symlink is recreated automatically when running `deploy_prod.sh`.
+  - Development: stop script now follows the same concise helper-based pattern as deploy scripts for consistency.
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]

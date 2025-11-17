@@ -3,27 +3,30 @@
 # Flooded Island - Production Deployment Script
 # Deploys application to /var/www/flooded-island with nginx and systemd
 
-set -e
+set -euo pipefail
 
-echo "🌊 Deploying Flooded Island to Production..."
-echo ""
+log() {
+    printf '%s\n' "$1"
+}
 
-# Check if running with sudo
+log_section() {
+    printf '\n%s\n\n' "$1"
+}
+
+log "🌊 Deploying Flooded Island to Production..."
+
 if [ "$EUID" -ne 0 ]; then
-    echo "❌ This script must be run with sudo"
-    echo "Usage: sudo ./scripts/deploy_prod.sh"
+    log "❌ This script must be run with sudo"
+    log "Usage: sudo ./scripts/deploy_prod.sh"
     exit 1
 fi
 
-# Get the actual user (not root) who invoked sudo
 ACTUAL_USER="${SUDO_USER:-$USER}"
 
-# Get the directory where this script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 cd "$REPO_ROOT"
 
-# Configuration
 DEPLOY_DIR="/var/www/flooded-island"
 SERVICE_NAME="flooded-island-backend"
 NGINX_AVAILABLE="/etc/nginx/sites-available/flooded-island.conf"
@@ -31,150 +34,216 @@ NGINX_ENABLED="/etc/nginx/sites-enabled/flooded-island.conf"
 SYSTEMD_SERVICE="/etc/systemd/system/${SERVICE_NAME}.service"
 LOG_DIR="/var/log/flooded-island"
 
-# Ensure .env.prod exists (should contain production configuration)
 ENV_FILE="$REPO_ROOT/.env.prod"
 if [ ! -f "$ENV_FILE" ]; then
-    echo "⚠️  $ENV_FILE not found!"
-    echo "   Please create .env.prod (copy from your secure template)."
+    log "⚠️  $ENV_FILE not found!"
+    log "   Please create .env.prod (copy from your secure template)."
     exit 1
 fi
 
-# Stop existing service before replacing files
-if systemctl list-units --type=service | grep -q "$SERVICE_NAME"; then
-    echo "🛑 Stopping existing $SERVICE_NAME service..."
-    systemctl stop "$SERVICE_NAME" || true
-fi
+build_source_artifacts() {
+    log_section "🔨 Building Flooded Island source tree before deployment..."
+    sudo -u "$ACTUAL_USER" REPO_ROOT="$REPO_ROOT" ENV_FILE="$ENV_FILE" bash <<'USER_BUILD'
+set -euo pipefail
+log() { printf '%s\n' "$1"; }
 
-# Create deploy directory if it doesn't exist
-echo "📁 Setting up deployment directory..."
-if [ -d "$DEPLOY_DIR" ]; then
-    echo "   Removing previous deployment at $DEPLOY_DIR"
-    rm -rf "$DEPLOY_DIR"
-fi
-mkdir -p "$DEPLOY_DIR"
-mkdir -p "$LOG_DIR"
+prepare_python_project() {
+    local dir="$1"
+    local label="${2:-backend}"
+    (
+        cd "$dir"
+        log "🐍 Preparing $label..."
+        find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+        find . -type f -name "*.pyc" -delete 2>/dev/null || true
+        if [ ! -d ".venv" ]; then
+            log "   Creating virtual environment..."
+            python3 -m venv .venv
+        fi
+        # shellcheck disable=SC1091
+        source .venv/bin/activate
+        log "   Installing dependencies..."
+        pip install -q -r requirements.txt
+        deactivate
+    )
+    log "✅ $label ready"
+}
 
-# Copy application files
-echo "📦 Copying application files..."
-rsync -av --delete \
-    --exclude='.git' \
-    --exclude='node_modules' \
-    --exclude='.venv' \
-    --exclude='venv' \
-    --exclude='__pycache__' \
-    --exclude='.pids' \
-    --exclude='*.log' \
-    --exclude='.env' \
-    --exclude='.env.dev' \
-    --exclude='.env.prod' \
-    --exclude='.env.local' \
-    "$REPO_ROOT/" "$DEPLOY_DIR/"
+prepare_node_project() {
+    local dir="$1"
+    local label="${2:-frontend}"
+    local run_build="${3:-false}"
+    (
+        cd "$dir"
+        log "⚛️  Preparing $label..."
+        rm -rf node_modules/.vite node_modules/.cache dist
+        log "   Installing dependencies..."
+        npm install
+        if [ "$run_build" = "true" ]; then
+            log "   Building $label..."
+            npm run build
+        fi
+    )
+    log "✅ $label built"
+}
 
-# Copy env file
-cp "$ENV_FILE" "$DEPLOY_DIR/.env.prod"
-
-# Load environment variables for build
-cd "$DEPLOY_DIR"
+cd "$REPO_ROOT"
 set -a
-# shellcheck disable=SC1091
-source .env.prod
+# shellcheck disable=SC1090
+source "$ENV_FILE"
 set +a
 
-echo ""
-echo "🔍 Verifying production build artifacts..."
-if [ ! -d "$DEPLOY_DIR/frontend/dist" ] || [ ! -f "$DEPLOY_DIR/frontend/dist/index.html" ]; then
-    echo "❌ Production assets not found (missing frontend/dist)."
-    echo "   Run ./scripts/build_prod.sh before deploying."
-    exit 1
-fi
+prepare_python_project "$REPO_ROOT/backend" "backend"
+prepare_node_project "$REPO_ROOT/frontend" "frontend" "true"
+log "🎉 Build phase complete!"
+USER_BUILD
+}
 
-# Setup backend
-echo ""
-echo "🐍 Setting up backend..."
-cd "$DEPLOY_DIR/backend"
+stop_existing_service() {
+    if systemctl list-units --type=service | grep -q "$SERVICE_NAME"; then
+        log "🛑 Stopping existing $SERVICE_NAME service..."
+        systemctl stop "$SERVICE_NAME" || true
+    fi
+}
 
-# Create virtual environment
-if [ ! -d ".venv" ]; then
-    echo "   Creating virtual environment..."
-    sudo -u "$ACTUAL_USER" python3 -m venv .venv
-fi
+sync_source_tree() {
+    log_section "📁 Setting up deployment directory..."
+    if [ -d "$DEPLOY_DIR" ]; then
+        log "   Removing previous deployment at $DEPLOY_DIR"
+        rm -rf "$DEPLOY_DIR"
+    fi
+    mkdir -p "$DEPLOY_DIR" "$LOG_DIR"
 
-# Install dependencies
-echo "   Installing dependencies..."
-sudo -u "$ACTUAL_USER" .venv/bin/pip install -r requirements.txt
+    log "📦 Copying application files..."
+    rsync -av --delete \
+        --exclude='.git' \
+        --exclude='node_modules' \
+        --exclude='.venv' \
+        --exclude='venv' \
+        --exclude='__pycache__' \
+        --exclude='.pids' \
+        --exclude='*.log' \
+        --exclude='.env' \
+        --exclude='.env.dev' \
+        --exclude='.env.prod' \
+        --exclude='.env.local' \
+        "$REPO_ROOT/" "$DEPLOY_DIR/"
 
-# Set ownership
-echo ""
-echo "🔒 Setting permissions..."
-chown -R www-data:www-data "$DEPLOY_DIR"
-chmod -R 755 "$DEPLOY_DIR"
+    cp "$ENV_FILE" "$DEPLOY_DIR/.env.prod"
+}
 
-# Install nginx configuration
-echo ""
-echo "🔧 Installing nginx configuration..."
-cp "$DEPLOY_DIR/deploy/nginx/flooded-island.conf" "$NGINX_AVAILABLE"
+load_prod_env() {
+    cd "$DEPLOY_DIR"
+    set -a
+    # shellcheck disable=SC1091
+    source .env.prod
+    set +a
+}
 
-# Enable nginx site
-if [ ! -L "$NGINX_ENABLED" ]; then
-    ln -s "$NGINX_AVAILABLE" "$NGINX_ENABLED"
-fi
+verify_frontend_artifacts() {
+    log_section "🔍 Verifying production build artifacts..."
+    if [ ! -d "$DEPLOY_DIR/frontend/dist" ] || [ ! -f "$DEPLOY_DIR/frontend/dist/index.html" ]; then
+        log "❌ Production assets not found (missing frontend/dist)."
+        log "   Ensure the frontend build completed successfully."
+        exit 1
+    fi
+}
 
-# Test nginx configuration
-echo "   Testing nginx configuration..."
-nginx -t
+setup_backend_virtualenv() {
+    log_section "🐍 Setting up backend virtual environment..."
+    local backend_dir="$DEPLOY_DIR/backend"
+    local python_bin="${PYTHON_BIN:-python3}"
+    if ! command -v "$python_bin" >/dev/null 2>&1; then
+        log "❌ Python interpreter '$python_bin' not found."
+        exit 1
+    fi
 
-# Install systemd service
-echo ""
-echo "🔧 Installing systemd service..."
-cp "$DEPLOY_DIR/deploy/systemd/${SERVICE_NAME}.service" "$SYSTEMD_SERVICE"
+    cd "$backend_dir"
+    local venv_path="$backend_dir/.venv"
+    if [ -d "$venv_path" ]; then
+        log "   Removing previous virtual environment..."
+        rm -rf "$venv_path"
+    fi
 
-# Reload systemd
-echo "   Reloading systemd daemon..."
-systemctl daemon-reload
+    log "   Creating virtual environment with $python_bin ..."
+    "$python_bin" -m venv "$venv_path"
+    local pip_bin="$venv_path/bin/pip"
+    if [ ! -x "$pip_bin" ]; then
+        log "❌ Failed to create virtual environment (pip missing)."
+        exit 1
+    fi
 
-# Enable and start service
-echo "   Enabling ${SERVICE_NAME} service..."
-systemctl enable "$SERVICE_NAME"
+    log "   Installing backend dependencies..."
+    "$pip_bin" install --upgrade pip >/dev/null
+    "$pip_bin" install --no-cache-dir -r requirements.txt
+    cd "$DEPLOY_DIR"
+}
 
-echo "   Restarting ${SERVICE_NAME} service..."
-systemctl restart "$SERVICE_NAME"
+set_permissions() {
+    log_section "🔒 Setting permissions..."
+    chown -R www-data:www-data "$DEPLOY_DIR"
+    chmod -R 755 "$DEPLOY_DIR"
+}
 
-# Reload nginx
-echo "   Reloading nginx..."
-systemctl reload nginx
+configure_nginx() {
+    log_section "🔧 Installing nginx configuration..."
+    cp "$DEPLOY_DIR/deploy/nginx/flooded-island.conf" "$NGINX_AVAILABLE"
+    if [ ! -L "$NGINX_ENABLED" ]; then
+        ln -s "$NGINX_AVAILABLE" "$NGINX_ENABLED"
+    fi
+    log "   Testing nginx configuration..."
+    nginx -t
+}
 
-# Wait a moment for services to start
-sleep 2
+configure_systemd() {
+    log_section "🔧 Installing systemd service..."
+    cp "$DEPLOY_DIR/deploy/systemd/${SERVICE_NAME}.service" "$SYSTEMD_SERVICE"
+    log "   Reloading systemd daemon..."
+    systemctl daemon-reload
+    log "   Enabling ${SERVICE_NAME} service..."
+    systemctl enable "$SERVICE_NAME"
+    log "   Restarting ${SERVICE_NAME} service..."
+    systemctl restart "$SERVICE_NAME"
+    log "   Reloading nginx..."
+    systemctl reload nginx
+}
 
-# Check service status
-echo ""
-echo "✅ Deployment complete!"
-echo ""
-echo "📊 Service Status:"
-systemctl status "$SERVICE_NAME" --no-pager -l || true
+print_summary() {
+    sleep 2
+    log_section "✅ Deployment complete!"
+    log "📊 Service Status:"
+    systemctl status "$SERVICE_NAME" --no-pager -l || true
+    log ""
+    log "🌐 Application URLs:"
+    log "   Production: ${FRONTEND_URL:-https://island.olegmagn.es}"
+    log "   API Health: ${FRONTEND_URL:-https://island.olegmagn.es}/health"
+    log ""
+    log "📝 Logs:"
+    log "   Backend: journalctl -u ${SERVICE_NAME} -f"
+    log "   Backend files: tail -f ${LOG_DIR}/backend.log"
+    log "   Nginx: tail -f /var/log/nginx/access.log"
+    log ""
+    log "🔧 Service Management:"
+    log "   Status:  sudo systemctl status ${SERVICE_NAME}"
+    log "   Restart: sudo systemctl restart ${SERVICE_NAME}"
+    log "   Stop:    sudo systemctl stop ${SERVICE_NAME}"
+    log "   Logs:    sudo journalctl -u ${SERVICE_NAME} -f"
+    log ""
 
-echo ""
-echo "🌐 Application URLs:"
-echo "   Production: ${FRONTEND_URL:-https://island.olegmagn.es}"
-echo "   API Health: ${FRONTEND_URL:-https://island.olegmagn.es}/health"
-echo ""
-echo "📝 Logs:"
-echo "   Backend: journalctl -u ${SERVICE_NAME} -f"
-echo "   Backend files: tail -f ${LOG_DIR}/backend.log"
-echo "   Nginx: tail -f /var/log/nginx/access.log"
-echo ""
-echo "🔧 Service Management:"
-echo "   Status:  sudo systemctl status ${SERVICE_NAME}"
-echo "   Restart: sudo systemctl restart ${SERVICE_NAME}"
-echo "   Stop:    sudo systemctl stop ${SERVICE_NAME}"
-echo "   Logs:    sudo journalctl -u ${SERVICE_NAME} -f"
-echo ""
+    if [ -n "${DOMAIN:-}" ] && [ ! -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]; then
+        log "⚠️  SSL Certificate not found!"
+        log "   To configure SSL with Let's Encrypt, run:"
+        log "   sudo certbot --nginx -d ${DOMAIN}"
+        log ""
+    fi
+}
 
-# Check if SSL is configured
-if [ -n "${DOMAIN:-}" ] && [ ! -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]; then
-    echo "⚠️  SSL Certificate not found!"
-    echo ""
-    echo "To configure SSL with Let's Encrypt, run:"
-    echo "   sudo certbot --nginx -d ${DOMAIN:-your-domain.com}"
-    echo ""
-fi
+build_source_artifacts
+stop_existing_service
+sync_source_tree
+load_prod_env
+verify_frontend_artifacts
+setup_backend_virtualenv
+set_permissions
+configure_nginx
+configure_systemd
+print_summary

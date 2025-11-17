@@ -1,6 +1,35 @@
 # Current Active Task
 
 ## Task
+Deploy Script Conciseness Refactor
+
+## Status
+Completed – helper abstractions, PID capture fix, and documentation landed on 2025-11-17.
+
+## General Idea
+Trim duplication inside `scripts/deploy_dev.sh` and `scripts/deploy_prod.sh` by adding local helper functions (logging, dependency prep, service management) so each script reads as a short sequence of phases instead of repetitive shell blocks.
+
+## Plan
+1. Introduce shared logging + preparation helpers inside `deploy_dev.sh`, unify PID handling, and keep the build/start phases readable.
+2. Split `deploy_prod.sh` into discrete functions (build, sync, backend setup, nginx/systemd) and reuse the same helper patterns inside the heredoc build step.
+3. Fix any runtime issues discovered during testing.
+4. Update `docs/progress.md` and this file once the refactor is complete.
+
+## Current Progress
+- [x] Development deploy script now uses helper abstractions for builds and background process management.
+- [x] Production deploy script is organized into named phases with consolidated logging and build helpers.
+- [x] Fixed PID capture bug where logging inside command substitution caused `ps: Invalid process id` errors.
+- [x] Documentation updated (progress + current task) to capture the work and the bug fix.
+
+## Notes
+- A shared `scripts/lib/deploy.sh` is still a future option, but keeping helpers inline avoided adding another file for this quick pass.
+- The PID bug was subtle: any stdout from functions called via command substitution gets captured, so `start_backend()`/`start_frontend()` must produce zero output; all logging happens in the main script after capturing PIDs.
+
+---
+
+## Previous Task Context – Configuration & Build System Refactoring
+
+## Task
 Configuration & Build System Refactoring
 
 ## Status
@@ -72,6 +101,8 @@ See **`docs/refactoring_plan.md`** for 15 discrete, actionable issues that can b
 - [x] Issue #11 – `scripts/deploy_prod.sh` created from legacy deploy script (2025-11-10)
 - [x] Issue #12 – Removed obsolete `build.sh` (2025-11-10)
 - [x] Issue #13 – Removed legacy `deploy.sh` entry point (2025-11-10)
+- [x] Production deploy script now provisions a backend virtualenv and the systemd unit launches with that interpreter (2025-11-17)
+- [x] Build steps merged into `deploy_dev.sh` / `deploy_prod.sh`, removing the standalone build scripts (2025-11-17)
 
 ## Recommended Execution Order
 1. **Issue #1** - Fix WebSocket (CRITICAL, blocks production)

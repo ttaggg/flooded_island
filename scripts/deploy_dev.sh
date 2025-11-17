@@ -1,12 +1,17 @@
 #!/bin/bash
 
 # Flooded Island - Development Deploy Script
-# Starts backend and frontend development servers using .env.dev
+# Builds the stack and starts backend/frontend development servers using .env.dev
 
-set -e
+set -euo pipefail
 
-echo "🚀 Starting Flooded Island development stack..."
-echo ""
+log() {
+    printf '%s\n' "$1"
+}
+
+log_section() {
+    printf '\n%s\n\n' "$1"
+}
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
@@ -14,118 +19,197 @@ cd "$REPO_ROOT"
 
 ENV_FILE="$REPO_ROOT/.env.dev"
 if [ ! -f "$ENV_FILE" ]; then
-    echo "❌ $ENV_FILE not found!"
-    echo "   Create it from your development template (e.g., .env.dev.example)."
+    log "❌ $ENV_FILE not found!"
+    log "   Create it from your development template (e.g., .env.dev.example)."
     exit 1
 fi
 
-echo "📝 Loading environment from $ENV_FILE"
+log "🚀 Starting Flooded Island development stack..."
+log "📝 Loading environment from $ENV_FILE"
 set -a
 # shellcheck disable=SC1090
 source "$ENV_FILE"
 set +a
 
-BACKEND_HOST=${BACKEND_HOST:-localhost}
-BACKEND_PORT=${BACKEND_PORT:-8000}
-FRONTEND_HOST=${FRONTEND_HOST:-localhost}
-FRONTEND_PORT=${FRONTEND_PORT:-5173}
+: "${BACKEND_HOST:=localhost}"
+: "${BACKEND_PORT:=8000}"
+: "${FRONTEND_HOST:=localhost}"
+: "${FRONTEND_PORT:=5173}"
 
 PID_DIR="$REPO_ROOT/.pids"
 mkdir -p "$PID_DIR"
+SERVICES=("backend" "frontend")
 
-cleanup() {
-    echo ""
-    echo "⚠️  Interrupted. Cleaning up..."
-    if [ -f "$PID_DIR/backend.pid" ]; then
-        BACKEND_PID=$(cat "$PID_DIR/backend.pid")
-        kill "$BACKEND_PID" 2>/dev/null || true
-    fi
-    if [ -f "$PID_DIR/frontend.pid" ]; then
-        FRONTEND_PID=$(cat "$PID_DIR/frontend.pid")
-        kill "$FRONTEND_PID" 2>/dev/null || true
-    fi
-    rm -f "$PID_DIR/backend.pid" "$PID_DIR/frontend.pid"
-    exit 1
+service_pid_file() {
+    printf '%s/%s.pid' "$PID_DIR" "$1"
 }
 
-trap cleanup INT TERM
+service_log_file() {
+    printf '%s/%s.log' "$PID_DIR" "$1"
+}
 
-if [ -f "$PID_DIR/backend.pid" ] || [ -f "$PID_DIR/frontend.pid" ]; then
-    echo "⚠️  Servers may already be running. Run ./scripts/stop_dev.sh first."
-    exit 1
-fi
+ensure_python_venv() {
+    if [ ! -d ".venv" ]; then
+        log "   Creating virtual environment..."
+        if command -v uv >/dev/null 2>&1; then
+            uv venv || python3 -m venv .venv
+        else
+            python3 -m venv .venv
+        fi
+    fi
+}
 
-echo "🐍 Starting backend server..."
-cd "$REPO_ROOT/backend"
-
-if [ ! -d ".venv" ]; then
-    echo "   Creating virtual environment..."
-    uv venv || python3 -m venv .venv
-fi
-
-source .venv/bin/activate
-
-if [ ! -f ".venv/.installed" ]; then
-    echo "   Installing dependencies..."
+install_python_dependencies() {
+    log "   Installing dependencies..."
     if command -v uv >/dev/null 2>&1; then
         uv pip install -r requirements.txt || pip install -r requirements.txt
     else
         pip install -r requirements.txt
     fi
-    touch .venv/.installed
-fi
+}
 
-PYTHON_EXEC="$(pwd)/.venv/bin/python"
+prepare_python_project() {
+    local dir="$1"
+    local label="${2:-Python project}"
+    (
+        cd "$dir"
+        log "🐍 Preparing $label..."
+        find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+        find . -type f -name "*.pyc" -delete 2>/dev/null || true
+        ensure_python_venv
+        # shellcheck disable=SC1091
+        source .venv/bin/activate
+        install_python_dependencies
+        deactivate
+    )
+    log "✅ $label ready"
+}
 
-nohup "$PYTHON_EXEC" main.py > "$PID_DIR/backend.log" 2>&1 &
-BACKEND_PID=$!
-echo $BACKEND_PID > "$PID_DIR/backend.pid"
-echo "   ✅ Backend started (PID: $BACKEND_PID)"
-echo "   📡 API: http://${BACKEND_HOST}:${BACKEND_PORT}"
-echo "   📚 Docs: http://${BACKEND_HOST}:${BACKEND_PORT}/docs"
+prepare_node_project() {
+    local dir="$1"
+    local label="${2:-Frontend}"
+    local run_build="${3:-false}"
+    (
+        cd "$dir"
+        log "⚛️  Preparing $label..."
+        rm -rf node_modules/.vite node_modules/.cache dist
+        log "   Installing dependencies..."
+        npm install
+        if [ "$run_build" = "true" ]; then
+            log "   Building $label..."
+            npm run build
+        fi
+    )
+    log "✅ $label built"
+}
 
-deactivate
-cd ..
+start_process() {
+    local key="$1"
+    local label="$2"
+    shift 2
+    local log_file pid_file
+    log_file="$(service_log_file "$key")"
+    pid_file="$(service_pid_file "$key")"
+    nohup "$@" > "$log_file" 2>&1 &
+    local pid=$!
+    echo "$pid" > "$pid_file"
+    echo "$pid"
+}
 
-echo ""
-echo "⚛️  Starting frontend server..."
-cd "$REPO_ROOT/frontend"
+cleanup() {
+    log_section "⚠️  Interrupted. Cleaning up..."
+    for service in "${SERVICES[@]}"; do
+        local pid_file
+        pid_file="$(service_pid_file "$service")"
+        if [ -f "$pid_file" ]; then
+            local pid
+            pid="$(cat "$pid_file")"
+            kill "$pid" 2>/dev/null || true
+            rm -f "$pid_file"
+            log "   Stopped $service (PID: $pid)"
+        fi
+    done
+    exit 1
+}
 
-if [ ! -d "node_modules" ]; then
-    echo "   Installing dependencies..."
-    npm install
-fi
+trap cleanup INT TERM
 
-nohup npm run dev > "$PID_DIR/frontend.log" 2>&1 &
-FRONTEND_PID=$!
-echo $FRONTEND_PID > "$PID_DIR/frontend.pid"
-echo "   ✅ Frontend started (PID: $FRONTEND_PID)"
-echo "   🌐 App: http://${FRONTEND_HOST}:${FRONTEND_PORT}"
+ensure_no_existing_pids() {
+    for service in "${SERVICES[@]}"; do
+        local pid_file
+        pid_file="$(service_pid_file "$service")"
+        if [ -f "$pid_file" ]; then
+            log "⚠️  $service appears to be running. Run ./scripts/stop_dev.sh first."
+            exit 1
+        fi
+    done
+}
 
-cd ..
+prepare_artifacts() {
+    log_section "🔨 Preparing local build artifacts..."
+    prepare_python_project "$REPO_ROOT/backend" "backend"
+    prepare_node_project "$REPO_ROOT/frontend" "frontend" "true"
+}
 
-echo ""
-echo "⏳ Waiting for servers to initialize..."
-sleep 3
+start_backend() {
+    cd "$REPO_ROOT/backend"
+    # shellcheck disable=SC1091
+    source .venv/bin/activate
+    local python_exec
+    python_exec="$(pwd)/.venv/bin/python"
+    start_process "backend" "Backend" "$python_exec" main.py
+    deactivate
+    cd "$REPO_ROOT"
+}
 
-if ! ps -p $BACKEND_PID > /dev/null; then
-    echo "❌ Backend failed to start. Check .pids/backend.log"
-    cleanup
-fi
+start_frontend() {
+    cd "$REPO_ROOT/frontend"
+    if [ ! -d "node_modules" ]; then
+        log "   Installing dependencies..."
+        npm install
+    fi
+    start_process "frontend" "Frontend" npm run dev
+    cd "$REPO_ROOT"
+}
 
-if ! ps -p $FRONTEND_PID > /dev/null; then
-    echo "❌ Frontend failed to start. Check .pids/frontend.log"
-    cleanup
-fi
+wait_for_services() {
+    local backend_pid="$1"
+    local frontend_pid="$2"
+    log ""
+    log "⏳ Waiting for servers to initialize..."
+    sleep 3
 
-echo ""
-echo "✅ Both servers are running!"
-echo ""
-echo "🎮 Open http://${FRONTEND_HOST}:${FRONTEND_PORT} in your browser to play"
-echo ""
-echo "📝 Logs:"
-echo "   Backend: tail -f .pids/backend.log"
-echo "   Frontend: tail -f .pids/frontend.log"
-echo ""
-echo "🛑 To stop servers: ./scripts/stop_dev.sh"
-echo ""
+    if ! ps -p "$backend_pid" > /dev/null; then
+        log "❌ Backend failed to start. Check $(service_log_file backend)"
+        cleanup
+    fi
+
+    if ! ps -p "$frontend_pid" > /dev/null; then
+        log "❌ Frontend failed to start. Check $(service_log_file frontend)"
+        cleanup
+    fi
+}
+
+ensure_no_existing_pids
+prepare_artifacts
+
+log_section "🚀 Starting development servers..."
+backend_pid="$(start_backend)"
+log "   ✅ Backend started (PID: $backend_pid)"
+log "   📡 API: http://${BACKEND_HOST}:${BACKEND_PORT}"
+log "   📚 Docs: http://${BACKEND_HOST}:${BACKEND_PORT}/docs"
+log ""
+frontend_pid="$(start_frontend)"
+log "   ✅ Frontend started (PID: $frontend_pid)"
+log "   🌐 App: http://${FRONTEND_HOST}:${FRONTEND_PORT}"
+wait_for_services "$backend_pid" "$frontend_pid"
+
+log_section "✅ Both servers are running!"
+log "🎮 Open http://${FRONTEND_HOST}:${FRONTEND_PORT} in your browser to play"
+log ""
+log "📝 Logs:"
+log "   Backend: tail -f $(service_log_file backend)"
+log "   Frontend: tail -f $(service_log_file frontend)"
+log ""
+log "🛑 To stop servers: ./scripts/stop_dev.sh"
+log ""

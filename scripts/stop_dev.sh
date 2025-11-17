@@ -2,68 +2,84 @@
 
 # Flooded Island - Development Stop Script
 
-echo "🛑 Stopping Flooded Island development servers..."
-echo ""
+set -euo pipefail
+
+log() {
+    printf '%s\n' "$1"
+}
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 cd "$REPO_ROOT"
 
 PID_DIR="$REPO_ROOT/.pids"
+SERVICES=("backend" "frontend")
 
-if [ ! -f "$PID_DIR/backend.pid" ] && [ ! -f "$PID_DIR/frontend.pid" ]; then
-    echo "ℹ️  No servers appear to be running (no PID files found)"
+service_pid_file() {
+    printf '%s/%s.pid' "$PID_DIR" "$1"
+}
+
+service_log_file() {
+    printf '%s/%s.log' "$PID_DIR" "$1"
+}
+
+stop_service() {
+    local service="$1"
+    local pid_file
+    pid_file="$(service_pid_file "$service")"
+
+    if [ ! -f "$pid_file" ]; then
+        return 0
+    fi
+
+    local pid
+    pid="$(cat "$pid_file")"
+
+    if ps -p "$pid" > /dev/null 2>&1; then
+        log "   Stopping $service (PID: $pid)..."
+        kill "$pid" 2>/dev/null || true
+        sleep 1
+        if ps -p "$pid" > /dev/null 2>&1; then
+            kill -9 "$pid" 2>/dev/null || true
+        fi
+    fi
+
+    rm -f "$pid_file"
+}
+
+cleanup_logs() {
+    for service in "${SERVICES[@]}"; do
+        rm -f "$(service_log_file "$service")"
+    done
+
+    if [ -d "$PID_DIR" ] && [ -z "$(ls -A "$PID_DIR")" ]; then
+        rmdir "$PID_DIR"
+    fi
+}
+
+check_any_running() {
+    for service in "${SERVICES[@]}"; do
+        if [ -f "$(service_pid_file "$service")" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+log "🛑 Stopping Flooded Island development servers..."
+log ""
+
+if ! check_any_running; then
+    log "ℹ️  No servers appear to be running (no PID files found)"
     exit 0
 fi
 
-if [ -f "$PID_DIR/backend.pid" ]; then
-    BACKEND_PID=$(cat "$PID_DIR/backend.pid")
-    if ps -p $BACKEND_PID > /dev/null 2>&1; then
-        echo "🐍 Stopping Backend Server (PID: $BACKEND_PID)..."
-        kill $BACKEND_PID 2>/dev/null || true
-        sleep 1
-        if ps -p $BACKEND_PID > /dev/null 2>&1; then
-            kill -9 $BACKEND_PID 2>/dev/null || true
-        fi
-        echo "   ✅ Backend stopped"
-    else
-        echo "   ⚠️  Backend process not found (PID: $BACKEND_PID)"
-    fi
-    rm -f "$PID_DIR/backend.pid"
-else
-    echo "   ℹ️  Backend PID file not found"
-fi
+for service in "${SERVICES[@]}"; do
+    stop_service "$service"
+done
 
-if [ -f "$PID_DIR/frontend.pid" ]; then
-    FRONTEND_PID=$(cat "$PID_DIR/frontend.pid")
-    if ps -p $FRONTEND_PID > /dev/null 2>&1; then
-        echo "⚛️  Stopping Frontend Server (PID: $FRONTEND_PID)..."
-        kill $FRONTEND_PID 2>/dev/null || true
-        sleep 1
-        if ps -p $FRONTEND_PID > /dev/null 2>&1; then
-            kill -9 $FRONTEND_PID 2>/dev/null || true
-        fi
-        echo "   ✅ Frontend stopped"
-    else
-        echo "   ⚠️  Frontend process not found (PID: $FRONTEND_PID)"
-    fi
-    rm -f "$PID_DIR/frontend.pid"
-else
-    echo "   ℹ️  Frontend PID file not found"
-fi
+cleanup_logs
 
-if [ -f "$PID_DIR/backend.log" ]; then
-    rm -f "$PID_DIR/backend.log"
-fi
-
-if [ -f "$PID_DIR/frontend.log" ]; then
-    rm -f "$PID_DIR/frontend.log"
-fi
-
-if [ -d "$PID_DIR" ] && [ -z "$(ls -A "$PID_DIR")" ]; then
-    rmdir "$PID_DIR"
-fi
-
-echo ""
-echo "✅ All development servers stopped successfully"
-echo ""
+log ""
+log "✅ All development servers stopped successfully"
+log ""

@@ -91,8 +91,6 @@ flooded_island/
 │   └── package.json     # Node dependencies
 ├── docs/                # Project documentation
 ├── scripts/             # Automation scripts (dev/prod)
-│   ├── build_dev.sh
-│   ├── build_prod.sh
 │   ├── deploy_dev.sh
 │   ├── deploy_prod.sh
 │   ├── stop_dev.sh
@@ -169,24 +167,19 @@ Deploy to your own server with nginx, Let's Encrypt SSL, and systemd:
 
 3. **Create `.env.prod`** with your domain configuration
 
-4. **Build production artifacts locally**:
-   ```bash
-   ./scripts/build_prod.sh
-   ```
-
-5. **Run deployment script**:
+4. **Run deployment script (build + install)**:
    ```bash
    sudo ./scripts/deploy_prod.sh
    ```
 
-6. **Configure SSL**:
+5. **Configure SSL**:
    ```bash
    sudo certbot --nginx -d your-domain.com
    ```
 
 For complete deployment instructions, see **[deploy/DEPLOYMENT.md](deploy/DEPLOYMENT.md)**
 
-> ℹ️ `scripts/deploy_prod.sh` assumes `scripts/build_prod.sh` has already produced the `frontend/dist` bundle. The deploy step stops the running service, replaces `/var/www/flooded-island`, and restarts the stack.
+> ℹ️ `scripts/deploy_prod.sh` now builds the backend/frontend artifacts and then deploys them to `/var/www/flooded-island`, replacing the running service in a single command.
 
 ### Deployment Files
 

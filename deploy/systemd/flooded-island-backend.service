@@ -1,7 +1,7 @@
 [Unit]
 Description=Flooded Island Backend Service
 After=network.target
-Documentation=https://github.com/your-repo/flooded_island
+Documentation=https://github.com/ttaggg/flooded_island
 
 [Service]
 Type=simple
@@ -13,7 +13,7 @@ WorkingDirectory=/var/www/flooded-island/backend
 EnvironmentFile=/var/www/flooded-island/.env.prod
 
 # Use virtual environment Python
-ExecStart=/var/www/flooded-island/backend/.venv/bin/python main.py
+ExecStart=/var/www/flooded-island/backend/.venv/bin/python /var/www/flooded-island/backend/main.py
 
 # Restart policy
 Restart=always
