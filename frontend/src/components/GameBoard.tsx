@@ -14,7 +14,7 @@
  * - Connection status monitoring
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GameState, PlayerRole, FieldState, Position } from '../types';
 import { Field } from './Field';
 import { TurnControls } from './TurnControls';
@@ -92,6 +92,84 @@ export function GameBoard({
   // Hover tracking state
   const [hoveredCell, setHoveredCell] = useState<Position | null>(null);
   const [dryingPreviewPositions, setDryingPreviewPositions] = useState<Position[]>([]);
+  const [cellSize, setCellSize] = useState<number>(60);
+
+  /**
+   * Calculate appropriate cell size based on grid dimensions and viewport
+   *
+   * Uses adaptive sizing that considers both the grid size and available viewport space.
+   * On desktop, uses larger fixed sizes for better visibility and interaction.
+   * On mobile and tablets, scales down to fit the screen while maintaining playability.
+   *
+   * @param width - Grid width
+   * @param height - Grid height
+   * @returns Cell size in pixels (30-90px range)
+   */
+  const getCellSize = (width: number, height: number): number => {
+    const MIN_CELL_SIZE = 30; // Minimum for playability
+    const maxDim = Math.max(width, height);
+
+    // Calculate base size for desktop
+    let baseSize;
+    if (maxDim <= 5) baseSize = 60;
+    else if (maxDim <= 7) baseSize = 50;
+    else baseSize = 40;
+    const desktopSize = Math.round(baseSize * 1.5);
+
+    // Calculate viewport-based size for mobile/tablet
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Account for UI elements and padding
+    // Horizontal: container padding (2*16px) + grid padding (2*16px) + gaps + borders
+    const horizontalPadding = viewportWidth < 768 ? 32 : 64; // Less padding on mobile
+    const gridPadding = viewportWidth < 768 ? 16 : 32;
+    const gapSpace = (width - 1) * 4; // gap-1 = 4px
+    const availableWidth = viewportWidth - horizontalPadding - gridPadding - gapSpace;
+
+    // Vertical: header (~200px mobile, ~250px desktop) + legend (~80px mobile, ~100px desktop)
+    // + controls (~100px) + padding
+    const headerHeight = viewportWidth < 768 ? 200 : 250;
+    const legendHeight = viewportWidth < 768 ? 80 : 100;
+    const controlsHeight = 100;
+    const verticalPadding = viewportWidth < 768 ? 64 : 128;
+    const availableHeight =
+      viewportHeight - headerHeight - legendHeight - controlsHeight - verticalPadding - gapSpace;
+
+    // Calculate max cell size that fits in viewport
+    const maxCellWidth = Math.floor(availableWidth / width);
+    const maxCellHeight = Math.floor(availableHeight / height);
+    const viewportBasedSize = Math.min(maxCellWidth, maxCellHeight);
+
+    // Use the smaller of viewport-based or desktop size, but not smaller than minimum
+    return Math.max(MIN_CELL_SIZE, Math.min(viewportBasedSize, desktopSize));
+  };
+
+  /**
+   * Effect to calculate and update cell size on mount and when grid dimensions change
+   * Also adds a resize listener to recalculate when viewport changes
+   */
+  useEffect(() => {
+    if (!gridWidth || !gridHeight) {
+      return;
+    }
+
+    const updateCellSize = () => {
+      const newSize = getCellSize(gridWidth, gridHeight);
+      setCellSize(newSize);
+    };
+
+    // Calculate initial size
+    updateCellSize();
+
+    // Add resize listener
+    window.addEventListener('resize', updateCellSize);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', updateCellSize);
+    };
+  }, [gridWidth, gridHeight]);
 
   // Early return if grid is not initialized
   if (!grid || !gridWidth || !gridHeight || !adventurerPosition) {
@@ -103,30 +181,6 @@ export function GameBoard({
       </div>
     );
   }
-
-  /**
-   * Calculate appropriate cell size based on grid dimensions
-   *
-   * Uses the maximum dimension to determine cell size for optimal visibility.
-   * Smaller grids get larger cells for better interaction.
-   * Board size is increased by 1.5x for better visibility.
-   *
-   * @param width - Grid width
-   * @param height - Grid height
-   * @returns Cell size in pixels (60-90px range)
-   */
-  const getCellSize = (width: number, height: number): number => {
-    const maxDim = Math.max(width, height);
-    let baseSize;
-    if (maxDim <= 5) baseSize = 60;
-    else if (maxDim <= 7) baseSize = 50;
-    else baseSize = 40;
-
-    // Increase board size by 1.5x
-    return Math.round(baseSize * 1.5);
-  };
-
-  const cellSize = getCellSize(gridWidth, gridHeight);
 
   /**
    * Get cardinal adjacent positions (N/S/E/W only) for drying preview
@@ -284,7 +338,7 @@ export function GameBoard({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex items-center justify-center px-2 md:px-4 py-4 md:py-8">
       {/* Connection Status Component */}
       <ConnectionStatus
         connectionState={connectionState}
@@ -297,39 +351,43 @@ export function GameBoard({
 
       <div className="max-w-6xl w-full">
         {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-5xl font-bold text-white mb-3 drop-shadow-lg">Flooded Island</h1>
-          <div className="flex items-center justify-center gap-8 text-white/90">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-2">
-              <span className="text-sm text-white/70">Day:</span>{' '}
-              <span className="font-bold text-xl">{currentTurn}</span>
-              <span className="text-sm text-white/70">/365</span>
+        <div className="text-center mb-4 md:mb-6">
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-2 md:mb-3 drop-shadow-lg">
+            Flooded Island
+          </h1>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 md:gap-8 text-white/90">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 md:px-6 py-1.5 md:py-2">
+              <span className="text-xs md:text-sm text-white/70">Day:</span>{' '}
+              <span className="font-bold text-lg md:text-xl">{currentTurn}</span>
+              <span className="text-xs md:text-sm text-white/70">/365</span>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-2">
-              <span className="text-sm text-white/70">Current Turn:</span>{' '}
-              <span className="font-bold text-xl capitalize">{currentRole}</span>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 md:px-6 py-1.5 md:py-2">
+              <span className="text-xs md:text-sm text-white/70">Current Turn:</span>{' '}
+              <span className="font-bold text-lg md:text-xl capitalize">{currentRole}</span>
             </div>
             <div
-              className={`backdrop-blur-sm rounded-lg px-6 py-2 ${
+              className={`backdrop-blur-sm rounded-lg px-4 md:px-6 py-1.5 md:py-2 ${
                 isMyTurn ? 'bg-yellow-400/30 ring-2 ring-yellow-400' : 'bg-white/10'
               }`}
             >
-              <span className="text-sm text-white/70">Your Role:</span>{' '}
-              <span className="font-bold text-xl capitalize">{myRole || 'Spectator'}</span>
+              <span className="text-xs md:text-sm text-white/70">Your Role:</span>{' '}
+              <span className="font-bold text-lg md:text-xl capitalize">
+                {myRole || 'Spectator'}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Main Game Board Card */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 shadow-2xl">
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 md:p-6 shadow-2xl">
           {/* Turn Indicator */}
-          <div className="text-center mb-4">
+          <div className="text-center mb-3 md:mb-4">
             {isMyTurn ? (
-              <p className="text-yellow-400 font-bold text-xl animate-pulse">
+              <p className="text-yellow-400 font-bold text-lg md:text-xl animate-pulse">
                 🎯 Your Turn - Make Your Move
               </p>
             ) : (
-              <p className="text-white/70 text-lg">
+              <p className="text-white/70 text-base md:text-lg">
                 Waiting for {currentRole === PlayerRole.ADVENTURER ? 'Adventurer' : 'Weather'} to
                 move...
               </p>
@@ -338,7 +396,7 @@ export function GameBoard({
 
           {/* Grid Container */}
           <div className="flex items-center justify-center">
-            <div className="bg-indigo-900/30 p-4 rounded-lg border-2 border-white/20 inline-block">
+            <div className="bg-indigo-900/30 p-2 md:p-4 rounded-lg border-2 border-white/20 inline-block">
               <div
                 className="inline-grid gap-1"
                 style={{
@@ -382,20 +440,20 @@ export function GameBoard({
           </div>
 
           {/* Legend */}
-          <div className="mt-6 flex justify-center gap-8">
+          <div className="mt-4 md:mt-6 flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 md:gap-8">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-yellow-200 border-2 border-yellow-400 rounded"></div>
-              <span className="text-white/80 text-sm font-medium">Dry Field</span>
+              <div className="w-5 h-5 md:w-6 md:h-6 bg-yellow-200 border-2 border-yellow-400 rounded"></div>
+              <span className="text-white/80 text-xs md:text-sm font-medium">Dry Field</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-blue-400 border-2 border-blue-600 rounded"></div>
-              <span className="text-white/80 text-sm font-medium">Flooded Field</span>
+              <div className="w-5 h-5 md:w-6 md:h-6 bg-blue-400 border-2 border-blue-600 rounded"></div>
+              <span className="text-white/80 text-xs md:text-sm font-medium">Flooded Field</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-yellow-200 border-2 border-yellow-400 rounded flex items-center justify-center">
+              <div className="w-5 h-5 md:w-6 md:h-6 bg-yellow-200 border-2 border-yellow-400 rounded flex items-center justify-center">
                 <span className="text-xs">🧙‍♂️</span>
               </div>
-              <span className="text-white/80 text-sm font-medium">Adventurer</span>
+              <span className="text-white/80 text-xs md:text-sm font-medium">Adventurer</span>
             </div>
           </div>
         </div>
@@ -412,8 +470,8 @@ export function GameBoard({
         />
 
         {/* Game Info Footer */}
-        <div className="mt-4 text-center">
-          <p className="text-white/50 text-sm">
+        <div className="mt-3 md:mt-4 text-center">
+          <p className="text-white/50 text-xs md:text-sm">
             Grid Size: {gridWidth}×{gridHeight} • Room ID: {gameState.roomId}
           </p>
         </div>

@@ -32,7 +32,7 @@ repos:
     hooks:
       - id: frontend-prettier
         name: Prettier (frontend)
-        entry: bash -c 'cd frontend && for file in "$@"; do npx prettier --write "${file#frontend/}"; done' --
+        entry: bash -c 'cd frontend && for file in "$@"; do ./node_modules/.bin/prettier --write "${file#frontend/}"; done' --
         language: system
         files: ^frontend/.*\.(ts|tsx|js|jsx|json|css|md)$
         pass_filenames: true
@@ -40,7 +40,7 @@ repos:
 
       - id: frontend-eslint
         name: ESLint (frontend)
-        entry: bash -c 'cd frontend && for file in "$@"; do npx eslint --fix "${file#frontend/}"; done' --
+        entry: bash -c 'cd frontend && for file in "$@"; do ./node_modules/.bin/eslint --fix "${file#frontend/}"; done' --
         language: system
         files: ^frontend/src/.*\.(ts|tsx)$
         pass_filenames: true

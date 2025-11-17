@@ -1,6 +1,39 @@
 # Current Active Task
 
 ## Task
+GameBoard Hook Order Fix
+
+## Status
+Completed ✅ – React hook order lint issue resolved on 2025-11-17.
+
+## General Idea
+Keep hooks unconditional inside `GameBoard.tsx` by delaying the loading fallback and guarding the resize effect body so React Hook ordering rules stay satisfied regardless of initialization state.
+
+## Plan
+1. Relocate the loading fallback until after all hooks execute.
+2. Add a guard inside the resize `useEffect` so it bails out when `gridWidth`/`gridHeight` are missing.
+3. Re-run `npm run lint` in `frontend/` and capture any blockers for follow-up.
+
+## Current Progress
+- [x] Moved the fallback UI so hooks (state + effects) always execute before any return.
+- [x] Added a readiness guard inside the resize effect to prevent undefined grid dimensions from being used.
+- [x] Attempted `npm run lint` (frontend); blocked by macOS `Operation not permitted` errors while accessing `node_modules/path-key`.
+- [x] Updated `docs/progress.md` and this file.
+
+## Implementation Details
+- Hook order is deterministic even when the grid is still initializing.
+- The resize effect no longer calculates or attaches listeners until `gridWidth` and `gridHeight` exist.
+- The "Initializing game board…" UI is unchanged; it simply renders after hook setup completes.
+
+## Notes
+- ESLint and npm tooling are currently blocked by macOS `Operation not permitted` errors against `frontend/node_modules/path-key` (and even `/opt/homebrew/.../npm/...`). Lint/tests must be rerun once filesystem permissions are fixed outside this workspace.
+- Grid remains playable even on small screens due to minimum cell size enforcement
+
+---
+
+## Previous Task Context – Deploy Script Conciseness Refactor
+
+## Task
 Deploy Script Conciseness Refactor
 
 ## Status
@@ -8,18 +41,6 @@ Completed – helper abstractions, PID capture fix, and documentation landed on 
 
 ## General Idea
 Trim duplication inside `scripts/deploy_dev.sh` and `scripts/deploy_prod.sh` by adding local helper functions (logging, dependency prep, service management) so each script reads as a short sequence of phases instead of repetitive shell blocks.
-
-## Plan
-1. Introduce shared logging + preparation helpers inside `deploy_dev.sh`, unify PID handling, and keep the build/start phases readable.
-2. Split `deploy_prod.sh` into discrete functions (build, sync, backend setup, nginx/systemd) and reuse the same helper patterns inside the heredoc build step.
-3. Fix any runtime issues discovered during testing.
-4. Update `docs/progress.md` and this file once the refactor is complete.
-
-## Current Progress
-- [x] Development deploy script now uses helper abstractions for builds and background process management.
-- [x] Production deploy script is organized into named phases with consolidated logging and build helpers.
-- [x] Fixed PID capture bug where logging inside command substitution caused `ps: Invalid process id` errors.
-- [x] Documentation updated (progress + current task) to capture the work and the bug fix.
 
 ## Notes
 - A shared `scripts/lib/deploy.sh` is still a future option, but keeping helpers inline avoided adding another file for this quick pass.

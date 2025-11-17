@@ -2024,6 +2024,55 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+### Adaptive Mobile Field Sizing
+- **Date**: 2025-11-17
+- **Status**: Completed ✅
+- **Changes**:
+  - Updated `GameBoard.tsx` `getCellSize()` function to calculate adaptive cell sizes based on viewport dimensions instead of using fixed pixel sizes.
+  - Implemented viewport-aware sizing that accounts for UI elements, padding, and margins, calculating available space for the grid.
+  - Added minimum cell size of 30px for playability on very small screens.
+  - Implemented dynamic cell size recalculation with `useEffect` hook and window resize listener.
+  - Added responsive Tailwind classes throughout `GameBoard.tsx`:
+    - Header title: `text-3xl md:text-5xl` (reduced from fixed `text-5xl`)
+    - Stats layout: `flex-col sm:flex-row` (stacks vertically on mobile)
+    - Container padding: `px-2 md:px-4 py-4 md:py-8` (less padding on mobile)
+    - Grid container padding: `p-3 md:p-6` (reduced on mobile)
+    - Turn indicator text: `text-lg md:text-xl` and `text-base md:text-lg`
+  - Updated legend section with responsive classes:
+    - Layout: `flex-col sm:flex-row` (stacks on mobile)
+    - Gap: `gap-3 sm:gap-4 md:gap-8` (smaller gaps on mobile)
+    - Legend boxes: `w-5 h-5 md:w-6 md:h-6` (smaller on mobile)
+    - Text sizes: `text-xs md:text-sm` (smaller on mobile)
+  - Field component adventurer emoji automatically scales proportionally with adaptive cell size.
+- **Technical Details**:
+  - Cell size calculation considers viewport width/height and subtracts space for header (~200px mobile, ~250px desktop), legend (~80px mobile, ~100px desktop), controls (~100px), and padding.
+  - Uses breakpoint of 768px (Tailwind's `md:` breakpoint) to distinguish mobile from desktop.
+  - Desktop sizes remain at 60-90px for optimal visibility, mobile scales down to fit viewport while respecting 30px minimum.
+  - The resize listener ensures grid adapts smoothly when device orientation changes or browser is resized.
+- **Verification**:
+  - No linter errors in `GameBoard.tsx`.
+  - Frontend builds successfully with TypeScript compilation.
+  - Implementation tested with browser resize to 375px width (iPhone X/11 Pro size).
+- **Notes**:
+  - The adaptive sizing ensures the game board fits on all mobile devices without horizontal scrolling.
+  - Grid remains playable even on small screens due to 30px minimum cell size.
+  - Responsive text and spacing throughout the UI improves mobile user experience.
+  - Changes are backward compatible - desktop experience unchanged with same large cell sizes.
+
+---
+
+### GameBoard Hook Order Fix
+- **Date**: 2025-11-17
+- **Status**: Completed ✅
+- **Changes**:
+  - Moved the "Initializing game board…" fallback so it renders after the hooks run, keeping the hook order consistent every render.
+  - Added a readiness guard to the resize `useEffect` that exits early when `gridWidth` or `gridHeight` are undefined, preventing the effect from registering listeners prematurely.
+  - Documented the new behavior in `docs/current_task.md` and this file.
+- **Notes**:
+  - `npm run lint` inside `frontend/` still cannot execute because macOS returns `Operation not permitted` for `frontend/node_modules/path-key` (and npm itself now fails to read `/opt/homebrew/.../@sigstore/verify/...`). Permissions must be repaired outside this workspace before rerunning lint/tests.
+
+---
+
 ## Template for Future Entries
 
 ### [Task Name]
