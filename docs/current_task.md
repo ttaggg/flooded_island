@@ -1,7 +1,14 @@
 # Current Active Task
 
 ## Task
-Migrate Shell Scripts to Use UV for Python Dependency Management
+Fix npm Audit Security Vulnerabilities
+
+## Status
+Completed ✅ – All npm security vulnerabilities fixed by upgrading to Tailwind v4 and Vite v7 on 2025-11-17.
+
+---
+
+## Previous Task Context – Migrate Shell Scripts to Use UV for Python Dependency Management
 
 ## Status
 Completed ✅ – All shell scripts now use `uv` as the primary tool for Python virtual environments and dependency installation on 2025-11-17.

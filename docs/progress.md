@@ -2109,3 +2109,28 @@ Running log of completed tasks and changes to the project.
   - Cross-platform support verified on both macOS and Linux
 
 ---
+
+## 2025-11-17: Fix npm Audit Security Vulnerabilities
+
+- **Status**: Completed ✅
+- **Changes**:
+  - Upgraded `tailwindcss` from 3.4.18 to 4.1.17
+    - Installed new `@tailwindcss/postcss@4.1.17` plugin (Tailwind v4 moved PostCSS integration to separate package)
+    - Updated `frontend/postcss.config.js` to use `@tailwindcss/postcss` instead of `tailwindcss`
+    - Fixed 3 high-severity glob vulnerabilities (CVE in glob CLI command injection via sucrase dependency)
+  - Upgraded `vite` from 5.4.21 to 7.2.2
+    - Upgraded `@vitejs/plugin-react` from 4.7.0 to 5.1.1
+    - Fixed 2 moderate-severity esbuild vulnerabilities (GHSA-67mh-4wv8-2f99: cross-site request vulnerability in dev server)
+  - Reduced total package count from 324 to 298 packages (removed 68 redundant dependencies from Tailwind v3)
+- **Verification**:
+  - `npm audit` shows 0 vulnerabilities (down from 5 vulnerabilities: 2 moderate, 3 high)
+  - `npm run build` completes successfully with both upgrades
+  - `npm run lint` passes with no errors
+  - Build output confirms: vite v7.2.2, tailwindcss v4.1.17, @tailwindcss/postcss v4.1.17
+- **Notes**:
+  - Tailwind v4 breaking change required migration from `tailwindcss` to `@tailwindcss/postcss` in PostCSS config
+  - Vite v7 and @vitejs/plugin-react v5 major upgrades were backward compatible (no code changes needed)
+  - All vulnerabilities were in development dependencies (not affecting production runtime)
+  - Conservative update approach: updated packages individually and tested after each upgrade
+
+---
