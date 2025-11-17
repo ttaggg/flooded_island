@@ -48,24 +48,29 @@ service_log_file() {
     printf '%s/%s.log' "$PID_DIR" "$1"
 }
 
-ensure_python_venv() {
-    if [ ! -d ".venv" ]; then
-        log "   Creating virtual environment..."
-        if command -v uv >/dev/null 2>&1; then
-            uv venv || python3 -m venv .venv
-        else
-            python3 -m venv .venv
+ensure_uv_installed() {
+    if ! command -v uv >/dev/null 2>&1; then
+        log "   Installing uv..."
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        # Add uv to PATH for current session (try both common install locations)
+        export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
+        if ! command -v uv >/dev/null 2>&1; then
+            log "❌ Failed to install uv. Please install it manually: https://github.com/astral-sh/uv"
+            exit 1
         fi
     fi
 }
 
-install_python_dependencies() {
-    log "   Installing dependencies..."
-    if command -v uv >/dev/null 2>&1; then
-        uv pip install -r requirements.txt || pip install -r requirements.txt
-    else
-        pip install -r requirements.txt
+ensure_python_venv() {
+    if [ ! -d ".venv" ]; then
+        log "   Creating virtual environment with uv..."
+        uv venv
     fi
+}
+
+install_python_dependencies() {
+    log "   Installing dependencies with uv..."
+    uv pip install -r requirements.txt
 }
 
 prepare_python_project() {
@@ -76,6 +81,7 @@ prepare_python_project() {
         log "🐍 Preparing $label..."
         find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
         find . -type f -name "*.pyc" -delete 2>/dev/null || true
+        ensure_uv_installed
         ensure_python_venv
         # shellcheck disable=SC1091
         source .venv/bin/activate

@@ -47,6 +47,19 @@ build_source_artifacts() {
 set -euo pipefail
 log() { printf '%s\n' "$1"; }
 
+ensure_uv_installed() {
+    if ! command -v uv >/dev/null 2>&1; then
+        log "   Installing uv..."
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        # Add uv to PATH for current session (try both common install locations)
+        export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
+        if ! command -v uv >/dev/null 2>&1; then
+            log "❌ Failed to install uv. Please install it manually: https://github.com/astral-sh/uv"
+            exit 1
+        fi
+    fi
+}
+
 prepare_python_project() {
     local dir="$1"
     local label="${2:-backend}"
@@ -55,14 +68,15 @@ prepare_python_project() {
         log "🐍 Preparing $label..."
         find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
         find . -type f -name "*.pyc" -delete 2>/dev/null || true
+        ensure_uv_installed
         if [ ! -d ".venv" ]; then
-            log "   Creating virtual environment..."
-            python3 -m venv .venv
+            log "   Creating virtual environment with uv..."
+            uv venv
         fi
         # shellcheck disable=SC1091
         source .venv/bin/activate
-        log "   Installing dependencies..."
-        pip install -q -r requirements.txt
+        log "   Installing dependencies with uv..."
+        uv pip install -r requirements.txt
         deactivate
     )
     log "✅ $label ready"
@@ -148,14 +162,24 @@ verify_frontend_artifacts() {
     fi
 }
 
+ensure_uv_installed_prod() {
+    if ! command -v uv >/dev/null 2>&1; then
+        log "   Installing uv..."
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        # Add uv to PATH for current session (try both common install locations)
+        export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
+        if ! command -v uv >/dev/null 2>&1; then
+            log "❌ Failed to install uv. Please install it manually: https://github.com/astral-sh/uv"
+            exit 1
+        fi
+    fi
+}
+
 setup_backend_virtualenv() {
     log_section "🐍 Setting up backend virtual environment..."
     local backend_dir="$DEPLOY_DIR/backend"
-    local python_bin="${PYTHON_BIN:-python3}"
-    if ! command -v "$python_bin" >/dev/null 2>&1; then
-        log "❌ Python interpreter '$python_bin' not found."
-        exit 1
-    fi
+
+    ensure_uv_installed_prod
 
     cd "$backend_dir"
     local venv_path="$backend_dir/.venv"
@@ -164,17 +188,10 @@ setup_backend_virtualenv() {
         rm -rf "$venv_path"
     fi
 
-    log "   Creating virtual environment with $python_bin ..."
-    "$python_bin" -m venv "$venv_path"
-    local pip_bin="$venv_path/bin/pip"
-    if [ ! -x "$pip_bin" ]; then
-        log "❌ Failed to create virtual environment (pip missing)."
-        exit 1
-    fi
-
-    log "   Installing backend dependencies..."
-    "$pip_bin" install --upgrade pip >/dev/null
-    "$pip_bin" install --no-cache-dir -r requirements.txt
+    log "   Creating virtual environment with uv..."
+    uv venv
+    log "   Installing backend dependencies with uv..."
+    uv pip install --no-cache -r requirements.txt
     cd "$DEPLOY_DIR"
 }
 

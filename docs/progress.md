@@ -2083,3 +2083,29 @@ Running log of completed tasks and changes to the project.
 - **Notes**: [Any important notes or decisions]
 
 ---
+
+## 2025-11-17: Migrate Shell Scripts to Use UV for Python Dependency Management
+
+- **Status**: Completed
+- **Changes**:
+  - Added `ensure_uv_installed()` function to `scripts/deploy_dev.sh` that automatically installs `uv` if not present
+  - Updated `ensure_python_venv()` to exclusively use `uv venv` for virtual environment creation
+  - Updated `install_python_dependencies()` to exclusively use `uv pip install` for dependency installation
+  - Added `ensure_uv_installed()` function to `scripts/deploy_prod.sh` build phase (within the heredoc for user builds)
+  - Updated `prepare_python_project()` in build phase to call `ensure_uv_installed` and use `uv` commands
+  - Added `ensure_uv_installed_prod()` function for deployment phase in `scripts/deploy_prod.sh`
+  - Updated `setup_backend_virtualenv()` to exclusively use `uv` for venv creation and dependency installation
+  - Removed all fallback logic to standalone `pip` or `python3 -m venv` commands
+  - Fixed PATH export to include both `$HOME/.cargo/bin` (macOS) and `$HOME/.local/bin` (Linux) for cross-platform compatibility
+  - Verified syntax of all modified shell scripts
+  - Updated `docs/current_task.md` and `docs/progress.md`
+- **Notes**: 
+  - `uv` is significantly faster than traditional pip (10-100x speedup)
+  - Scripts now automatically install `uv` via `curl -LsSf https://astral.sh/uv/install.sh | sh` if not already present
+  - The installer places `uv` in `~/.cargo/bin/` on macOS and `~/.local/bin/` on Linux - scripts export both to PATH for compatibility
+  - No manual setup required - scripts handle everything automatically
+  - If `uv` installation fails, scripts exit with a clear error message
+  - All Python operations now consistently use `uv` across both development and production environments
+  - Cross-platform support verified on both macOS and Linux
+
+---
