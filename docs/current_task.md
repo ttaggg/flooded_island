@@ -1,7 +1,47 @@
 # Current Active Task
 
 ## Task
-Fix npm Audit Security Vulnerabilities
+Fix Tailwind CSS v4 Configuration and Deployment Issues
+
+## Status
+Completed ✅ – Tailwind CSS v4 configuration updated and deployment scripts fixed on 2025-11-17.
+
+## General Idea
+After upgrading to Tailwind CSS v4, the frontend build failed during deployment because:
+1. Tailwind v4 uses a completely different configuration system (CSS-based instead of JavaScript)
+2. The old `@tailwind` directives are replaced with `@import "tailwindcss"`
+3. Theme configuration moved from `tailwind.config.js` to CSS using `@theme` directive
+4. Deployment scripts weren't doing clean npm installations, causing version conflicts
+
+## Changes Made
+1. **Updated `frontend/src/index.css`**:
+   - Changed from `@tailwind base; @tailwind components; @tailwind utilities;` to `@import "tailwindcss"`
+   - Migrated theme configuration to CSS using `@theme` directive with CSS variables
+   - Defined custom colors (field-dry, field-flooded, indigo palette) as CSS variables
+   - Defined custom animations using CSS variables
+
+2. **Simplified `frontend/tailwind.config.js`**:
+   - Removed all theme configuration (now handled in CSS)
+   - Kept only the `content` array for file scanning
+
+3. **Fixed deployment scripts** (`deploy_prod.sh` and `deploy_dev.sh`):
+   - Changed `npm install` to `npm ci` in `prepare_node_project()` function
+   - Ensures clean installation from `package-lock.json` every time
+   - Prevents version conflicts with existing `node_modules`
+
+## Verification
+- ✅ Local build successful (`npm run build`)
+- ✅ CSS bundle generated correctly (37.73 kB)
+- ✅ No TypeScript or build errors
+
+## Notes
+- Tailwind CSS v4 is a major breaking change from v3
+- The PostCSS plugin moved to `@tailwindcss/postcss` (already in package.json)
+- Using `npm ci` is more reliable for deployment than `npm install`
+
+---
+
+## Previous Task Context – Fix npm Audit Security Vulnerabilities
 
 ## Status
 Completed ✅ – All npm security vulnerabilities fixed by upgrading to Tailwind v4 and Vite v7 on 2025-11-17.

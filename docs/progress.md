@@ -4,6 +4,57 @@ Running log of completed tasks and changes to the project.
 
 ---
 
+## 2025-11-17
+
+### Task: Fix Tailwind CSS v4 Configuration and Deployment Issues
+- **Status**: Completed ✅
+- **Summary**:
+  - Migrated frontend from Tailwind CSS v3 configuration to v4 CSS-based configuration system
+  - Updated `frontend/src/index.css` to use `@import "tailwindcss"` instead of old `@tailwind` directives
+  - Moved theme configuration from JavaScript to CSS using `@theme` directive with CSS variables
+  - Simplified `frontend/tailwind.config.js` to only contain content paths
+  - Fixed deployment scripts (`deploy_prod.sh` and `deploy_dev.sh`) to use `npm ci` instead of `npm install`
+- **Changes Made**:
+  1. **Frontend CSS Configuration**:
+     - Replaced `@tailwind base; @tailwind components; @tailwind utilities;` with `@import "tailwindcss"`
+     - Added `@theme` block with CSS variable definitions:
+       - Custom game colors: `--color-field-dry`, `--color-field-flooded` (with light/dark variants)
+       - Extended indigo palette: `--color-indigo-50` through `--color-indigo-950`
+       - Custom animations: `--animate-flip`, `--animate-pulse-slow`
+     - Moved `@keyframes flip` definition to CSS (removed from JS config)
+  2. **Tailwind Configuration**:
+     - Removed entire `theme.extend` object from `tailwind.config.js`
+     - Removed `plugins` array and `animation`/`keyframes` definitions
+     - Kept only `content` array for file scanning
+  3. **Deployment Scripts**:
+     - Changed `prepare_node_project()` function to use `npm ci` for clean installations
+     - Ensures exact `package-lock.json` match and prevents version conflicts
+     - Applied to both `deploy_dev.sh` and `deploy_prod.sh`
+- **Root Cause**:
+  - Tailwind CSS v4 (4.1.17) requires PostCSS plugin `@tailwindcss/postcss` instead of direct `tailwindcss` plugin
+  - Theme configuration must be done via CSS variables in `@theme` blocks, not JavaScript
+  - Existing `node_modules` on remote machine had version conflicts with v4 requirements
+  - `npm install` was not removing old v3 plugin structure
+- **Verification**:
+  - ✅ Local build successful: `npm run build` completed without errors
+  - ✅ CSS bundle generated: `dist/assets/index-Dlq7QxGl.css` (37.73 kB, gzipped: 6.61 kB)
+  - ✅ JavaScript bundle generated: `dist/assets/index-CtHnYzoh.js` (188.68 kB, gzipped: 57.44 kB)
+  - ✅ TypeScript compilation successful with no errors
+  - ✅ Vite build completed in 1.30s
+- **Files Modified**:
+  - `frontend/src/index.css` - Migrated to v4 syntax with CSS-based theme
+  - `frontend/tailwind.config.js` - Simplified to content-only config
+  - `scripts/deploy_prod.sh` - Changed to `npm ci` for clean installs
+  - `scripts/deploy_dev.sh` - Changed to `npm ci` for clean installs
+- **Notes**:
+  - Tailwind CSS v4 is a major architectural change requiring CSS-based configuration
+  - All custom colors, animations, and theme extensions now defined as CSS variables
+  - The `@tailwindcss/postcss` plugin (already in `package.json`) is required for v4
+  - Using `npm ci` is best practice for CI/CD and deployment scenarios
+  - Existing functionality and styling maintained - only configuration format changed
+
+---
+
 ## 2025-11-10
 
 ### Task: Issue #2 - Backend Health Check Endpoint

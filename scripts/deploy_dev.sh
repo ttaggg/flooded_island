@@ -100,7 +100,7 @@ prepare_node_project() {
         log "⚛️  Preparing $label..."
         rm -rf node_modules/.vite node_modules/.cache dist
         log "   Installing dependencies..."
-        npm install
+        npm ci
         if [ "$run_build" = "true" ]; then
             log "   Building $label..."
             npm run build
