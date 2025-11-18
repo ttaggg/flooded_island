@@ -155,5 +155,5 @@ async def catch_all(path: str):
 
 if __name__ == "__main__":
     port = int(os.getenv("BACKEND_PORT", 8000))
-    host = os.getenv("BACKEND_HOST")
+    host = os.getenv("BACKEND_HOST", "127.0.0.1")
     uvicorn.run("main:app", host=host, port=port, log_level="info")

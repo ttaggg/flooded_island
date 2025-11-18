@@ -2,19 +2,27 @@
 
 A turn-based multiplayer strategy game where two players compete on a flooding grid. One player (the Adventurer) tries to survive 365 days by moving strategically and drying adjacent fields, while the other player (the Weather) attempts to trap them by flooding the island.
 
+**Ready to play?** Play at https://island.olegmagn.es!
+
+<p align="center">
+  <img src="assets/screenshot_1.jpg" height="300" />
+  <img src="assets/screenshot_2.jpg" height="300" />
+  <img src="assets/screenshot_3.jpg" height="300" />
+</p>
+
 ## 🎮 Game Overview
 
 - **Two Asymmetric Roles**: Adventurer (survivor) vs Weather (adversary)
 - **Turn-Based Strategy**: Each player makes strategic decisions to win
 - **Online Multiplayer**: Real-time WebSocket communication
 - **Configurable Grid**: Adjustable grid size (3x3 to 10x10)
-- **Beautiful UI**: Indigo-themed interface with smooth animations
+- **UI**: Indigo-themed interface with smooth animations
 
-## 🚀 Quick Start
+## 🚀 Development
 
 ### Prerequisites
 
-- **Python 3.11+ (3.13+ recommended)** (backend)
+- **Python 3.13+** (backend)
 - **Node.js 18+** (frontend)
 - **[uv](https://github.com/astral-sh/uv)** - Fast Python package installer
 
@@ -22,15 +30,14 @@ A turn-based multiplayer strategy game where two players compete on a flooding g
 
 1. **Clone the repository**
 ```bash
-git clone <repository-url>
-cd flooding_islands
+git clone https://github.com/ttaggg/flooded_island.git
+cd flooded_island
 ```
 
-2. **Configure environment**
+2. **Start both servers**
 
-Create `.env.dev` in the project root with the variables shown below.
+Configure `.env.dev` in the project root and run deploy script.
 
-3. **Start both servers** (development stack)
 ```bash
 chmod +x scripts/deploy_dev.sh scripts/stop_dev.sh
 ./scripts/deploy_dev.sh
@@ -46,37 +53,11 @@ This will:
 ./scripts/stop_dev.sh
 ```
 
-### Manual Setup
-
-If you prefer to set up each component individually:
-
-#### Backend Setup
-
-```bash
-cd backend
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install -r requirements.txt
-python main.py
-```
-
-See [backend/README.md](backend/README.md) for detailed backend setup instructions.
-
-#### Frontend Setup
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-See [frontend/README.md](frontend/README.md) for detailed frontend setup instructions.
-
 ## 📁 Project Structure
 
 ```
 flooded_island/
-├── backend/              # FastAPI backend
+├── backend/             # FastAPI backend
 │   ├── game/            # Game logic modules
 │   ├── models/          # Pydantic data models
 │   ├── routers/         # API routes and WebSocket handlers
@@ -123,38 +104,6 @@ flooded_island/
 - **Vite**: Build tool and dev server
 - **Tailwind CSS**: Utility-first CSS with indigo theme
 
-## 🌐 Development
-
-### Environment Variables
-
-Development scripts read from `.env.dev`. A typical local file looks like:
-```env
-BACKEND_HOST=localhost
-BACKEND_PORT=8000
-FRONTEND_HOST=localhost
-FRONTEND_PORT=5173
-VITE_BACKEND_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
-```
-
-Production automation relies on `.env.prod`, containing your public URLs and any secrets required by the server environment.
-
-### Available Endpoints
-
-- **Backend API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
-- **Frontend**: http://localhost:5173
-
-### Development Workflow
-
-1. Make changes to backend or frontend code
-2. Both servers support hot reload (changes apply automatically)
-3. Test in browser at http://localhost:5173
-4. Use API docs at http://localhost:8000/docs for backend testing
-
-## 🚀 Production Deployment
-
-Deploy to your own server with nginx, Let's Encrypt SSL, and systemd:
 
 ### Quick Deployment
 
@@ -177,16 +126,12 @@ Deploy to your own server with nginx, Let's Encrypt SSL, and systemd:
    sudo certbot --nginx -d your-domain.com
    ```
 
-For complete deployment instructions, see **[deploy/DEPLOYMENT.md](deploy/DEPLOYMENT.md)**
-
-> ℹ️ `scripts/deploy_prod.sh` now builds the backend/frontend artifacts and then deploys them to `/var/www/flooded-island`, replacing the running service in a single command.
-
 ### Deployment Files
 
 - `deploy/nginx/flooded-island.conf` - Nginx reverse proxy configuration
 - `deploy/systemd/flooded-island-backend.service` - Systemd service
 - `deploy/DEPLOYMENT.md` - Complete deployment guide
-- `deploy_prod.sh` - Automated deployment script
+- `scripts/deploy_prod.sh` - Automated deployment script
 
 ## 📚 Documentation
 
@@ -195,17 +140,3 @@ For complete deployment instructions, see **[deploy/DEPLOYMENT.md](deploy/DEPLOY
 - [UI Design](docs/ui_design.md) - Interface design decisions
 - [Implementation Plan](docs/implementation_plan.md) - Development roadmap
 - [Deployment Guide](deploy/DEPLOYMENT.md) - Production deployment instructions
-
-## 🎨 Features
-
-- ✅ Real-time multiplayer via WebSockets
-- ✅ Indigo-themed beautiful UI
-- ✅ Smooth 3D flip animations for field state changes
-- ✅ Responsive design
-- ✅ In-memory game state management
-- ✅ Room-based matchmaking
-- ✅ Reconnection support
-
----
-
-**Ready to play?** Run `./scripts/deploy_dev.sh` and open http://localhost:5173 in your browser!

@@ -10,7 +10,7 @@ Group=www-data
 WorkingDirectory=/var/www/flooded-island/backend
 
 # Environment variables
-EnvironmentFile=/var/www/flooded-island/.env.prod
+EnvironmentFile=/var/www/flooded-island/.env
 
 # Use virtual environment Python
 ExecStart=/var/www/flooded-island/backend/.venv/bin/python /var/www/flooded-island/backend/main.py

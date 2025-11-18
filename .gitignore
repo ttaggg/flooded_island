@@ -71,3 +71,6 @@ logs
 
 # Process PIDs for scripts
 .pids
+
+# uv
+uv.lock
