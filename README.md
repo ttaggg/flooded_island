@@ -2,7 +2,9 @@
 
 A turn-based multiplayer strategy game where two players compete on a flooding grid. One player (the Adventurer) tries to survive 365 days by moving strategically and drying adjacent fields, while the other player (the Weather) attempts to trap them by flooding the island.
 
-**Ready to play?** Play at https://island.olegmagn.es!
+This is a pet project where I learn new things about AI-assisted spec-driven development (SDD), frontend, and backend development.
+
+**Ready to play?** Try at https://island.olegmagn.es!
 
 <p align="center">
   <img src="assets/screenshot_1.jpg" height="300" />
