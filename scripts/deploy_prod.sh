@@ -142,14 +142,14 @@ sync_source_tree() {
         --exclude='.env.local' \
         "$REPO_ROOT/" "$DEPLOY_DIR/"
 
-    cp "$ENV_FILE" "$DEPLOY_DIR/.env.prod"
+    cp "$ENV_FILE" "$DEPLOY_DIR/.env"
 }
 
 load_prod_env() {
     cd "$DEPLOY_DIR"
     set -a
     # shellcheck disable=SC1091
-    source .env.prod
+    source .env
     set +a
 }
 
@@ -181,6 +181,10 @@ setup_backend_virtualenv() {
 
     ensure_uv_installed_prod
 
+    # Configure uv to install python in a shared location readable by www-data
+    export UV_PYTHON_INSTALL_DIR="/opt/uv-python"
+    mkdir -p "$UV_PYTHON_INSTALL_DIR"
+
     cd "$backend_dir"
     local venv_path="$backend_dir/.venv"
     if [ -d "$venv_path" ]; then
@@ -199,6 +203,14 @@ set_permissions() {
     log_section "🔒 Setting permissions..."
     chown -R www-data:www-data "$DEPLOY_DIR"
     chmod -R 755 "$DEPLOY_DIR"
+    # Ensure log directory is writable by www-data
+    chown -R www-data:www-data "$LOG_DIR"
+    chmod -R 755 "$LOG_DIR"
+    # Ensure uv python install directory is readable by www-data
+    if [ -d "/opt/uv-python" ]; then
+        chown -R root:root "/opt/uv-python"
+        chmod -R 755 "/opt/uv-python"
+    fi
 }
 
 configure_nginx() {
