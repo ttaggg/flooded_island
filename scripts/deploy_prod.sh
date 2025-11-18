@@ -69,15 +69,11 @@ prepare_python_project() {
         find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
         find . -type f -name "*.pyc" -delete 2>/dev/null || true
         ensure_uv_installed
-        if [ ! -d ".venv" ]; then
-            log "   Creating virtual environment with uv..."
-            uv venv
-        fi
-        # shellcheck disable=SC1091
-        source .venv/bin/activate
-        log "   Installing dependencies with uv..."
-        uv pip install -r requirements.txt
-        deactivate
+        # Clean up old venv to prevent python version mismatch issues
+        rm -rf .venv
+        log "   Syncing dependencies with uv..."
+        # Use frozen lockfile but allow system python if needed, though uv prefers its own managed python
+        uv sync --frozen
     )
     log "✅ $label ready"
 }
@@ -192,10 +188,10 @@ setup_backend_virtualenv() {
         rm -rf "$venv_path"
     fi
 
-    log "   Creating virtual environment with uv..."
-    uv venv
-    log "   Installing backend dependencies with uv..."
-    uv pip install --no-cache -r requirements.txt
+    log "   Syncing backend dependencies with uv..."
+    # Use exact same sync command as build phase to ensure consistency
+    # This will reuse the cached environment or recreate it identically
+    uv sync --frozen --no-cache
     cd "$DEPLOY_DIR"
 }
 

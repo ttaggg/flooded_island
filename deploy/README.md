@@ -34,7 +34,7 @@ deploy/
 ## Prerequisites
 
 - Ubuntu 20.04+ or similar Linux distribution
-- Python 3.11+
+- Python 3.12+
 - Node.js 18+
 - Nginx
 - Certbot (for SSL)

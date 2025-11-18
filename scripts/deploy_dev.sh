@@ -61,17 +61,6 @@ ensure_uv_installed() {
     fi
 }
 
-ensure_python_venv() {
-    if [ ! -d ".venv" ]; then
-        log "   Creating virtual environment with uv..."
-        uv venv
-    fi
-}
-
-install_python_dependencies() {
-    log "   Installing dependencies with uv..."
-    uv pip install -r requirements.txt
-}
 
 prepare_python_project() {
     local dir="$1"
@@ -82,11 +71,8 @@ prepare_python_project() {
         find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
         find . -type f -name "*.pyc" -delete 2>/dev/null || true
         ensure_uv_installed
-        ensure_python_venv
-        # shellcheck disable=SC1091
-        source .venv/bin/activate
-        install_python_dependencies
-        deactivate
+        log "   Syncing dependencies with uv..."
+        uv sync
     )
     log "✅ $label ready"
 }
