@@ -7,9 +7,9 @@ This is a pet project exploring AI-assisted spec-driven development (SDD), moder
 **Ready to play?** Try at https://island.olegmagn.es!
 
 <p align="center">
-  <img src="assets/screenshot_1.jpg" height="300" />
-  <img src="assets/screenshot_2.jpg" height="300" />
-  <img src="assets/screenshot_3.jpg" height="300" />
+  <img src="assets/screenshot_1.jpg" height="200" />
+  <img src="assets/screenshot_2.jpg" height="200" />
+  <img src="assets/screenshot_3.jpg" height="200" />
 </p>
 
 ## 🎮 Game Overview
